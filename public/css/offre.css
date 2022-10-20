@@ -1,0 +1,27 @@
+.fiche{
+    padding : 20px;
+    position:relative;
+}
+.carte{
+    float: right;
+    margin : 20px;
+}
+.boite{
+    border-radius: 15px;
+    border: 1px solid lightgrey;
+    overflow: hidden;
+    margin-bottom: 30px;
+    width: calc(100% - 450px - 40px);
+}
+
+.titre_boite{
+    text-align: center;
+    margin: 0;
+    padding : 0.5em 0;
+    color:white;
+    background-color: rgb(221, 11, 11);
+}
+
+.corps_boite{
+    padding : 0 20px;
+}

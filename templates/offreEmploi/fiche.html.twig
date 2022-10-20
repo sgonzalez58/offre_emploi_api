@@ -1,0 +1,101 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Clients{% endblock %}
+
+{% block stylesheets %}
+    <link href="/css/all.css" rel="stylesheet">
+    <link href='/css/offre.css' rel='stylesheet'>
+{% endblock %}
+
+{% block javascripts %}
+{% endblock %}
+
+{% block body %}
+<a href='/offreEmploi'>retour</a>
+<div class='fiche'>
+    {% if not offre.latitude is empty %}
+    <div class='carte'>
+        <iframe width="425" height="350" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="{{ 'https://www.openstreetmap.org/export/embed.html?bbox=' ~ (offre.longitude - 0.0360) ~ '%2C' ~ (offre.latitude - 0.0133) ~ '%2C' ~ (offre.longitude + 0.0360) ~ '%2C' ~ (offre.latitude + 0.0133) ~ '&layer=mapnik&marker=' ~ offre.latitude ~ '%2C' ~ offre.longitude}}" style="border: 1px solid black"></iframe>
+        <br/>
+        <small>
+            <a href="{{ 'https://www.openstreetmap.org/?mlat=' ~ offre.latitude ~ '&amp;mlon=' ~ offre.longitude ~ '#map=16/' ~ offre.latitude ~ '/' ~ offre.longitude ~ '&amp;layers=N'}}">Afficher une carte plus grande</a>
+        </small>
+    </div>
+    {% endif %}
+    {% if not offre.getIdPoleEmploi() is empty %}
+    <h3>Offre n° <a href='{{offre.getOrigineOffre}}'>{{offre.getIdPoleEmploi}}</a></h3>
+    {% endif %}
+    <h2>{{offre.intitule}}</h2>
+    <h4>{{(offre.villeLibelle | split('- '))[1]}}</h4>
+    <p>Offre créée le {{offre.getDateDeCreation() | date()}}</p>
+    <p>Mise à jour le {{offre.getDateActualisation() | date()}}</p>
+    <p>{{offre.getNbPostes()}} poste(s) à pourvoir</p>
+    <p>{{offre.description}}</p>
+    
+    <div class='boite'>
+        <h3 class='titre_boite'>Information métier</h3>
+        <div class='corps_boite'>
+            <p>{{offre.getLibelleMetier()}}</p>
+            <p>{{offre.getAppellationMetier()}}</p>
+        </div>
+    </div>
+    <div class='boite'>
+        <h3 class='titre_boite'>Contrat</h3>
+        <div class='corps_boite'>
+            <p>{{offre.getTypeContrat()}}</p>
+            <p>{{offre.getTypeContratLibelle()}}</p>
+            <p>{{offre.getNatureContrat()}}</p>
+        </div>
+    </div>
+    <div class='boite'>
+        <h3 class='titre_boite'>Experience</h3>
+        <div class='corps_boite'>
+            <p>{{offre.getExperienceLibelle()}}</p>
+        </div>
+    </div>
+
+    {% if not offre.getNomEntreprise() is empty %}
+    <div class='boite'>
+        <h3 class='titre_boite'>Entreprise</h3>
+        <div class='corps_boite'>
+            <p>{{offre.getNomEntreprise()}}</p>
+        </div>
+    </div>
+    {% endif %}
+    
+    {% if not offre.getSalaire() is empty%}
+    <div class='boite'>
+        <h3 class='titre_boite'>Salaire</h3>
+        <div class='corps_boite'>
+            <p>{{offre.getSalaire()}}</p>
+        </div>
+    </div>
+    {% endif %}
+    {% if not offre.getDureeTravail() is empty or not offre.getDureeTravailConvertie() is empty%}
+    <div class='boite'>
+        <h3 class='titre_boite'>Durée</h3>
+        <div class='corps_boite'>
+            <p>{{offre.getDureeTravail()}}</p>
+            <p>{{offre.getDureeTravailConvertie()}}</p>
+        </div>
+    </div>
+    {% endif %}
+    {% if not offre.getLibelleQualification() is empty%}
+    <div class='boite'>
+        <h3 class='titre_boite'>Qualification</h3>
+        <div class='corps_boite'>
+            <p>{{offre.getLibelleQualification()}}</p>
+        </div>
+    </div>
+    {% endif %}
+    {% if not offre.getSecteurActiviteLibelle() is empty%}
+    <div class='boite'>
+        <h3 class='titre_boite'>Secteur d'activité</h3>
+        <div class='corps_boite'>
+            <p>{{offre.getSecteurActiviteLibelle()}}</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

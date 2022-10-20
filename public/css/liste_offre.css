@@ -1,0 +1,49 @@
+.tri_liste{
+    width: 80vw;
+    margin: 30px 10vw;
+}
+
+.selection{
+    margin : 10px 0;
+}
+.offre{
+    display:flex;
+    justify-content: space-between;
+    background-color: whitesmoke;
+    margin : 10px 0;
+}
+
+.liste_offres{
+    display: flex;
+    flex-direction: column;
+    width: 80vw;
+    margin:auto;
+}
+
+.entreprise_offre{
+    width: calc(30vw - 40px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding : 0 20px;
+    text-align: center;
+}
+
+.corps_offre{
+    width: calc(50vw - 40px);
+    padding: 0 20px;
+}
+
+.lien_fiche{
+    text-decoration: none;
+    color:darkslateblue
+}
+
+.ville{
+    background-color: red;
+    color: white;
+    padding: 5px;
+    border-radius: 5px;
+    display: inline;
+}

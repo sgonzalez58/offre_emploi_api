@@ -1,0 +1,73 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Clients{% endblock %}
+
+{% block stylesheets %}
+    <link href="/css/all.css" rel="stylesheet">
+    <link href='/css/liste_offre.css' rel='stylesheet'>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+{% endblock %}
+
+{% block javascripts %}
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src='/js/index_pole_emploi.js' defer></script>
+{% endblock %}
+
+{% block body %}
+<div class='tri_liste'>
+    <div class='selection'>
+        <label for='liste_ville'>
+            Ville :
+        </label>
+        <select id='liste_ville'>
+            <option></option>
+            {% for ville in villes %}
+            <option value='{{ville.getId()}}'>{{ville.nomCommune}}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class='selection'>
+        <label for='liste_distance'>
+            Distance maximum(km) :
+        </label>
+        <select id='liste_distance'>
+            <option value='aucune' selected>0</option>
+            <option value='10'>10</option>
+            <option value='25'>25</option>
+            <option value='50'>50</option>
+            <option value='100'>100</option>
+        </select>
+    </div>
+</div>
+
+
+<div class='liste_offres'>
+    {% for offre in offres %}
+
+    <div class='offre'>
+        <div class='corps_offre'>
+            <a class='lien_fiche' href='{{ '/offreEmploi/' ~ offre.id }}'><h2>{{offre.intitule}}</h2></a>
+            <h4 class='ville'>{{offre.villeLibelle | split(' - ') [1]}}
+            {% if not offre.getLatitude is empty %}
+            <a href='{{ 'https://www.openstreetmap.org/?mlat=' ~ offre.latitude ~ '&mlon=' ~ offre.longitude ~ '#map=17/' ~ offre.latitude ~ '/' ~ offre.longitude ~ '&layers=N'}}' target='_blank'><i class="fa-solid fa-map-pin"></i></a>
+            {% endif %}
+            </h4>
+            <p>{{offre.description | length > 150 ? offre.description | slice(0,150) ~ '...' : offre.description}}</p>
+        </div>
+        <div class='entreprise_offre'>
+            {% if not offre.getNomEntreprise() is empty %}
+
+            <p>{{offre.getNomEntreprise()}}</p>
+
+            {% endif %}
+
+            <a class='lien_pole_emploi' href='{{offre.getOrigineOffre()}}'>lien vers l'offre sur pole emploi.</a>
+        </div>
+    </div>
+
+    {% endfor %}
+</div>
+
+{% endblock %}
