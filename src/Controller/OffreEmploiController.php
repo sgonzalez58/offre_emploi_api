@@ -16,11 +16,14 @@ class OffreEmploiController extends AbstractController
     /**
      * @Route("/offreEmploi", name="app_offre_emploi")
      */
-    public function index(OffreEmploiRepository $offreEmploiRepository, CommuneRepository $communeRepository): Response
+    public function index(OffreEmploiRepository $offreEmploiRepository, CommuneRepository $communeRepository, Request $request): Response
     {
+        $session = $request->getSession();
+        $nb_offres = $session->get('nb_offres', 50);
         return $this->render('offreEmploi/index.html.twig', [
-            'offres' => $offreEmploiRepository->findAll(),
-            'villes' => $communeRepository->findBy([], ['nomCommune' => 'ASC'])
+            'offres' => $offreEmploiRepository->findBy([], [], $nb_offres),
+            'villes' => $communeRepository->findBy([], ['nomCommune' => 'ASC']),
+            'max_page' => count($offreEmploiRepository->findAll()) / $nb_offres
         ]);
     }
 
@@ -29,6 +32,9 @@ class OffreEmploiController extends AbstractController
      */
     public function getByVille(OffreEmploiRepository $offreEmploiRepository, Request $request, CommuneRepository $communeRepository): Response
     {
+        $session = $request->getSession();
+        $nb_offres = $session->get('nb_offres', 50);
+        $page = $request->query->get('page', 1);
         $ville_id = $request->request->get('ville');
         $distance = $request->request->get('distance');
         if(!$ville_id){
@@ -38,14 +44,10 @@ class OffreEmploiController extends AbstractController
             return new JsonResponse("La distance maximale de la recherche n'a pas été envoyée. Erreure lors de la demande ajax.", 500);
         }
         if($distance == 'aucune'){
-            $offres = $offreEmploiRepository->findBy(['commune' => $ville_id]);
-            $offres_sans_ville = $offreEmploiRepository->findBy(['commune' => null]);
-            foreach($offres_sans_ville as $offre){
-                array_push($offres, $offre);
-            }
+            $offres = $offreEmploiRepository->findByCommunes(array($communeRepository->find($ville_id)), $nb_offres, ($page - 1) * $nb_offres);
+            $nb_offres_demandees = count($offreEmploiRepository->findByCommunes(array($communeRepository->find($ville_id))));
         }else{
             $offres = array();
-            $offres_a_trier = $offreEmploiRepository->findAll();
             $ville_cible = array();
             $ville_a_trier = $communeRepository->findAll();
 
@@ -70,18 +72,12 @@ class OffreEmploiController extends AbstractController
                     }
                 }
             }
-            foreach($offres_a_trier as $offre){
-                if(in_array($offre->getCommune(), $ville_cible)){
-                    array_push($offres, $offre);
-                }
-            }
-            $offres_sans_ville = $offreEmploiRepository->findBy(['commune' => null]);
-            foreach($offres_sans_ville as $offre){
-                array_push($offres, $offre);
-            }
+            $offres = $offreEmploiRepository->findByCommunes($ville_cible, $nb_offres, ($page - 1) * $nb_offres);
+            $nb_offres_demandees = count($offreEmploiRepository->findByCommunes($ville_cible));
         }
         $jsonData = [];
         $idx = 0;
+        $jsonData['info'] = ['nbOffres' => $nb_offres_demandees, 'nbOffresPage' => $nb_offres, 'pageActuelle' => $page, 'pageMax' => ceil($nb_offres_demandees / $nb_offres)];
         foreach($offres as $offre){
             $nomVille = explode('- ', $offre->getVilleLibelle())[1];
             if($offre->getLatitude()){
@@ -107,9 +103,12 @@ class OffreEmploiController extends AbstractController
     /**
      * @Route("/offreEmploi/getAll", name="getAll_offre_emploi")
      */
-    public function getAll(OffreEmploiRepository $offreEmploiRepository): Response
+    public function getAll(OffreEmploiRepository $offreEmploiRepository, Request $request): Response
     {
-        $offres = $offreEmploiRepository->findAll();
+        $session = $request->getSession();
+        $nb_offres = $session->get('nb_offres', 50);
+        $page = $request->query->get('page', 1);
+        $offres = $offreEmploiRepository->findBy([], [], $nb_offres, ($page - 1) * $nb_offres);
         $jsonData = [];
         $idx = 0;
         foreach($offres as $offre){

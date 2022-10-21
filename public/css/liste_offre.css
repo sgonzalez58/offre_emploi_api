@@ -47,3 +47,8 @@
     border-radius: 5px;
     display: inline;
 }
+
+.liste_offre_footer, .liste_offre_header{
+    width: 80vw;
+    margin: 10px 10vw;
+}

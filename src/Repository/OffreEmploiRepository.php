@@ -39,20 +39,28 @@ class OffreEmploiRepository extends ServiceEntityRepository
         }
     }
 
-//    /**
-//     * @return OffreEmploi[] Returns an array of OffreEmploi objects
-//     */
-//    public function findByExampleField($value): array
-//    {
-//        return $this->createQueryBuilder('o')
-//            ->andWhere('o.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->orderBy('o.id', 'ASC')
-//            ->setMaxResults(10)
-//            ->getQuery()
-//            ->getResult()
-//        ;
-//    }
+    /**
+     * @return OffreEmploi[] Returns an array of OffreEmploi objects
+     */
+    public function findByCommunes(array $communes, $limit=null, $offset=null): array
+    {
+        $result = $this->createQueryBuilder('o');
+        $result->Where('o.commune IS NULL');
+        foreach($communes as $commune){
+            $result
+                ->orWhere('o.commune = '. $commune->getId());
+        };
+        if (!is_null($offset)){
+            $result->setFirstResult($offset);
+        }
+        if (!is_null($limit)){
+            $result->setMaxResults($limit);
+        }
+        return $result
+            ->getQuery()
+            ->getResult()
+        ;
+    }
 
 //    public function findOneBySomeField($value): ?OffreEmploi
 //    {
