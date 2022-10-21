@@ -34,7 +34,7 @@ class OffreEmploiController extends AbstractController
     {
         $session = $request->getSession();
         $nb_offres = $session->get('nb_offres', 50);
-        $page = $request->query->get('page', 1);
+        $page = $request->request->get('page', 1);
         $ville_id = $request->request->get('ville');
         $distance = $request->request->get('distance');
         if(!$ville_id){
@@ -77,7 +77,7 @@ class OffreEmploiController extends AbstractController
         }
         $jsonData = [];
         $idx = 0;
-        $jsonData['info'] = ['nbOffres' => $nb_offres_demandees, 'nbOffresPage' => $nb_offres, 'pageActuelle' => $page, 'pageMax' => ceil($nb_offres_demandees / $nb_offres)];
+        $jsonData['info'] = ['nbOffres' => $nb_offres_demandees, 'nbOffresPage' => $nb_offres, 'pageActuelle' => (int)$page, 'pageMax' => ceil($nb_offres_demandees / $nb_offres)];
         foreach($offres as $offre){
             $nomVille = explode('- ', $offre->getVilleLibelle())[1];
             if($offre->getLatitude()){
@@ -107,10 +107,12 @@ class OffreEmploiController extends AbstractController
     {
         $session = $request->getSession();
         $nb_offres = $session->get('nb_offres', 50);
-        $page = $request->query->get('page', 1);
+        $page = $request->request->get('page', 1);
         $offres = $offreEmploiRepository->findBy([], [], $nb_offres, ($page - 1) * $nb_offres);
+        $nb_offres_max = count($offreEmploiRepository->findAll());
         $jsonData = [];
         $idx = 0;
+        $jsonData['info'] = ['nbOffres' => $nb_offres_max, 'nbOffresPage' => $nb_offres, 'pageActuelle' => (int)$page, 'pageMax' => ceil($nb_offres_max / $nb_offres)];
         foreach($offres as $offre){
             $nomVille = explode('- ', $offre->getVilleLibelle())[1];
             if($offre->getLatitude()){
