@@ -1,6 +1,9 @@
 .tri_liste{
     width: 80vw;
-    margin: 30px 10vw;
+    margin: 30px auto;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap-reverse;
 }
 
 .selection{
@@ -49,6 +52,13 @@
 }
 
 .liste_offre_footer, .liste_offre_header{
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
     width: 80vw;
-    margin: 10px 10vw;
+    margin: 10px auto;
+}
+
+.ajouter_offre{
+
 }

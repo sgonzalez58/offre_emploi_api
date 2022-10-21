@@ -16,31 +16,37 @@
 
 {% block body %}
 <div class='tri_liste'>
-    <div class='selection'>
-        <label for='liste_ville'>
-            Ville :
-        </label>
-        <select id='liste_ville'>
-            <option></option>
-            {% for ville in villes %}
-            <option value='{{ville.getId()}}'>{{ville.nomCommune}}</option>
-            {% endfor %}
-        </select>
-    </div>
+    <div class='tri'>
+        <div class='selection'>
+            <label for='liste_ville'>
+                Ville :
+            </label>
+            <select id='liste_ville'>
+                <option></option>
+                {% for ville in villes %}
+                <option value='{{ville.getId()}}'>{{ville.nomCommune}}</option>
+                {% endfor %}
+            </select>
+        </div>
 
-    <div class='selection'>
-        <label for='liste_distance'>
-            Distance maximum(km) :
-        </label>
-        <select id='liste_distance'>
-            <option value='aucune' selected>0</option>
-            <option value='10'>10</option>
-            <option value='25'>25</option>
-            <option value='50'>50</option>
-            <option value='100'>100</option>
-        </select>
+        <div class='selection'>
+            <label for='liste_distance'>
+                Distance maximum(km) :
+            </label>
+            <select id='liste_distance'>
+                <option value='aucune' selected>0</option>
+                <option value='10'>10</option>
+                <option value='25'>25</option>
+                <option value='50'>50</option>
+                <option value='100'>100</option>
+            </select>
+        </div>
+    </div>
+    <div class='ajout'>
+        <a class='ajouter_offre' href='/offreEmploi/creer'><button>Créer une offre</button></a>
     </div>
 </div>
+
 
 <div class='liste_offre_header'>
     <button class='page_precedente' disabled>precedent</button>
