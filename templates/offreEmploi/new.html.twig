@@ -1,0 +1,147 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouvelle offre d'emploi{% endblock %}
+
+{% block stylesheets %}
+    <link href="/css/all.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.2/dist/leaflet.css"
+     integrity="sha256-sA+zWATbFveLLNqWO2gtiw3HL/lh1giY/Inf1BJ0z14="
+     crossorigin=""/>
+    <link href='/css/formulaireOffreEmploi.css' rel='stylesheet'>
+{% endblock %}
+
+{% block javascripts %}
+    <script src="https://unpkg.com/leaflet@1.9.2/dist/leaflet.js"
+     integrity="sha256-o9N1jGDZrf5tS+Ft4gbIK7mYMipq9lqpVJ91xHSyKhg="
+     crossorigin=""></script>
+    <script src='/js/formulaire_offre_emploi.js' defer></script>
+{% endblock %}
+
+{% block body %}
+
+<a href='/offreEmploi'> retour </a>
+<br>
+<div class='conteneur_formulaire'>
+{{ form_start(form) }}
+
+<h2>Nouvelle offre d'emploi</h2>
+    {{ form_errors(form) }}
+
+    <div class='ligne_formulaire'>
+        {{ form_label(form.intitule) }}
+        :
+        {{ form_widget(form.intitule) }}
+    </div>
+
+    <div class='ligne_formulaire'>
+        <div class='metier'>
+            {{ form_label(form.appellationMetier) }}
+            :
+            {{ form_widget(form.appellationMetier) }}
+        </div>
+    </div>
+
+    <div class='ligne_formulaire'>
+        <div class='entreprise'>
+            {{ form_label(form.nomEntreprise) }}
+            :
+            {{ form_widget(form.nomEntreprise) }}
+        </div>
+    </div>
+
+    <div class='ligne_formulaire'>
+        <div class='contact'>
+            Mail de contact *:
+            {{ form_widget(form.mailEntreprise) }}
+        </div>
+    </div>
+
+    <div class='ligne_formulaire'>
+        <div class='contrat'>
+            <h3>Contrat</h3>
+            <div class='type_contrat'>
+                {{ form_label(form.typeContrat) }}
+                :
+                {{ form_widget(form.typeContrat) }}
+            </div>
+            <div class='nature_contrat'>
+                {{ form_label(form.natureContrat) }}
+                :
+                {{ form_widget(form.natureContrat) }}
+            </div>
+            <div class='alternance'>
+                {{ form_label(form.alternance) }}
+                :
+                {{ form_widget(form.alternance) }}
+            </div>
+            <div class='duree_contrat'>
+                {{ form_label(form.duree) }}
+                :
+                {{ form_widget(form.duree) }}
+            </div>
+        </div>
+    </div>
+
+    <div class='ligne_formulaire'>
+        <div class='salaire'>
+            Salaire :
+            {{ form_widget(form.montantSalaire) }}
+            par 
+            {{ form_widget(form.periodeSalaire) }}
+        </div>
+    </div>
+
+    <div class='ligne_formulaire'>
+        <div class='horaire'>
+            {{ form_label(form.dureeTravail) }}
+            :
+            {{ form_widget(form.dureeTravail) }}
+        </div>
+    </div>
+
+    <div class='ligne_formulaire'>
+        <div class='experience'>
+            {{ form_label(form.experienceLibelle) }}
+            :
+            {{ form_widget(form.experienceLibelle) }}
+        </div>
+    </div>
+
+    <div class='ligne_formulaire'>
+        <div class='poste'>
+            {{ form_label(form.nbPostes) }}
+            :
+            {{ form_widget(form.nbPostes) }}
+        </div>
+    </div>
+
+    <div class='description'>
+        {{ form_label(form.description) }}
+        :
+        {{ form_widget(form.description) }}
+    </div>
+    
+    <div class='ligne_formulaire'>
+        <div class='localisation'>
+            <h3>Localisation</h3>
+            <div class='commune'>
+                {{ form_row(form.commune) }}
+            </div>
+            <div class='villeLibelle'>
+                {{ form_label(form.villeLibelle) }}
+                :
+                {{ form_widget(form.villeLibelle) }}
+            </div>
+            <div id="map"></div>
+        </div>
+    </div>
+
+    <div class='submit'>
+        {{ form_widget(form.submit, { 'label': 'Enregistrer l\'offre' }) }}
+    </div>
+
+{{ form_end(form) }}
+</div>
+
+{% endblock %}

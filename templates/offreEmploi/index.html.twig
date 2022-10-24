@@ -1,6 +1,6 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Clients{% endblock %}
+{% block title %}Liste offre d'emploi{% endblock %}
 
 {% block stylesheets %}
     <link href="/css/all.css" rel="stylesheet">
@@ -15,6 +15,11 @@
 {% endblock %}
 
 {% block body %}
+{% for message in app.flashes('ajout') %}
+    <div id='content-flash' class="message_ajout">{{message}}
+        <button class='fermer_message'>X</button>
+    </div>
+{% endfor %}
 <div class='tri_liste'>
     <div class='tri'>
         <div class='selection'>

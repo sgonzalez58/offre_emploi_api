@@ -1,3 +1,10 @@
+let message_ajout = document.getElementById('content-flash');
+if(message_ajout){
+    message_ajout.firstElementChild.addEventListener('click', ()=>{
+        message_ajout.remove()
+    });
+}
+
 $('#liste_ville').select2({
     placeholder: 'Selectionner une ville',
     allowClear : true

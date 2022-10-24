@@ -64,16 +64,16 @@ class OffreEmploi
     private $longitude;
 
     /**
-     * @var string
+     * @var string|null
      *
-     * @ORM\Column(name="code_metier", type="string", length=255, nullable=false)
+     * @ORM\Column(name="code_metier", type="string", length=255, nullable=true)
      */
     private $codeMetier;
 
     /**
-     * @var string
+     * @var string|null
      *
-     * @ORM\Column(name="libelle_metier", type="string", length=255, nullable=false)
+     * @ORM\Column(name="libelle_metier", type="string", length=255, nullable=true)
      */
     private $libelleMetier;
 
@@ -115,7 +115,7 @@ class OffreEmploi
     /**
      * @var string
      *
-     * @ORM\Column(name="experience_exige", type="string", length=255, nullable=false)
+     * @ORM\Column(name="experience_exige", type="string", length=255, nullable=true)
      */
     private $experienceExige;
 
@@ -199,7 +199,7 @@ class OffreEmploi
     /**
      * @var string
      *
-     * @ORM\Column(name="origine_offre", type="string", length=255, nullable=false)
+     * @ORM\Column(name="origine_offre", type="string", length=255, nullable=true)
      */
     private $origineOffre;
 
@@ -219,6 +219,16 @@ class OffreEmploi
      * @ORM\Column(type="string", length=255)
      */
     private $ville_libelle;
+
+    /**
+     * @ORM\Column(type="string", length=255)
+     */
+    private $validation;
+
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     */
+    private $mailEntreprise;
 
     public function getId(): ?int
     {
@@ -386,7 +396,7 @@ class OffreEmploi
         return $this->experienceExige;
     }
 
-    public function setExperienceExige(string $experienceExige): self
+    public function setExperienceExige(?string $experienceExige): self
     {
         $this->experienceExige = $experienceExige;
 
@@ -530,7 +540,7 @@ class OffreEmploi
         return $this->origineOffre;
     }
 
-    public function setOrigineOffre(string $origineOffre): self
+    public function setOrigineOffre(?string $origineOffre): self
     {
         $this->origineOffre = $origineOffre;
 
@@ -569,6 +579,30 @@ class OffreEmploi
     public function setVilleLibelle(string $ville_libelle): self
     {
         $this->ville_libelle = $ville_libelle;
+
+        return $this;
+    }
+
+    public function getValidation(): ?string
+    {
+        return $this->validation;
+    }
+
+    public function setValidation(string $validation): self
+    {
+        $this->validation = $validation;
+
+        return $this;
+    }
+
+    public function getMailEntreprise(): ?string
+    {
+        return $this->mailEntreprise;
+    }
+
+    public function setMailEntreprise(?string $mailEntreprise): self
+    {
+        $this->mailEntreprise = $mailEntreprise;
 
         return $this;
     }

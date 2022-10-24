@@ -2,9 +2,10 @@
 
 namespace App\Controller;
 
+use App\Entity\OffreEmploi;
+use App\Form\FormulaireOffreEmploiType;
 use App\Repository\CommuneRepository;
 use App\Repository\OffreEmploiRepository;
-use App\Repository\VilleRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -23,7 +24,7 @@ class OffreEmploiController extends AbstractController
         return $this->render('offreEmploi/index.html.twig', [
             'offres' => $offreEmploiRepository->findBy([], [], $nb_offres),
             'villes' => $communeRepository->findBy([], ['nomCommune' => 'ASC']),
-            'max_page' => count($offreEmploiRepository->findAll()) / $nb_offres
+            'max_page' => ceil(count($offreEmploiRepository->findAll()) / $nb_offres)
         ]);
     }
 
@@ -133,6 +134,55 @@ class OffreEmploiController extends AbstractController
             $jsonData[$idx++] = ['id' => $offre->getId(), 'intitule' => $offre->getIntitule(), 'nomVille' => $nomVille, 'lienMap' => $lienMap, 'description' => $description, 'nomEntreprise' => $nomEntreprise, 'lienOrigineOffre' => $offre->getOrigineOffre()];
         }
         return new JsonResponse($jsonData);
+    }
+
+    /**
+     * @Route("/offreEmploi/creer", name="creer_offre_emploi")
+     */
+    public function creer(OffreEmploiRepository $offreEmploiRepository, Request $request): Response
+    {
+        $offre = new OffreEmploi;
+        $offre->setValidation('en attente');
+        $offre->setDateDeCreation(new \Datetime());
+        $offre->setDateActualisation(new \Datetime());
+        $form = $this->createForm(FormulaireOffreEmploiType::class, $offre);
+        $form->handleRequest($request);
+        if ($form->isSubmitted() && $form->isValid()) {
+            
+            $offre = $form->getData();
+            if($form['duree']->getData()['months'] == ''){
+                $offre->setTypeContratLibelle( $offre->getTypeContrat() . ' - ' . $form['duree']->getData()['days'] . ' Jour(s)');
+            }else{
+                $offre->setTypeContratLibelle( $offre->getTypeContrat() . ' - ' . $form['duree']->getData()['months'] . ' Mois');
+            }
+            $offre->setSalaire( $form['periodeSalaire']->getData() . ' de ' .  $form['montantSalaire']->getData() . 'Euros.');
+            if($form['latitude']->getData() == ''){
+                if($offre->getCommune()){
+                    $offre->setLatitude($offre->getCommune()->getLatitude());
+                    $offre->setLongitude($offre->getCommune()->getLongitude());
+                }
+            }
+            if( $form['villeLibelle']->getData() == ''){
+                $offre->setVilleLibelle(substr($offre->getCommune()->getCodePostal(), 0, 2). ' - ' . strtoupper($offre->getCommune()->getNomCommune()));
+            }
+            $offreEmploiRepository->add($offre, true);
+
+            $this->addFlash('ajout', 'Votre demande d\'offre d\'emploi a bien été reçue. Elle apparaitra sur le site une fois validée.');
+            return $this->redirectToRoute('app_offre_emploi');
+        }
+        return $this->renderForm('offreEmploi/new.html.twig', [
+            'form' => $form,
+        ]);
+    }
+
+    /**
+     * @Route("/offreEmploi/admin/offreEmploi", name="gestion_offre_emploi")
+     */
+    public function gestion(OffreEmploiRepository $offreEmploiRepository): Response
+    {
+        return $this->render('offreEmploi/fiche.html.twig', [
+            'offre' => $offreEmploiRepository->findAll()
+        ]);
     }
 
     /**

@@ -93,6 +93,7 @@ class RecupererOffreEmploi extends Command
                     $nouvelle_offre->setSecteurActiviteLibelle($offre->secteurActiviteLibelle);
                 }
                 $nouvelle_offre->setOrigineOffre($offre->origineOffre->urlOrigine);
+                $nouvelle_offre->setValidation('valide');
                 $this->manager->persist($nouvelle_offre);
                 $this->manager->flush();
                 $output->writeln('Ajout de l\'offre '.$offre->id);

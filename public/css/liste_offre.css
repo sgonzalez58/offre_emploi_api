@@ -1,3 +1,7 @@
+body{
+    margin:0;
+}
+
 .tri_liste{
     width: 80vw;
     margin: 30px auto;
@@ -57,4 +61,30 @@
     flex-wrap: wrap;
     width: 80vw;
     margin: 10px auto;
+}
+
+.message_ajout{
+    background-color:green;
+    display: flex;
+    justify-content: center;
+    color:white;
+    padding: 10px;
+    margin:0;
+    position: relative;
+}
+
+.fermer_message{
+    position: absolute;
+    left: 90%;
+    background-color: transparent;
+    border-radius: 5px;
+    height: 100%;
+    top:0;
+    border: none;
+    transition: 0.2s;
+}
+
+.fermer_message:hover{
+    background-color: red;
+    border: 1px solid darkred;
 }
