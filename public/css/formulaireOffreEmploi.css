@@ -18,6 +18,13 @@ input[type='number']{
     padding: 3px 10px;
 }
 
+input[type='tel']{
+    margin-left : 10px;
+    border-color: lightgray;
+    border-radius: 5px;
+    padding: 3px 10px;
+}
+
 select{
     margin-left : 10px;
     border-color: lightgray;

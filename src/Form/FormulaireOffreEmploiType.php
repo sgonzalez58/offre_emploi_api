@@ -17,6 +17,7 @@ use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\DateIntervalType;
 use Symfony\Component\Form\Extension\Core\Type\EmailType;
+use Symfony\Component\Form\Extension\Core\Type\TelType;
 
 class FormulaireOffreEmploiType extends AbstractType
 {
@@ -34,9 +35,16 @@ class FormulaireOffreEmploiType extends AbstractType
                 'label' => 'Métier *',
                 'attr' => ['placeholder' => 'Ex : Responsable de boutique, Agent / Agente d\'accueil, Auxiliaire de puériculture...']
             ])
-            ->add('nomEntreprise', TextType::class)
+            ->add('nomEntreprise', TextType::class, [
+                'required' => false,
+            ])
             ->add('mailEntreprise', EmailType::class, [
+                'label' => 'Mail de contact',
                 'required' => true,
+            ])
+            ->add('numeroEntreprise', TelType::class, [
+                'label' => 'Téléphone de contact',
+                'required' => false,
             ])
             ->add('typeContrat', ChoiceType::class, [
                 'label' => 'Type *',
@@ -44,7 +52,7 @@ class FormulaireOffreEmploiType extends AbstractType
                     'Contrat à durée déterminée' => 'CDD',
                     'Contrat à durée indéterminée' => 'CDI',
                     'CDD insertion' => 'DDI',
-                    'CDI intérimaire ' => 'DIN',
+                    'CDI intérimaire' => 'DIN',
                     'Franchise' => 'FRA',
                     'Profession libérale' => 'LIB',
                     'Mission intérimaire' => 'MIS',
@@ -81,7 +89,8 @@ class FormulaireOffreEmploiType extends AbstractType
                 'attr' => ['placeholder' => 'Ex : 1 an exigé, Débutant accepté, Expérience souhaitée de 2 ans...']
             ])
             ->add('montantSalaire', IntegerType::class, [
-                'mapped'=>false
+                'mapped'=>false,
+                'required' => false
             ])
             ->add('periodeSalaire', ChoiceType::class, [
                 'choices'=>[
@@ -94,7 +103,8 @@ class FormulaireOffreEmploiType extends AbstractType
             
             ->add('dureeTravail', TextType::class, [
                 'label' => 'Temps de travail par semaine',
-                'attr' => ['placeholder' => 'Ex : 35H horaires normaux, 39H Travail en 3X8, 37H Travail samedi et dimanche...']
+                'attr' => ['placeholder' => 'Ex : 35H horaires normaux, 39H Travail en 3X8, 37H Travail samedi et dimanche...'],
+                'required' => false
             ])
             ->add('alternance')
             ->add('nbPostes', IntegerType::class, [

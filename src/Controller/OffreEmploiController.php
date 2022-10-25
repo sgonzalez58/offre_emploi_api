@@ -6,10 +6,13 @@ use App\Entity\OffreEmploi;
 use App\Form\FormulaireOffreEmploiType;
 use App\Repository\CommuneRepository;
 use App\Repository\OffreEmploiRepository;
+use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Routing\Annotation\Route;
 
 class OffreEmploiController extends AbstractController
@@ -22,7 +25,7 @@ class OffreEmploiController extends AbstractController
         $session = $request->getSession();
         $nb_offres = $session->get('nb_offres', 50);
         return $this->render('offreEmploi/index.html.twig', [
-            'offres' => $offreEmploiRepository->findBy([], [], $nb_offres),
+            'offres' => $offreEmploiRepository->findBy(['validation' => 'valide'], [], $nb_offres),
             'villes' => $communeRepository->findBy([], ['nomCommune' => 'ASC']),
             'max_page' => ceil(count($offreEmploiRepository->findAll()) / $nb_offres)
         ]);
@@ -80,7 +83,9 @@ class OffreEmploiController extends AbstractController
         $idx = 0;
         $jsonData['info'] = ['nbOffres' => $nb_offres_demandees, 'nbOffresPage' => $nb_offres, 'pageActuelle' => (int)$page, 'pageMax' => ceil($nb_offres_demandees / $nb_offres)];
         foreach($offres as $offre){
-            $nomVille = explode('- ', $offre->getVilleLibelle())[1];
+            if($offre->getVilleLibelle() && $offre->getVilleLibelle() != 'Non renseigné'){
+                $nomVille = explode('- ', $offre->getVilleLibelle())[1];
+            }
             if($offre->getLatitude()){
                 $lienMap = 'https://www.openstreetmap.org/?mlat=' . $offre->getLatitude() . '&mlon=' . $offre->getLongitude() . '#map=17/' . $offre->getLatitude() . '/' . $offre->getLongitude() . '&layers=N';
             }else{
@@ -109,13 +114,15 @@ class OffreEmploiController extends AbstractController
         $session = $request->getSession();
         $nb_offres = $session->get('nb_offres', 50);
         $page = $request->request->get('page', 1);
-        $offres = $offreEmploiRepository->findBy([], [], $nb_offres, ($page - 1) * $nb_offres);
-        $nb_offres_max = count($offreEmploiRepository->findAll());
+        $offres = $offreEmploiRepository->findBy(['validation' => 'valide'], [], $nb_offres, ($page - 1) * $nb_offres);
+        $nb_offres_max = count($offreEmploiRepository->findBy(['validation' => 'valide']));
         $jsonData = [];
         $idx = 0;
         $jsonData['info'] = ['nbOffres' => $nb_offres_max, 'nbOffresPage' => $nb_offres, 'pageActuelle' => (int)$page, 'pageMax' => ceil($nb_offres_max / $nb_offres)];
         foreach($offres as $offre){
-            $nomVille = explode('- ', $offre->getVilleLibelle())[1];
+            if($offre->getVilleLibelle() && $offre->getVilleLibelle() != 'Non renseigné'){
+                $nomVille = explode('- ', $offre->getVilleLibelle())[1];
+            }
             if($offre->getLatitude()){
                 $lienMap = 'https://www.openstreetmap.org/?mlat=' . $offre->getLatitude() . '&mlon=' . $offre->getLongitude() . '#map=17/' . $offre->getLatitude() . '/' . $offre->getLongitude() . '&layers=N';
             }else{
@@ -141,6 +148,7 @@ class OffreEmploiController extends AbstractController
      */
     public function creer(OffreEmploiRepository $offreEmploiRepository, Request $request): Response
     {
+        $user = $this->getUser();
         $offre = new OffreEmploi;
         $offre->setValidation('en attente');
         $offre->setDateDeCreation(new \Datetime());
@@ -150,12 +158,42 @@ class OffreEmploiController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             
             $offre = $form->getData();
-            if($form['duree']->getData()['months'] == ''){
-                $offre->setTypeContratLibelle( $offre->getTypeContrat() . ' - ' . $form['duree']->getData()['days'] . ' Jour(s)');
-            }else{
-                $offre->setTypeContratLibelle( $offre->getTypeContrat() . ' - ' . $form['duree']->getData()['months'] . ' Mois');
+            $offre->setUser($user);
+            $contratLibelle = '';
+            switch($form['typeContrat']->getData()){
+                case 'CDD':
+                    $contratLibelle = 'Contrat à durée déterminée';
+                    break;
+                case 'CDI':
+                    $contratLibelle = 'Contrat à durée indéterminée';
+                    break;
+                case 'DDI':
+                    $contratLibelle = 'CDD insertion';
+                    break;
+                case 'DIN':
+                    $contratLibelle = 'CDI intérimaire';
+                    break;
+                case 'FRA':
+                    $contratLibelle = 'Franchise';
+                    break;
+                case 'LIB':
+                    $contratLibelle = 'Profession libérale';
+                    break;
+                case 'MIS':
+                    $contratLibelle = 'Mission intérimaire';
+                    break;
+                case 'SAI':
+                    $contratLibelle = 'Contrat travail saisonnier';
+                    break;
             }
-            $offre->setSalaire( $form['periodeSalaire']->getData() . ' de ' .  $form['montantSalaire']->getData() . 'Euros.');
+            if($form['duree']->getData()['months'] == ''){
+                $offre->setTypeContratLibelle( $contratLibelle . ' - ' . $form['duree']->getData()['days'] . ' Jour(s)');
+            }else{
+                $offre->setTypeContratLibelle( $contratLibelle . ' - ' . $form['duree']->getData()['months'] . ' Mois');
+            }
+            if($form['montantSalaire']->getData() != ''){
+                $offre->setSalaire( $form['periodeSalaire']->getData() . ' de ' .  $form['montantSalaire']->getData() . 'Euros.');
+            }
             if($form['latitude']->getData() == ''){
                 if($offre->getCommune()){
                     $offre->setLatitude($offre->getCommune()->getLatitude());
@@ -163,7 +201,11 @@ class OffreEmploiController extends AbstractController
                 }
             }
             if( $form['villeLibelle']->getData() == ''){
-                $offre->setVilleLibelle(substr($offre->getCommune()->getCodePostal(), 0, 2). ' - ' . strtoupper($offre->getCommune()->getNomCommune()));
+                if($offre->getCommune()){
+                    $offre->setVilleLibelle(substr($offre->getCommune()->getCodePostal(), 0, 2). ' - ' . strtoupper($offre->getCommune()->getNomCommune()));
+                }else{
+                    $offre->setVilleLibelle('Non renseigné');
+                }
             }
             $offreEmploiRepository->add($offre, true);
 
@@ -176,12 +218,122 @@ class OffreEmploiController extends AbstractController
     }
 
     /**
-     * @Route("/offreEmploi/admin/offreEmploi", name="gestion_offre_emploi")
+     * @Route("/offreEmploi/admin", name="gestion_offre_emploi")
      */
     public function gestion(OffreEmploiRepository $offreEmploiRepository): Response
     {
-        return $this->render('offreEmploi/fiche.html.twig', [
+        return $this->render('offreEmploi/gestion.html.twig', [
             'offre' => $offreEmploiRepository->findAll()
+        ]);
+    }
+
+    /**
+     * @Route("/offreEmploi/admin/getOffresUsers", name="gestion_get_offre_emploi_users")
+     */
+    public function gestion_get_offres_users(OffreEmploiRepository $offreEmploiRepository): Response
+    {
+        $offres = $offreEmploiRepository->findBy(['id_pole_emploi'=>null]);
+        $jsonData = [];
+        $idx = 0;
+        foreach($offres as $offre){
+            if($offre->getVilleLibelle() && $offre->getVilleLibelle() != 'Non renseigné'){
+                $nomVille = explode('- ', $offre->getVilleLibelle())[1];
+            }else{
+                if($offre->getLatitude()){
+                    $nomVille ='Ville non précisée';
+                }else{
+                    $nomVille = 'Localisation inconnue!';
+                }
+            }
+            if($offre->getNomEntreprise()){
+                $nomEntreprise = $offre->getNomEntreprise();
+            }else{
+                $nomEntreprise = 'Non précisé';
+            }
+            $dateDemande = $offre->getDateActualisation();
+            $jsonData[$idx++] = ['id' => $offre->getId(), 'intitule' => $offre->getIntitule(), 'nomVille' => $nomVille, 'nomEntreprise' => $nomEntreprise, 'dateDemande' => $dateDemande, 'etat' => $offre->getValidation()];
+        }
+        return new JsonResponse($jsonData);
+    }
+
+    /**
+     * @Route("/offreEmploi/admin/refuserOffre/{id}", name="gestion_refuser_offre_emploi")
+     */
+    public function refuserOffre(int $id, OffreEmploiRepository $offreEmploiRepository, ManagerRegistry $doctrine, Request $request, MailerInterface $mailer): Response
+    {
+        $offre = $offreEmploiRepository->find($id);
+        if (!$offre){
+            return new JsonResponse('L\'offre n\'existe pas. Erreure lors de l\'envoie de l\'id.', 500);
+        }
+        $raison = '';
+        if ($request->isXmlHttpRequest()){
+            $raison = $request->request->get('raison');
+            if(!$raison){
+                return new JsonResponse('Erreure ajax. La raison du refus n\'a pas été donnée.', 500);
+            }
+        }else{
+            if($request->request->get('localisation')){
+                $raison .= 'La localisation et le nom de la commune ne sont pas renseignés.<br>';
+            }
+            if($request->request->get('entreprise')){
+                $raison .= 'Le nom de l\'entreprise n\'est pas renseigné.<br>';
+            }
+            $raison .= $request->request->get('raison_personnalisee').'<br>';
+        }
+        $offre->setValidation('refus');
+        $doctrine->getManager()->flush();
+        $email = (new TemplatedEmail())
+            ->from('no-reply@iti-conseil.com')
+            ->to($offre->getMailEntreprise())
+            ->subject('Refus offre d\'emploi.')
+            ->htmlTemplate('offreEmploi/mailRefus.html.twig')
+            ->context([
+                'raison' => $raison
+            ])
+        ;
+        $mailer->send($email);
+        if ($request->isXmlHttpRequest()){
+            return new JsonResponse('Offre refusée et mail envoyé.');
+        }else{
+            $this->addFlash('reponse', 'L\'offre d\'emploi n°'.$id.' a bien été refusée.');
+            return $this->redirectToRoute('gestion_offre_emploi');
+        }
+    }
+
+    /**
+     * @Route("/offreEmploi/admin/accepterOffre/{id}", name="gestion_accepter_offre_emploi")
+     */
+    public function accepterOffre(int $id, OffreEmploiRepository $offreEmploiRepository, ManagerRegistry $doctrine, Request $request, MailerInterface $mailer): Response
+    {
+        $offre = $offreEmploiRepository->find($id);
+        if (!$offre){
+            return new JsonResponse('L\'offre n\'existe pas. Erreure lors de l\'envoie de l\'id.', 500);
+        }
+        $raison = $request->request->get('raison_personnalisee').'<br>';
+        $offre->setValidation('valide');
+        $doctrine->getManager()->flush();
+        $email = (new TemplatedEmail())
+            ->from('no-reply@iti-conseil.com')
+            ->to($offre->getMailEntreprise())
+            ->subject('Validation offre d\'emploi.')
+            ->htmlTemplate('offreEmploi/mailValide.html.twig')
+            ->context([
+                'raison' => $raison
+            ])
+        ;
+        $mailer->send($email);
+        $this->addFlash('reponse', 'L\'offre d\'emploi n°'.$id.' a bien été validée.');
+        return $this->redirectToRoute('gestion_offre_emploi');
+    }
+
+    /**
+     * @Route("/offreEmploi/admin/{id}", name="admin_fiche_offre_emploi")
+     */
+    public function adminFiche(int $id, OffreEmploiRepository $offreEmploiRepository): Response
+    {
+        return $this->render('offreEmploi/fiche.html.twig', [
+            'offre' => $offreEmploiRepository->find($id),
+            'admin' => true
         ]);
     }
 
@@ -191,7 +343,18 @@ class OffreEmploiController extends AbstractController
     public function fiche(int $id, OffreEmploiRepository $offreEmploiRepository): Response
     {
         return $this->render('offreEmploi/fiche.html.twig', [
-            'offre' => $offreEmploiRepository->find($id)
+            'offre' => $offreEmploiRepository->find($id),
+            'admin' => false
+        ]);
+    }
+
+    /**
+     * @Route("/user/{id}/offreEmploi", name="client_offre_emploi")
+     */
+    public function clientOffre(int $id, OffreEmploiRepository $offreEmploiRepository): Response
+    {
+        return $this->render('offreEmploi/gestion.html.twig', [
+            'offre' => $offreEmploiRepository->findBy(['user'=> $id])
         ]);
     }
 }

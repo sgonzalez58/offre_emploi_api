@@ -45,11 +45,12 @@ class OffreEmploiRepository extends ServiceEntityRepository
     public function findByCommunes(array $communes, $limit=null, $offset=null): array
     {
         $result = $this->createQueryBuilder('o');
-        $result->Where('o.commune IS NULL');
+        $whereQuery = 'o.commune IS NULL';
         foreach($communes as $commune){
-            $result
-                ->orWhere('o.commune = '. $commune->getId());
+            $whereQuery .= ' OR o.commune = '. $commune->getId();
         };
+        $result->Where($whereQuery);
+        $result->andWhere('o.validation = \'valide\'');
         if (!is_null($offset)){
             $result->setFirstResult($offset);
         }

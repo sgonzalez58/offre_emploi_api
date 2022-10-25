@@ -1,101 +1,80 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Fiche offre d'emploi{% endblock %}
+{% block title %}Liste offre d'emploi{% endblock %}
 
 {% block stylesheets %}
     <link href="/css/all.css" rel="stylesheet">
-    <link href='/css/offre.css' rel='stylesheet'>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/bs5/dt-1.12.1/date-1.1.2/r-2.3.0/sb-1.3.4/sp-2.0.2/sl-1.4.0/datatables.min.css"/>
+    <link href='/css/gestion_offre_emploi.css' rel='stylesheet'>
 {% endblock %}
 
 {% block javascripts %}
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-OERcA2EqjJCMA+/3y+gxIOqMEjwtxJY7qPCqsdltbNJuaOe923+mo//f6V8Qbsw3" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/luxon@3.0.4/build/global/luxon.min.js"></script> 
+    <script type="text/javascript" src="https://cdn.datatables.net/v/bs5/dt-1.12.1/date-1.1.2/r-2.3.0/sb-1.3.4/sp-2.0.2/sl-1.4.0/datatables.min.js"></script>
+    <script src="https://cdn.datatables.net/plug-ins/1.10.24/sorting/datetime-luxon.js"></script>
+    <script src='/js/gestion_offre_emploi.js' defer></script>
 {% endblock %}
 
 {% block body %}
-<a href='/offreEmploi'>retour</a>
-<div class='fiche'>
-    {% if not offre.latitude is empty %}
-    <div class='carte'>
-        <iframe width="425" height="350" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="{{ 'https://www.openstreetmap.org/export/embed.html?bbox=' ~ (offre.longitude - 0.0360) ~ '%2C' ~ (offre.latitude - 0.0133) ~ '%2C' ~ (offre.longitude + 0.0360) ~ '%2C' ~ (offre.latitude + 0.0133) ~ '&layer=mapnik&marker=' ~ offre.latitude ~ '%2C' ~ offre.longitude}}" style="border: 1px solid black"></iframe>
-        <br/>
-        <small>
-            <a href="{{ 'https://www.openstreetmap.org/?mlat=' ~ offre.latitude ~ '&amp;mlon=' ~ offre.longitude ~ '#map=16/' ~ offre.latitude ~ '/' ~ offre.longitude ~ '&amp;layers=N'}}">Afficher une carte plus grande</a>
-        </small>
-    </div>
-    {% endif %}
-    {% if not offre.getIdPoleEmploi() is empty %}
-    <h3>Offre n° <a href='{{offre.getOrigineOffre}}'>{{offre.getIdPoleEmploi}}</a></h3>
-    {% endif %}
-    <h2>{{offre.intitule}}</h2>
-    <h4>{{(offre.villeLibelle | split('- '))[1]}}</h4>
-    <p>Offre créée le {{offre.getDateDeCreation() | date()}}</p>
-    <p>Mise à jour le {{offre.getDateActualisation() | date()}}</p>
-    <p>{{offre.getNbPostes()}} poste(s) à pourvoir</p>
-    <p>{{offre.description}}</p>
-    
-    <div class='boite'>
-        <h3 class='titre_boite'>Information métier</h3>
-        <div class='corps_boite'>
-            <p>{{offre.getLibelleMetier()}}</p>
-            <p>{{offre.getAppellationMetier()}}</p>
-        </div>
-    </div>
-    <div class='boite'>
-        <h3 class='titre_boite'>Contrat</h3>
-        <div class='corps_boite'>
-            <p>{{offre.getTypeContrat()}}</p>
-            <p>{{offre.getTypeContratLibelle()}}</p>
-            <p>{{offre.getNatureContrat()}}</p>
-        </div>
-    </div>
-    <div class='boite'>
-        <h3 class='titre_boite'>Experience</h3>
-        <div class='corps_boite'>
-            <p>{{offre.getExperienceLibelle()}}</p>
-        </div>
-    </div>
 
-    {% if not offre.getNomEntreprise() is empty %}
-    <div class='boite'>
-        <h3 class='titre_boite'>Entreprise</h3>
-        <div class='corps_boite'>
-            <p>{{offre.getNomEntreprise()}}</p>
+{% for message in app.flashes('reponse') %}
+    <div id='reponse-flash' class="alert-success text-center text-white sticky-top" style="background-color:green">{{message}}
+        <button class='btn round text-light end-0 position-absolute py-0'>X</button>
+    </div>
+{% endfor %}
+<div class='container'>
+    <div class="modal fade" id="modalMail" tabindex="-1" aria-labelledby="modalMailLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalMailLabel"></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <label for='localisation'>
+                        <p>
+                            <input type='checkbox' id='localisation'>
+                            La localisation et le nom de la commune ne sont pas renseignés.
+                        </p>
+                    </label>
+                    <label for='entreprise'>
+                        <p>
+                            <input type='checkbox' id='entreprise'>
+                            Le nom de l'entreprise n'est pas renseigné.
+                        </p>
+                    </label>
+                    <br>
+                    <div class='d-flex align-items-start justify-content-stretch'>
+                        <label for='raison_personnalisee'>
+                            <p>Autres:</p>
+                        </label>
+                        <textarea id='raison_personnalisee' class='form-control ms-1'></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id='closeModal' type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button onclick='confirmerSuppression()' type="button" class="btn btn-primary">Envoyer et supprimer</button>
+                </div>
+            </div>
         </div>
     </div>
-    {% endif %}
-    
-    {% if not offre.getSalaire() is empty%}
-    <div class='boite'>
-        <h3 class='titre_boite'>Salaire</h3>
-        <div class='corps_boite'>
-            <p>{{offre.getSalaire()}}</p>
-        </div>
-    </div>
-    {% endif %}
-    {% if not offre.getDureeTravail() is empty or not offre.getDureeTravailConvertie() is empty%}
-    <div class='boite'>
-        <h3 class='titre_boite'>Durée</h3>
-        <div class='corps_boite'>
-            <p>{{offre.getDureeTravail()}}</p>
-            <p>{{offre.getDureeTravailConvertie()}}</p>
-        </div>
-    </div>
-    {% endif %}
-    {% if not offre.getLibelleQualification() is empty%}
-    <div class='boite'>
-        <h3 class='titre_boite'>Qualification</h3>
-        <div class='corps_boite'>
-            <p>{{offre.getLibelleQualification()}}</p>
-        </div>
-    </div>
-    {% endif %}
-    {% if not offre.getSecteurActiviteLibelle() is empty%}
-    <div class='boite'>
-        <h3 class='titre_boite'>Secteur d'activité</h3>
-        <div class='corps_boite'>
-            <p>{{offre.getSecteurActiviteLibelle()}}</p>
-        </div>
-    </div>
-    {% endif %}
+    <table id="liste_offre_en_attente" class="table table-striped">
+        <thead>
+            <tr>
+                <th>Titre de l'offre</th>
+                <th>Ville</th>
+                <th>Entreprise</th>
+                <th>Date</th>
+                <th>Etat</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
 </div>
 
 {% endblock %}

@@ -5,13 +5,22 @@
 {% block stylesheets %}
     <link href="/css/all.css" rel="stylesheet">
     <link href='/css/offre.css' rel='stylesheet'>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" crossorigin="anonymous">
 {% endblock %}
 
 {% block javascripts %}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-OERcA2EqjJCMA+/3y+gxIOqMEjwtxJY7qPCqsdltbNJuaOe923+mo//f6V8Qbsw3" crossorigin="anonymous"></script>
+    {% if admin %}
+        <script src='/js/fiche_admin_offre_emploi.js' defer></script>
+    {% endif %}
 {% endblock %}
 
 {% block body %}
-<a href='/offreEmploi'>retour</a>
+{% if not admin %}
+    <a href='/offreEmploi'>retour</a>
+{% else %}
+    <a href='/offreEmploi/admin'>retour</a>
+{% endif %}
 <div class='fiche'>
     {% if not offre.latitude is empty %}
     <div class='carte'>
@@ -23,24 +32,30 @@
     </div>
     {% endif %}
     {% if not offre.getIdPoleEmploi() is empty %}
-    <h3>Offre n° <a href='{{offre.getOrigineOffre}}'>{{offre.getIdPoleEmploi}}</a></h3>
+    <h4>Offre n° <a href='{{offre.getOrigineOffre}}'>{{offre.getIdPoleEmploi}}</a></h4>
     {% endif %}
     <h2>{{offre.intitule}}</h2>
-    <h4>{{(offre.villeLibelle | split('- '))[1]}}</h4>
-    <p>Offre créée le {{offre.getDateDeCreation() | date()}}</p>
-    <p>Mise à jour le {{offre.getDateActualisation() | date()}}</p>
+    {% if not offre.villeLibelle is same as('Non renseigné') %}
+        <h4>{{(offre.villeLibelle | split('- '))[1]}}</h4>
+    {% endif %}
+    <p>Offre créée le {{offre.getDateDeCreation() | format_datetime(locale='fr',pattern="EEEE dd MMMM YYYY")}}</p>
+    <p>Mise à jour le {{offre.getDateActualisation() | format_datetime(locale='fr',pattern="EEEE dd MMMM YYYY")}}</p>
     <p>{{offre.getNbPostes()}} poste(s) à pourvoir</p>
     <p>{{offre.description}}</p>
     
     <div class='boite'>
-        <h3 class='titre_boite'>Information métier</h3>
+        <h4 class='titre_boite'>Information métier</h4>
         <div class='corps_boite'>
+        {% if not offre.getLibelleMetier is empty %}
             <p>{{offre.getLibelleMetier()}}</p>
+        {% endif %}
+        {% if not offre.getAppellationMetier is empty %}
             <p>{{offre.getAppellationMetier()}}</p>
+        {% endif %}
         </div>
     </div>
     <div class='boite'>
-        <h3 class='titre_boite'>Contrat</h3>
+        <h4 class='titre_boite'>Contrat</h4>
         <div class='corps_boite'>
             <p>{{offre.getTypeContrat()}}</p>
             <p>{{offre.getTypeContratLibelle()}}</p>
@@ -48,24 +63,30 @@
         </div>
     </div>
     <div class='boite'>
-        <h3 class='titre_boite'>Experience</h3>
+        <h4 class='titre_boite'>Experience</h4>
         <div class='corps_boite'>
             <p>{{offre.getExperienceLibelle()}}</p>
         </div>
     </div>
 
-    {% if not offre.getNomEntreprise() is empty %}
+    {% if not offre.getNomEntreprise() is empty or not offre.getNumeroEntreprise() is empty or not offre.getMailEntreprise() is empty %}
     <div class='boite'>
-        <h3 class='titre_boite'>Entreprise</h3>
+        <h4 class='titre_boite'>Entreprise</h4>
         <div class='corps_boite'>
             <p>{{offre.getNomEntreprise()}}</p>
+            {% if not offre.getMailEntreprise() is empty %}
+                <p>Contact mail : {{offre.getMailEntreprise()}}</p>
+            {% endif %}
+            {% if not offre.getNumeroEntreprise() is empty %}
+                <p>Contact telephone :{{offre.getNumeroEntreprise()}}</p>
+            {% endif %}
         </div>
     </div>
     {% endif %}
     
     {% if not offre.getSalaire() is empty%}
     <div class='boite'>
-        <h3 class='titre_boite'>Salaire</h3>
+        <h4 class='titre_boite'>Salaire</h4>
         <div class='corps_boite'>
             <p>{{offre.getSalaire()}}</p>
         </div>
@@ -73,16 +94,20 @@
     {% endif %}
     {% if not offre.getDureeTravail() is empty or not offre.getDureeTravailConvertie() is empty%}
     <div class='boite'>
-        <h3 class='titre_boite'>Durée</h3>
+        <h4 class='titre_boite'>Durée</h4>
         <div class='corps_boite'>
+        {% if not offre.getDureeTravail() is empty %}
             <p>{{offre.getDureeTravail()}}</p>
+        {% endif %}
+        {% if not offre.getDureeTravailConvertie() is empty %}
             <p>{{offre.getDureeTravailConvertie()}}</p>
+        {% endif %}
         </div>
     </div>
     {% endif %}
     {% if not offre.getLibelleQualification() is empty%}
     <div class='boite'>
-        <h3 class='titre_boite'>Qualification</h3>
+        <h4 class='titre_boite'>Qualification</h4>
         <div class='corps_boite'>
             <p>{{offre.getLibelleQualification()}}</p>
         </div>
@@ -90,12 +115,54 @@
     {% endif %}
     {% if not offre.getSecteurActiviteLibelle() is empty%}
     <div class='boite'>
-        <h3 class='titre_boite'>Secteur d'activité</h3>
+        <h4 class='titre_boite'>Secteur d'activité</h4>
         <div class='corps_boite'>
             <p>{{offre.getSecteurActiviteLibelle()}}</p>
         </div>
     </div>
     {% endif %}
 </div>
-
+{% if admin %}
+    <div class='choix'>
+        <button class='valider' data-bs-target='#modalOffre' data-bs-toggle='modal' data-bs-decision='valider'>Valider</button>
+        <button class='refuser' data-bs-target='#modalOffre' data-bs-toggle='modal' data-bs-decision='refuser'>Refuser</button>
+    </div>
+    <div class="modal fade" id="modalOffre" tabindex="-1" aria-labelledby="modalOffreLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalOffreLabel"></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id='formulaire' method='post'>
+                        <label for='localisation'>
+                            <p>
+                                <input type='checkbox' id='localisation' name='localisation'>
+                                La localisation et le nom de la commune ne sont pas renseignés.
+                            </p>
+                        </label>
+                        <label for='entreprise'>
+                            <p>
+                                <input type='checkbox' id='entreprise' name='entreprise'>
+                                Le nom de l'entreprise n'est pas renseigné.
+                            </p>
+                        </label>
+                        <br>
+                        <div class='d-flex align-items-start justify-content-stretch'>
+                            <label for='raison_personnalisee'>
+                                <p>Autres:</p>
+                            </label>
+                            <textarea id='raison_personnalisee' class='form-control ms-1' name='raison_personnalisee'></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button id='closeModal' type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type='submit' id='bouton_confirmation' form='formulaire' type="button" class="btn btn-primary"></button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
 {% endblock %}
