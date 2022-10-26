@@ -23,7 +23,7 @@ let tableOffres = $('#liste_offre_en_attente').DataTable({
             show:true
         }},
         {targets: 5, render:function (data){                    //création des boutons modifier et supprimer pour chaque ligne
-            return "<a href='/offreEmploi/admin/"+ data +"' ><i class='fa-solid fa-eye'></i></a><button type='button' class='btn btn-danger rounded ms-2' data-bs-toggle='modal' data-bs-target='#modalMail' data-bs-offre='"+ data +"'><i class='fa-solid fa-xmark'></i></button>"; 
+            return "<a href='/offreEmploi/admin/"+ data +"' class='btn btn-success rounded'><i class='fa-regular fa-file-lines'></i></a><button type='button' class='btn btn-danger rounded ms-2' data-bs-toggle='modal' data-bs-target='#modalMail' data-bs-offre='"+ data +"'><i class='fa-solid fa-xmark'></i></button>"; 
         }},
         {targets: [3], render:function (data, type){                    //mise en page de la colonne date de création
             return type === 'display' ?

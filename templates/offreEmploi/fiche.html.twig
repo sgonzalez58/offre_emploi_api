@@ -17,7 +17,11 @@
 
 {% block body %}
 {% if not admin %}
-    <a href='/offreEmploi'>retour</a>
+    {% if not user %}
+        <a href='/offreEmploi'>retour</a>
+    {% else %}
+        <a href='{{ '/user/' ~ app.user.id ~ '/offreEmploi'}}'>retour</a>
+    {% endif %}
 {% else %}
     <a href='/offreEmploi/admin'>retour</a>
 {% endif %}
@@ -30,6 +34,9 @@
             <a href="{{ 'https://www.openstreetmap.org/?mlat=' ~ offre.latitude ~ '&amp;mlon=' ~ offre.longitude ~ '#map=16/' ~ offre.latitude ~ '/' ~ offre.longitude ~ '&amp;layers=N'}}">Afficher une carte plus grande</a>
         </small>
     </div>
+    {% endif %}
+    {% if user %}
+        <a href='{{ '/user/' ~ app.user.id ~ '/offreEmploi/modifier/' ~ offre.id}}'>Modifier</a>
     {% endif %}
     {% if not offre.getIdPoleEmploi() is empty %}
     <h4>Offre n° <a href='{{offre.getOrigineOffre}}'>{{offre.getIdPoleEmploi}}</a></h4>

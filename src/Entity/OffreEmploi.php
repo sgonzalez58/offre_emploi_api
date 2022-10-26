@@ -231,7 +231,7 @@ class OffreEmploi
     private $mailEntreprise;
 
     /**
-     * @ORM\Column(type="integer", nullable=true)
+     * @ORM\Column(type="string", length=255, nullable=true)
      */
     private $numeroEntreprise;
 
@@ -239,6 +239,11 @@ class OffreEmploi
      * @ORM\ManyToOne(targetEntity=User::class, inversedBy="offreEmplois")
      */
     private $user;
+
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     */
+    private $visibilite;
 
     public function getId(): ?int
     {
@@ -617,12 +622,12 @@ class OffreEmploi
         return $this;
     }
 
-    public function getNumeroEntreprise(): ?int
+    public function getNumeroEntreprise(): ?string
     {
         return $this->numeroEntreprise;
     }
 
-    public function setNumeroEntreprise(?int $numeroEntreprise): self
+    public function setNumeroEntreprise(?string $numeroEntreprise): self
     {
         $this->numeroEntreprise = $numeroEntreprise;
 
@@ -637,6 +642,18 @@ class OffreEmploi
     public function setUser(?User $user): self
     {
         $this->user = $user;
+
+        return $this;
+    }
+
+    public function getVisibilite(): ?string
+    {
+        return $this->visibilite;
+    }
+
+    public function setVisibilite(?string $visibilite): self
+    {
+        $this->visibilite = $visibilite;
 
         return $this;
     }

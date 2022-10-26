@@ -42,7 +42,7 @@ class FormulaireOffreEmploiType extends AbstractType
                 'label' => 'Mail de contact',
                 'required' => true,
             ])
-            ->add('numeroEntreprise', TelType::class, [
+            ->add('numeroEntreprise', TextType::class, [
                 'label' => 'Téléphone de contact',
                 'required' => false,
             ])

@@ -6,6 +6,7 @@ use App\Entity\OffreEmploi;
 use App\Form\FormulaireOffreEmploiType;
 use App\Repository\CommuneRepository;
 use App\Repository\OffreEmploiRepository;
+use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -149,6 +150,9 @@ class OffreEmploiController extends AbstractController
     public function creer(OffreEmploiRepository $offreEmploiRepository, Request $request): Response
     {
         $user = $this->getUser();
+        if(!$user){
+            return $this->redirectToRoute('app_login');
+        }
         $offre = new OffreEmploi;
         $offre->setValidation('en attente');
         $offre->setDateDeCreation(new \Datetime());
@@ -207,8 +211,9 @@ class OffreEmploiController extends AbstractController
                     $offre->setVilleLibelle('Non renseigné');
                 }
             }
+            $offre->setVisibilite('visible');
             $offreEmploiRepository->add($offre, true);
-
+            
             $this->addFlash('ajout', 'Votre demande d\'offre d\'emploi a bien été reçue. Elle apparaitra sur le site une fois validée.');
             return $this->redirectToRoute('app_offre_emploi');
         }
@@ -281,6 +286,7 @@ class OffreEmploiController extends AbstractController
             $raison .= $request->request->get('raison_personnalisee').'<br>';
         }
         $offre->setValidation('refus');
+        $offre->setVisibilite('non visible');
         $doctrine->getManager()->flush();
         $email = (new TemplatedEmail())
             ->from('no-reply@iti-conseil.com')
@@ -311,6 +317,7 @@ class OffreEmploiController extends AbstractController
         }
         $raison = $request->request->get('raison_personnalisee').'<br>';
         $offre->setValidation('valide');
+        $offre->setVisibilite('visible');
         $doctrine->getManager()->flush();
         $email = (new TemplatedEmail())
             ->from('no-reply@iti-conseil.com')
@@ -333,7 +340,8 @@ class OffreEmploiController extends AbstractController
     {
         return $this->render('offreEmploi/fiche.html.twig', [
             'offre' => $offreEmploiRepository->find($id),
-            'admin' => true
+            'admin' => true,
+            'user' => false
         ]);
     }
 
@@ -344,7 +352,8 @@ class OffreEmploiController extends AbstractController
     {
         return $this->render('offreEmploi/fiche.html.twig', [
             'offre' => $offreEmploiRepository->find($id),
-            'admin' => false
+            'admin' => false,
+            'user' => false,
         ]);
     }
 
@@ -353,8 +362,261 @@ class OffreEmploiController extends AbstractController
      */
     public function clientOffre(int $id, OffreEmploiRepository $offreEmploiRepository): Response
     {
-        return $this->render('offreEmploi/gestion.html.twig', [
+        /** @var \App\Entity\Users $user */
+        $user = $this->getUser();
+        if(!$user || $user->getId() != $id){
+            return $this->redirectToRoute('app_login');
+        }
+        return $this->render('offreEmploi/userGestion.html.twig', [
             'offre' => $offreEmploiRepository->findBy(['user'=> $id])
         ]);
+    }
+
+    /**
+     * @Route("/user/offreEmploi/toggleVisibilite/{id}", name="user_visibilite_offre_emploi")
+     */
+    public function toggleVisibilite(int $id, OffreEmploiRepository $offreEmploiRepository, ManagerRegistry $doctrine): Response
+    {
+        /** @var \App\Entity\Users $user */
+        $user = $this->getUser();
+        $offre = $offreEmploiRepository->find($id);
+        if(!$offre){
+            return new JsonResponse('Cette offre n\'existe pas. L\'id est incorrecte ou l\'offre a été supprimée.', 500);
+        }
+        if(!$user || $user->getId() != $offre->getUser()->getId()){
+            return new JsonResponse('Vous n\'avez pas les droits pour modifier cette offre.', 500);
+        }
+        if($offre->getVisibilite() == 'visible')
+            $offre->setVisibilite('non visible');
+        else
+            $offre->setVisibilite('visible');
+        $doctrine->getManager()->flush();
+        return new JsonResponse('La visibilite a été changée.');
+    }
+
+    /**
+     * @Route("/user/{id}/offreEmploi/getOffres/", name="user_get_offre_emploi")
+     */
+    public function userGetOffres(int $id, OffreEmploiRepository $offreEmploiRepository): Response
+    {
+        /** @var \App\Entity\Users $user */
+        $user = $this->getUser();
+        if(!$user || $user->getId() != $id){
+            return new JsonResponse('Vous n\'avez pas les droits.', 500);
+        }
+        $offres = $offreEmploiRepository->findBy(['user'=>$id]);
+        $jsonData = [];
+        $idx = 0;
+        foreach($offres as $offre){
+            if($offre->getVilleLibelle() && $offre->getVilleLibelle() != 'Non renseigné'){
+                $nomVille = explode('- ', $offre->getVilleLibelle())[1];
+            }else{
+                if($offre->getLatitude()){
+                    $nomVille ='Ville non précisée';
+                }else{
+                    $nomVille = 'Localisation inconnue!';
+                }
+            }
+            if($offre->getNomEntreprise()){
+                $nomEntreprise = $offre->getNomEntreprise();
+            }else{
+                $nomEntreprise = 'Non précisé';
+            }
+            $dateCreation = $offre->getDateActualisation();
+            $jsonData[$idx++] = ['id' => $offre->getId(), 'intitule' => $offre->getIntitule(), 'nomVille' => $nomVille, 'nomEntreprise' => $nomEntreprise, 'dateCreation' => $dateCreation, 'etat' => $offre->getValidation(), 'visibilite' => $offre->getVisibilite()];
+        }
+        return new JsonResponse($jsonData);
+    }
+
+    /**
+     * @Route("/user/{idclient}/offreEmploi/{id}", name="user_fiche_offre_emploi")
+     */
+    public function userFicheOffre(int $idclient, int $id, OffreEmploiRepository $offreEmploiRepository): Response
+    {
+        /** @var \App\Entity\Users $user */
+        $user = $this->getUser();
+        if(!$user || $user->getId() != $idclient){
+            return $this->redirectToRoute('app_login');
+        }
+        return $this->render('offreEmploi/fiche.html.twig', [
+            'offre' => $offreEmploiRepository->find($id),
+            'admin' => false,
+            'user' => true
+        ]);
+    }
+
+    /**
+     * @Route("/user/offreEmploi/creer", name="user_creer_offre_emploi")
+     */
+    public function userCreerOffre(OffreEmploiRepository $offreEmploiRepository, Request $request): Response
+    {
+        /** @var \App\Entity\Users $user */
+        $user = $this->getUser();
+        if(!$user){
+            return $this->redirectToRoute('app_login');
+        }
+        $offre = new OffreEmploi;
+        $offre->setValidation('en attente');
+        $offre->setDateDeCreation(new \Datetime());
+        $offre->setDateActualisation(new \Datetime());
+        $form = $this->createForm(FormulaireOffreEmploiType::class, $offre);
+        $form->handleRequest($request);
+        if ($form->isSubmitted() && $form->isValid()) {
+            
+            $offre = $form->getData();
+            $offre->setUser($user);
+            $contratLibelle = '';
+            switch($form['typeContrat']->getData()){
+                case 'CDD':
+                    $contratLibelle = 'Contrat à durée déterminée';
+                    break;
+                case 'CDI':
+                    $contratLibelle = 'Contrat à durée indéterminée';
+                    break;
+                case 'DDI':
+                    $contratLibelle = 'CDD insertion';
+                    break;
+                case 'DIN':
+                    $contratLibelle = 'CDI intérimaire';
+                    break;
+                case 'FRA':
+                    $contratLibelle = 'Franchise';
+                    break;
+                case 'LIB':
+                    $contratLibelle = 'Profession libérale';
+                    break;
+                case 'MIS':
+                    $contratLibelle = 'Mission intérimaire';
+                    break;
+                case 'SAI':
+                    $contratLibelle = 'Contrat travail saisonnier';
+                    break;
+            }
+            if($form['duree']->getData()['months'] == ''){
+                $offre->setTypeContratLibelle( $contratLibelle . ' - ' . $form['duree']->getData()['days'] . ' Jour(s)');
+            }else{
+                $offre->setTypeContratLibelle( $contratLibelle . ' - ' . $form['duree']->getData()['months'] . ' Mois');
+            }
+            if($form['montantSalaire']->getData() != ''){
+                $offre->setSalaire( $form['periodeSalaire']->getData() . ' de ' .  $form['montantSalaire']->getData() . 'Euros.');
+            }
+            if($form['latitude']->getData() == ''){
+                if($offre->getCommune()){
+                    $offre->setLatitude($offre->getCommune()->getLatitude());
+                    $offre->setLongitude($offre->getCommune()->getLongitude());
+                }
+            }
+            if( $form['villeLibelle']->getData() == ''){
+                if($offre->getCommune()){
+                    $offre->setVilleLibelle(substr($offre->getCommune()->getCodePostal(), 0, 2). ' - ' . strtoupper($offre->getCommune()->getNomCommune()));
+                }else{
+                    $offre->setVilleLibelle('Non renseigné');
+                }
+            }
+            $offre->setVisibilite('non visible');
+            $offreEmploiRepository->add($offre, true);
+            
+            return $this->redirectToRoute('client_offre_emploi', ['id' => $user->getId()]);
+        }
+        return $this->renderForm('offreEmploi/new.html.twig', [
+            'form' => $form,
+        ]);
+    }
+
+    /**
+     * @Route("/user/{idclient}/offreEmploi/modifier/{id}", name="user_modifer_offre_emploi")
+     */
+    public function userModifierOffre(int $idclient, int $id, EntityManagerInterface $em, OffreEmploiRepository $offreEmploiRepository, Request $request): Response
+    {
+        /** @var \App\Entity\Users $user */
+        $user = $this->getUser();
+        if(!$user || $user->getId() != $idclient){
+            return $this->redirectToRoute('app_login');
+        }
+        $offre = $offreEmploiRepository->find($id);
+        if(!$offre){
+            return new Response('Offre d\'emploi non trouvé', 500);
+        }
+        $offre->setValidation('en attente');
+        $offre->setDateActualisation(new \Datetime());
+        $form = $this->createForm(FormulaireOffreEmploiType::class, $offre);
+        $form->handleRequest($request);
+        if ($form->isSubmitted() && $form->isValid()) {
+            
+            $offre = $form->getData();
+            $offre->setUser($user);
+            $contratLibelle = '';
+            switch($form['typeContrat']->getData()){
+                case 'CDD':
+                    $contratLibelle = 'Contrat à durée déterminée';
+                    break;
+                case 'CDI':
+                    $contratLibelle = 'Contrat à durée indéterminée';
+                    break;
+                case 'DDI':
+                    $contratLibelle = 'CDD insertion';
+                    break;
+                case 'DIN':
+                    $contratLibelle = 'CDI intérimaire';
+                    break;
+                case 'FRA':
+                    $contratLibelle = 'Franchise';
+                    break;
+                case 'LIB':
+                    $contratLibelle = 'Profession libérale';
+                    break;
+                case 'MIS':
+                    $contratLibelle = 'Mission intérimaire';
+                    break;
+                case 'SAI':
+                    $contratLibelle = 'Contrat travail saisonnier';
+                    break;
+            }
+            if($form['duree']->getData()['months'] == ''){
+                $offre->setTypeContratLibelle( $contratLibelle . ' - ' . $form['duree']->getData()['days'] . ' Jour(s)');
+            }else{
+                $offre->setTypeContratLibelle( $contratLibelle . ' - ' . $form['duree']->getData()['months'] . ' Mois');
+            }
+            if($form['montantSalaire']->getData() != ''){
+                $offre->setSalaire( $form['periodeSalaire']->getData() . ' de ' .  $form['montantSalaire']->getData() . 'Euros.');
+            }
+            if($form['latitude']->getData() == ''){
+                if($offre->getCommune()){
+                    $offre->setLatitude($offre->getCommune()->getLatitude());
+                    $offre->setLongitude($offre->getCommune()->getLongitude());
+                }
+            }
+            if( $form['villeLibelle']->getData() == ''){
+                if($offre->getCommune()){
+                    $offre->setVilleLibelle(substr($offre->getCommune()->getCodePostal(), 0, 2). ' - ' . strtoupper($offre->getCommune()->getNomCommune()));
+                }else{
+                    $offre->setVilleLibelle('Non renseigné');
+                }
+            }
+            $offre->setVisibilite('non visible');
+            $em->flush();
+            
+            return $this->redirectToRoute('user_fiche_offre_emploi', ['idclient' => $idclient, 'id' => $id]);
+        }
+        return $this->renderForm('offreEmploi/new.html.twig', [
+            'form' => $form,
+        ]);
+    }
+    /**
+     * @Route("/user/{idclient}/offreEmploi/supprimer/{id}", name="user_supprimer_offre_emploi")
+     */
+    public function userSupprimerOffre(int $idclient, int $id, OffreEmploiRepository $offreEmploiRepository):Response
+    {
+        /** @var \App\Entity\Users $user */
+        $user = $this->getUser();
+        if(!$user || $user->getId() != $idclient){
+            return new JsonResponse('Vous n\'avez pas les droits.', 500);
+        }
+        $offre = $offreEmploiRepository->find($id);
+        if(!$offre){
+            return new JsonResponse('Offre d\'emploi non trouvé', 500);
+        }
+        $offreEmploiRepository->remove($offre, true);
+        return new JsonResponse('Offre supprimée.');
     }
 }

@@ -61,10 +61,10 @@
     <button class='page_suivante'>suivant</button>
 </div>
 
-<div class='liste_offres'>
+<ul class='liste_offres'>
     {% for offre in offres %}
 
-    <div class='offre'>
+    <li class='offre'>
         <div class='corps_offre'>
             <a class='lien_fiche' href='{{ '/offreEmploi/' ~ offre.id }}'><h2>{{offre.intitule}}</h2></a>
             <h4 class='ville'>{{offre.villeLibelle | split(' - ') [1]}}
@@ -83,10 +83,10 @@
 
             <a class='lien_pole_emploi' href='{{offre.getOrigineOffre()}}'>lien vers l'offre sur pole emploi.</a>
         </div>
-    </div>
+    </li>
 
     {% endfor %}
-</div>
+</ul>
 <div class='liste_offre_footer'>
     <button class='page_precedente' disabled>precedent</button>
     <button class='page_actuelle'>1</button>

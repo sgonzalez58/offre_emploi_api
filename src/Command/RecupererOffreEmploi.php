@@ -3,9 +3,9 @@
 namespace App\Command;
 
 use App\Entity\Commune;
-use App\Service\OffreEmploi;
-use App\Entity\OffreEmploi as offre;
-use Doctrine\Persistence\ManagerRegistry;
+use App\Service\OffreEmploi as serviceOffre;
+use App\Entity\OffreEmploi;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -14,21 +14,28 @@ class RecupererOffreEmploi extends Command
 {
     protected static $defaultName = 'app:recuperer-offre-emploi';
     private $offreEmploi;
-    private $manager;
+    private $em;
 
-    public function __construct(OffreEmploi $offreEmploi, ManagerRegistry $registry)
+    public function __construct(serviceOffre $offreEmploi, EntityManagerInterface $entityManager)
     {
         parent::__construct();
         $this->offreEmploi = $offreEmploi;
-        $this->manager = $registry->getManager();
+        $this->em = $entityManager;
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
+        foreach($this->em->getRepository(OffreEmploi::class)->findAll() as $offre){
+            if($offre->getIdPoleEmploi()){
+                $output->writeln('Suppression offre n°: '.$offre->getId());
+                $this->em->remove($offre);
+            }
+        }
+        $this->em->flush();
         $liste_offreEmploi = $this->offreEmploi->getOffreNievre();
         foreach($liste_offreEmploi as $offre){
-            if(!$this->manager->getRepository(offre::class)->findOneBy(['id_pole_emploi' => $offre->id])){
-                $nouvelle_offre = new offre;
+            if(!$this->em->getRepository(OffreEmploi::class)->findOneBy(['id_pole_emploi' => $offre->id])){
+                $nouvelle_offre = new OffreEmploi;
                 $nouvelle_offre
                     ->setIdPoleEmploi($offre->id)
                     ->setIntitule($offre->intitule)
@@ -42,10 +49,10 @@ class RecupererOffreEmploi extends Command
                     $nouvelle_offre->setLongitude($offre->lieuTravail->longitude);
                 }
                 $nouvelle_offre->setVilleLibelle($offre->lieuTravail->libelle);
-                if(property_exists($offre->lieuTravail, 'commune') && $this->manager->getRepository(Commune::class)->findOneBy(['codeInsee' => $offre->lieuTravail->commune])){
-                    $nouvelle_offre->setCommune($this->manager->getRepository(Commune::class)->findOneBy(['codeInsee' => $offre->lieuTravail->commune]));
+                if(property_exists($offre->lieuTravail, 'commune') && $this->em->getRepository(Commune::class)->findOneBy(['codeInsee' => $offre->lieuTravail->commune])){
+                    $nouvelle_offre->setCommune($this->em->getRepository(Commune::class)->findOneBy(['codeInsee' => $offre->lieuTravail->commune]));
                 }else{
-                    $villeQuery = $this->manager->getRepository(Commune::class)->findBySlug(explode(' - ', $offre->lieuTravail->libelle)[1]);
+                    $villeQuery = $this->em->getRepository(Commune::class)->findBySlug(explode(' - ', $offre->lieuTravail->libelle)[1]);
                     if($villeQuery){
                         $nouvelle_offre->setCommune($villeQuery);
                         if(!property_exists($offre->lieuTravail, 'latitude')){
@@ -94,8 +101,9 @@ class RecupererOffreEmploi extends Command
                 }
                 $nouvelle_offre->setOrigineOffre($offre->origineOffre->urlOrigine);
                 $nouvelle_offre->setValidation('valide');
-                $this->manager->persist($nouvelle_offre);
-                $this->manager->flush();
+                $nouvelle_offre->setVisibilite('visible');
+                $this->em->persist($nouvelle_offre);
+                $this->em->flush();
                 $output->writeln('Ajout de l\'offre '.$offre->id);
             }else{
                 $output->writeln('Cette offre existe déjà : '.$offre->id);
