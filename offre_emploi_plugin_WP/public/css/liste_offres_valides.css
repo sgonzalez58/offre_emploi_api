@@ -1,0 +1,140 @@
+/**
+ * All of the CSS for your public-facing functionality should be
+ * included in this file.
+ */
+
+ body{
+    margin:0;
+}
+
+main{
+    overflow-x: hidden;
+}
+
+.tri_liste{
+    width: 80%;
+    margin: 30px auto;
+    display: flex;
+    justify-content: space-between;
+}
+
+.selection{
+    margin : 10px 0;
+}
+.offre{
+    display:flex;
+    justify-content: space-between;
+    background-color: white;
+    margin : 10px 0;
+}
+
+#liste_ville, #liste_distance{
+    max-width: 100%;
+}
+
+.liste_offres{
+    display: flex;
+    flex-direction: column;
+    margin:auto;
+}
+
+.entreprise_offre{
+    width: calc(30% - 40px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding : 0 20px;
+    text-align: center;
+}
+
+.corps_offre{
+    width: calc(50% - 40px);
+    padding: 0 20px;
+}
+
+.lien_fiche{
+    text-decoration: none;
+    color:darkslateblue
+}
+
+.ville{
+    background-color: red;
+    color: white;
+    padding: 5px;
+    border-radius: 5px;
+    display: inline;
+}
+
+#description{
+    margin-top: 10px;
+}
+
+.liste_offre_footer, .liste_offre_header{
+    display: flex;
+    justify-content: center;
+    align-items:flex-end;
+    flex-wrap: wrap;
+    width: 80%;
+    margin: 10px auto;
+}
+
+.message_ajout{
+    background-color:green;
+    display: flex;
+    justify-content: center;
+    color:white;
+    padding: 10px;
+    margin:0;
+    position: relative;
+}
+
+.fermer_message{
+    position: absolute;
+    left: 90%;
+    background-color: transparent;
+    border-radius: 5px;
+    height: 100%;
+    top:0;
+    border: none;
+    transition: 0.2s;
+}
+
+.fermer_message:hover{
+    background-color: red;
+    border: 1px solid darkred;
+}
+
+.bouton_pagination{
+    margin: 0 10px;
+    border-radius: 5px!important;
+    padding:5px 10px;
+}
+
+.page_actuelle{
+    border:2px inset darkred;
+}
+
+.select2-selection__clear{
+    color:black;
+    padding:0;
+}
+
+.select2-selection__clear:hover{
+    color:black;
+    transform: scale(1.5);
+}
+
+@media screen and (max-width:520px) {
+    .tri_liste{
+        flex-direction: column-reverse;
+    }
+
+    .offre{
+        flex-direction: column;
+    }
+
+    .corps_offre, .entreprise_offre{
+        width: calc(100% - 40px);
+    }
+}

@@ -28,10 +28,10 @@
 <div class='fiche'>
     {% if not offre.latitude is empty %}
     <div class='carte'>
-        <iframe width="425" height="350" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="{{ 'https://www.openstreetmap.org/export/embed.html?bbox=' ~ (offre.longitude - 0.0360) ~ '%2C' ~ (offre.latitude - 0.0133) ~ '%2C' ~ (offre.longitude + 0.0360) ~ '%2C' ~ (offre.latitude + 0.0133) ~ '&layer=mapnik&marker=' ~ offre.latitude ~ '%2C' ~ offre.longitude}}" style="border: 1px solid black"></iframe>
+        <iframe frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="{{ 'http://www.openstreetmap.org/export/embed.html?bbox=' ~ (offre.longitude - 0.0360) ~ '%2C' ~ (offre.latitude - 0.0133) ~ '%2C' ~ (offre.longitude + 0.0360) ~ '%2C' ~ (offre.latitude + 0.0133) ~ '&layer=mapnik&marker=' ~ offre.latitude ~ '%2C' ~ offre.longitude}}" style="border: 1px solid black"></iframe>
         <br/>
         <small>
-            <a href="{{ 'https://www.openstreetmap.org/?mlat=' ~ offre.latitude ~ '&amp;mlon=' ~ offre.longitude ~ '#map=16/' ~ offre.latitude ~ '/' ~ offre.longitude ~ '&amp;layers=N'}}">Afficher une carte plus grande</a>
+            <a href="{{ 'http://www.openstreetmap.org/?mlat=' ~ offre.latitude ~ '&amp;mlon=' ~ offre.longitude ~ '#map=16/' ~ offre.latitude ~ '/' ~ offre.longitude ~ '&amp;layers=N'}}">Afficher une carte plus grande</a>
         </small>
     </div>
     {% endif %}
