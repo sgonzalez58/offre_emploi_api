@@ -256,10 +256,80 @@ class Offre_emploi_Public {
         wp_send_json_success($jsonData);
 	}
 
+	function creation_offre_emploi(){
+		$intitule = $_POST['intitule'];
+		$appelation_metier = $_POST['appelation_metier'];
+		$nom_entreprise = $_POST['nom_entreprise'];
+		$mail_entreprise = $_POST['mail_entreprise'];
+		$numero_entreprise = $_POST['numero_entreprise'];
+		$type_contrat = $_POST['type_contrat'];
+		$nature_contrat = $_POST['nature_contrat'];
+		if($_POST['alternance'] == 'on'){
+			$alternance = 1;
+		}else{
+			$alternance = 0;
+		}
+		switch($type_contrat){
+			case 'CDD':
+				$contratLibelle = 'Contrat à durée déterminée';
+				break;
+			case 'CDI':
+				$contratLibelle = 'Contrat à durée indéterminée';
+				break;
+			case 'DDI':
+				$contratLibelle = 'CDD insertion';
+				break;
+			case 'DIN':
+				$contratLibelle = 'CDI intérimaire';
+				break;
+			case 'FRA':
+				$contratLibelle = 'Franchise';
+				break;
+			case 'LIB':
+				$contratLibelle = 'Profession libérale';
+				break;
+			case 'MIS':
+				$contratLibelle = 'Mission intérimaire';
+				break;
+			case 'SAI':
+				$contratLibelle = 'Contrat travail saisonnier';
+				break;
+		}
+		if($_POST['mois'] != ''){
+			$type_contrat_libelle = ( $contratLibelle . ' - ' . $_POST['mois'] .' Mois');
+		}else if ($_POST['jours'] != ''){
+			$type_contrat_libelle = ( $contratLibelle . ' - ' . $_POST['jours'] .' Jours(s)');
+		}else{
+			$type_contrat_libelle = 'Durée indeterminée';
+		}
+		$salaire = $_POST['montant_salaire'].'€ par '.$_POST['periode_salaire'];
+		$duree_travail = $_POST['duree_travail'];
+		$experience_libelle = $_POST['experience_libelle'];
+		$nb_postes = $_POST['nb_postes'];
+		$description = $_POST['description'];
+		if($_POST['latitude'] != ''){
+			$latitude = $_POST['latitude'];
+			$longitude = $_POST['longitude'];
+			$ville_libelle = $_POST['ville_libelle'];
+		}else{
+			if($_POST['commune'] != ''){
+				$commune_id = $_POST['commune'];
+				$commune = $this->model->findOneCommune($commune_id);
+				$latitude = $commune['latitude'];
+				$longitude = $commune['longitude'];
+				$ville_libelle = ucwords($commune['slug']);
+			}else{
+				$ville_libelle = $_POST['ville_libelle'];
+			}
+		}
+		$this->model->createOneOffre($intitule, $appelation_metier, $type_contrat, $type_contrat_libelle, $nature_contrat, $experience_libelle, $alternance, $nb_postes, $latitude, $longitude, $nom_entreprise, $salaire, $duree_travail, $commune_id, get_current_user_id(), $description, $ville_libelle, $mail_entreprise, $numero_entreprise);
+	}
 
 	function offre_emploi_rewrite_rules() {	
 
 		add_rewrite_rule('^offreEmploi/([0-9]+)/?', 'index.php?idOffreEmploi=$matches[0]', 'top');
+
+		add_rewrite_rule('^offreEmploi/creer/verification/?', 'index.php?verificationNouvelleOffre=1', 'top');
 
 		add_rewrite_rule('^offreEmploi/creer/?', 'index.php?nouvelleOffre=1', 'top');
 
@@ -271,6 +341,8 @@ class Offre_emploi_Public {
 		
 		$vars[] = 'offreEmploi';
 		$vars[] = 'idOffreEmploi';
+		$vars[] = 'nouvelleOffre';
+		$vars[] = 'verificationNouvelleOffre';
 
 		return $vars;
 	}
@@ -282,8 +354,8 @@ class Offre_emploi_Public {
 
 		if(array_key_exists('offreEmploi',$wp_query->query_vars) && $wp_query->query_vars['offreEmploi'] ==1){
 			if(file_exists(plugin_dir_path( __FILE__ ) .'partials/liste_offres_valides.php')) {
-				wp_enqueue_style( $this->plugin_name.'.liste_offres_valides', plugin_dir_url( __FILE__ ) . 'css/liste_offres_valides.css', array(), $this->version, 'all' );
-				wp_enqueue_script( $this->plugin_name.'.liste_offres_valides', plugin_dir_url( __FILE__ ) . 'js/liste_offres_valides.js', array( 'jquery' ), $this->version, true );
+				wp_enqueue_style( $this->plugin_name.'.liste_offres_valides_css', plugin_dir_url( __FILE__ ) . 'css/liste_offres_valides.css', array(), $this->version, 'all' );
+				wp_enqueue_script( $this->plugin_name.'.liste_offres_valides_js', plugin_dir_url( __FILE__ ) . 'js/liste_offres_valides.js', array( 'jquery' ), $this->version, true );
 				$liste_offres = wp_create_nonce( 'liste_offres' );
 				wp_localize_script(
 					$this->plugin_name.'.liste_offres_valides',
@@ -308,16 +380,30 @@ class Offre_emploi_Public {
 		if(array_key_exists('nouvelleOffre',$wp_query->query_vars)){
 			if(file_exists(plugin_dir_path( __FILE__ ) .'partials/nouvelle_offre.php')) {
 				if(is_user_logged_in()){
-					wp_enqueue_style( $this->plugin_name.'.formulaire_offre_emploi', plugin_dir_url( __FILE__ ) . 'css/formulaire_offre_emploi.css', array(), $this->version, 'all' );
+					wp_enqueue_style( $this->plugin_name.'.formulaire_offre_emploi_css', plugin_dir_url( __FILE__ ) . 'css/formulaire_offre_emploi.css', array(), $this->version, 'all' );
 					wp_enqueue_style( $this->plugin_name.'.leaflet', 'https://unpkg.com/leaflet@1.9.2/dist/leaflet.css', array(), $this->version, 'all' );
 					wp_enqueue_script( $this->plugin_name.'.leaflet', 'https://unpkg.com/leaflet@1.9.2/dist/leaflet.js', array( 'jquery' ), $this->version, false);
-					wp_enqueue_script( $this->plugin_name.'.formulaire_offre_emploi', plugin_dir_url( __FILE__ ) . 'js/formulaire_offre_emploi.js', array( 'jquery' ), $this->version, true);
+					wp_enqueue_script( $this->plugin_name.'.formulaire_offre_emploi_js', plugin_dir_url( __FILE__ ) . 'js/formulaire_offre_emploi.js', array( 'jquery' ), $this->version, true);
 					include(plugin_dir_path( __FILE__ ) .'partials/nouvelle_offre.php');
+					return;
+				}else{
+					echo 'Vous devez être connecté(e) pour ajouter une nouvelle offre.';
+				}
+			}
+		}
+		if(array_key_exists('verificationNouvelleOffre',$wp_query->query_vars)){
+			if(is_user_logged_in()){
+				$this->creation_offre_emploi();
+				if(file_exists(plugin_dir_path( __FILE__ ) .'partials/reponse_nouvelle_offre.php')) {
+					wp_enqueue_style( $this->plugin_name.'.reponse_nouvelle_offre_css', plugin_dir_url( __FILE__ ) . 'css/reponse_nouvelle_offre.css', array(), $this->version, 'all' );
+					include(plugin_dir_path( __FILE__ ) .'partials/reponse_nouvelle_offre.php');
 					return;
 				}
 				else{
-
+					echo 'Une erreur s\'est produite, votre demande de nouvelle offre a toutefois été envoyée.';
 				}
+			}else{
+				echo 'Vous devez être connecté(e) pour ajouter une nouvelle offre.';
 			}
 		}
 

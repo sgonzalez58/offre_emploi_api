@@ -60,6 +60,7 @@ textarea{
 
 .duree_contrat{
     display: flex;
+    align-items: center;
 }
 
 .conteneur_formulaire{
@@ -92,4 +93,23 @@ button{
 
 button:hover{
     transform: scale(1.1);
+}
+
+.mois, .jours{
+    display:flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.indetermine{
+    margin-left: 20px;
+}
+
+#retour_offres{
+    margin-left: 30px;
+}
+
+.duree{
+    display: flex;
+    align-items: center;
 }

@@ -184,4 +184,21 @@ class Offre_Emploi_Model {
 		
 		return $return[0];
 	}
+
+	public function createOneOffre($intitule, $appellation_metier, $type_contrat, $type_contrat_libelle, $nature_contrat, $experience_libelle, $alternance = 'NULL', $nb_postes, $latitude = 'NULL', $longitude ='NULL',  $nom_entreprise = 'NULL', $salaire ='NULL', $duree_travail='NULL', $commune_id = 'NULL', $user_id, $description, $ville_libelle, $mail_entreprise = 'NULL', $numero_entreprise ='NULL'){
+
+		$sql = $this->offreEmploiDB->prepare('INSERT INTO '.$this->TableOffreEmploi." (intitule, date_de_creation, date_actualisation,
+											appellation_metier, type_contrat, type_contrat_libelle, nature_contrat,
+											experience_libelle, alternance, nb_postes, latitude, longitude, nom_entreprise,
+											salaire, duree_travail, commune_id, user_id, description, ville_libelle,
+											validation, mail_entreprise, numero_entreprise, visibilite)
+											  VALUES ('".$intitule."', '".new Datetime()."', '".new DateTime()."',
+											'".$appellation_metier."', '".$type_contrat."', '".$type_contrat_libelle."', '".$nature_contrat."', 
+											'".$experience_libelle."', ".$alternance.", ".$nb_postes.", ".$latitude.", ".$longitude.", '".$nom_entreprise."', 
+											'".$salaire."', '".$duree_travail."', ".$commune_id.", ".$user_id.", '".$description."', '".$ville_libelle."', 
+											'en attente', '".$mail_entreprise."', '".$numero_entreprise."', 'non visible')");
+		
+		$this->offreEmploiDB->query($sql);
+
+	}
 }

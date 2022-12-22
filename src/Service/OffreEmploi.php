@@ -2,7 +2,6 @@
 namespace App\Service;
 
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
-use Symfony\Component\HttpFoundation\RequestStack;
 
 class OffreEmploi
 {
@@ -84,7 +83,7 @@ class OffreEmploi
             }
         }
         curl_close($curl);
-
+        
         return $offre_intitule;
     }
 }

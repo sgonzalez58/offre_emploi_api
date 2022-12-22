@@ -56,9 +56,9 @@ get_header(); ?>
             </select>
         </div>
     </div>
-<!-- <div class='ajout'>
+    <div class='ajout'>
         <a class='ajouter_offre' href='/offreEmploi/creer'><button>Créer une offre</button></a>
-    </div>-->
+    </div>
 </div>
 
 <div class='liste_offre_header'>
