@@ -24,7 +24,7 @@ get_header(); ?>
     
 ?>
 <div class='reponse'>
-    <p>Votre demande à bien été envoyée.</p>
+    <p>Votre modification a bien été enregistrée.</p>
     <div>
         <p>Cliquez sur ce bouton pour revenir sur les offres d'emploi.</p>
         <a href=/offreEmploi'><button>Offres d'emploi</button></a>

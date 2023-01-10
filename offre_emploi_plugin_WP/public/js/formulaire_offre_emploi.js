@@ -18,5 +18,7 @@ function onDragMarker(e) {
     document.getElementById('formulaire_offre_emploi_longitude').value = e.target._latlng.lng;
 }
 
+jQuery('#commune').select2();
+
 map.on('click', onMapClick);
 marker.on('dragend', onDragMarker);

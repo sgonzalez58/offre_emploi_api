@@ -228,7 +228,7 @@ get_header(); ?>
                     <input type='text' name='ville_libelle' id='ville_libelle'>
                 </div>
                 <input type='hidden' name='latitude' id='formulaire_offre_emploi_latitude'>
-                <input type='hidden' name='latitude' id='formulaire_offre_emploi_longitude'>
+                <input type='hidden' name='longitude' id='formulaire_offre_emploi_longitude'>
                 <div id="map"></div>
             </div>
         </div>

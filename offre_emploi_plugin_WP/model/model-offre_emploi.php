@@ -49,9 +49,10 @@ class Offre_Emploi_Model {
 		$this->TableCommune = 'commune';
 	}
 	
-	/*public function findAllOffres(){
+	public function findAllOffresUser(){
 
-		$sql = $this->offreEmploiDB->prepare('SELECT * FROM '.$this->TableOffreEmploi);
+		$sql = $this->offreEmploiDB->prepare('SELECT * FROM '.$this->TableOffreEmploi.'
+			WHERE id_pole_emploi IS NULL');
 
 		$this->offreEmploiDB->query( $sql );
 		
@@ -61,7 +62,17 @@ class Offre_Emploi_Model {
 		return $return;
 	}
 
-	*/public function findOneOffre($idOffre){
+	public function findCountPendingOffresUser(){
+
+		$sql = $this->offreEmploiDB->prepare('SELECT * FROM '.$this->TableOffreEmploi.'
+			WHERE id_pole_emploi IS NULL AND validation = \'en attente\'');
+
+		$this->offreEmploiDB->query( $sql );
+		
+		return $this->offreEmploiDB->num_rows;
+	}
+
+	public function findOneOffre($idOffre){
 		$sql = $this->offreEmploiDB->prepare('SELECT * FROM '.$this->TableOffreEmploi.' A
 				WHERE A.id = '.$idOffre);
 		
@@ -73,9 +84,9 @@ class Offre_Emploi_Model {
 		return $return[0];
 	}
 
-	public function findByOffreValidation($validation = 'valide', array $orderBy = null, $limit = null, $offset = null){
+	public function findByOffreVisibles($visibilite = 'visible', array $orderBy = null, $limit = null, $offset = null){
 
-		$baseSql = 'SELECT * FROM '.$this->TableOffreEmploi.' A WHERE A.validation = \''.$validation.'\'';
+		$baseSql = 'SELECT * FROM '.$this->TableOffreEmploi.' A WHERE A.visibilite = \''.$visibilite.'\'';
 
 		if($orderBy){
 			$baseSql .= ' ORDER BY A.'.key($orderBy).' '.$orderBy[key($orderBy)];
@@ -101,7 +112,7 @@ class Offre_Emploi_Model {
 
 	public function findByOffreCommunes(array $communes = [], array $orderBy = null, $limit = null, $offset = null){
 
-		$baseSql = 'SELECT * FROM '.$this->TableOffreEmploi.' A WHERE A.validation = \'valide\' AND (A.commune_id IS NULL';
+		$baseSql = 'SELECT * FROM '.$this->TableOffreEmploi.' A WHERE A.visibilite = \'visible\' AND (A.commune_id IS NULL';
 
 		$baseSql .= ' OR A.commune_id IN ('.implode(', ',$communes);
 		$baseSql .= '))';
@@ -117,7 +128,6 @@ class Offre_Emploi_Model {
 			$baseSql .= ' OFFSET '.$offset;
 		}
 
-		//var_dump($baseSql);
 		$sql = $this->offreEmploiDB->prepare($baseSql);
 		
 		$this->offreEmploiDB->query( $sql );
@@ -127,27 +137,10 @@ class Offre_Emploi_Model {
 		
 		return $return;
 	}
-	/*
 
-	public function findByOffreUser($user_id = null, array $orderBy = null, $limit = null, $offset = null){
+	public function findMesOffres($user_id){
 
-		$baseSql = 'SELECT * FROM '.$this->TableOffreEmploi.' A WHERE A.id_pole_emploi IS NULL';
-
-		if($user_id){
-			$baseSql .= ' AND A.user = '.$user_id;
-		}
-
-		if($orderBy){
-			$baseSql .= ' ORDER BY A.'.key($orderBy).' '.$orderBy[key($orderBy)];
-		}
-
-		if($limit){
-			$baseSql .= ' LIMIT '.$limit;
-		}
-
-		if($offset){
-			$baseSql .= ' OFFSET '.$offset;
-		}
+		$baseSql = 'SELECT * FROM '.$this->TableOffreEmploi.' A WHERE A.user_id = '.$user_id;
 
 		$sql = $this->offreEmploiDB->prepare($baseSql);
 		
@@ -159,7 +152,7 @@ class Offre_Emploi_Model {
 		return $return;
 	}
 	
-	*/public function findAllCommunes(){
+	public function findAllCommunes(){
 		
 		$sql = $this -> offreEmploiDB ->prepare('SELECT C.id, C.code_postal, C.nom_commune, C.slug, C.latitude, C.longitude FROM
 				'.$this->TableCommune.' C ORDER BY C.nom_commune ASC');
@@ -192,7 +185,7 @@ class Offre_Emploi_Model {
 											experience_libelle, alternance, nb_postes, latitude, longitude, nom_entreprise,
 											salaire, duree_travail, commune_id, user_id, description, ville_libelle,
 											validation, mail_entreprise, numero_entreprise, visibilite)
-											  VALUES ('".$intitule."', '".new Datetime()."', '".new DateTime()."',
+											  VALUES ('".$intitule."', NOW(), NOW(),
 											'".$appellation_metier."', '".$type_contrat."', '".$type_contrat_libelle."', '".$nature_contrat."', 
 											'".$experience_libelle."', ".$alternance.", ".$nb_postes.", ".$latitude.", ".$longitude.", '".$nom_entreprise."', 
 											'".$salaire."', '".$duree_travail."', ".$commune_id.", ".$user_id.", '".$description."', '".$ville_libelle."', 
@@ -200,5 +193,82 @@ class Offre_Emploi_Model {
 		
 		$this->offreEmploiDB->query($sql);
 
+	}
+
+	public function modifierOffre($id_offre, $intitule, $appellation_metier, $type_contrat, $type_contrat_libelle, $nature_contrat, $experience_libelle, $alternance = 'NULL', $nb_postes, $latitude = 'NULL', $longitude ='NULL',  $nom_entreprise = 'NULL', $salaire ='NULL', $duree_travail='NULL', $commune_id = 'NULL', $user_id, $description, $ville_libelle, $mail_entreprise = 'NULL', $numero_entreprise ='NULL'){
+
+		$sql = $this->offreEmploiDB->prepare('UPDATE '.$this->TableOffreEmploi." 
+											SET intitule = '".$intitule."', date_actualisation = NOW(),
+											appellation_metier = '".$appellation_metier."', type_contrat = '".$type_contrat."',
+											type_contrat_libelle = '".$type_contrat_libelle."', nature_contrat = '".$nature_contrat."',
+											experience_libelle = '".$experience_libelle."', alternance = ".$alternance.",
+											nb_postes = ".$nb_postes.", latitude = ".$latitude.", longitude = ".$latitude.", 
+											nom_entreprise = '".$nom_entreprise."', salaire = '".$salaire."', duree_travail = '".$duree_travail."',
+											commune_id = ".$commune_id.", description = '".$description."', ville_libelle = '".$ville_libelle."',
+											validation = 'en attente', mail_entreprise = '".$mail_entreprise."',
+											numero_entreprise = '".$numero_entreprise."', visibilite = 'non visible'
+											WHERE id = ".$id_offre);
+		
+		$this->offreEmploiDB->query($sql);
+
+	}
+
+	public function accepterOffre($offre_id){
+
+		$sql = $this->offreEmploiDB->prepare('UPDATE '.$this->TableOffreEmploi." 
+											SET validation = 'valide', visibilite = 'visible', date_actualisation = NOW()
+											WHERE id = ".$offre_id);
+
+		$this->offreEmploiDB->query($sql);
+
+		if($this->offreEmploiDB->last_error){
+			return 'Erreur sql : ' . $this->offreEmploiDB->last_error;
+		}else{
+			return 'Sql succès';
+		}
+	}
+
+	public function refuserOffre($offre_id){
+
+		$sql = $this->offreEmploiDB->prepare('UPDATE '.$this->TableOffreEmploi." 
+											SET validation = 'refus', date_actualisation = NOW()
+											WHERE id = ".$offre_id);
+
+		$this->offreEmploiDB->query($sql);
+
+		if($this->offreEmploiDB->last_error){
+			return 'Erreur sql : ' . $this->offreEmploiDB->last_error;
+		}else{
+			return 'Sql succès';
+		}
+	}
+
+	public function supprimerMonOffre($offre_id){
+
+		$sql = $this->offreEmploiDB->prepare('DELETE FROM '.$this->TableOffreEmploi."
+											WHERE id = ".$offre_id);
+		
+		$this->offreEmploiDB->query($sql);
+
+		if($this->offreEmploiDB->last_error){
+			return 'Erreur sql : ' . $this->offreEmploiDB->last_error;
+		}else{
+			return 'Suppression réussie';
+		}
+	}
+
+	public function toggleVisibiliteOffre($offre_id, $visibilite){
+
+		$sql = $this->offreEmploiDB->prepare('UPDATE '.$this->TableOffreEmploi."
+											SET visibilite = '".$visibilite."'
+											WHERE id = ".$offre_id);
+		
+		$this->offreEmploiDB->query($sql);
+
+		if($this->offreEmploiDB->last_error){
+			return 'Erreur sql : ' . $this->offreEmploiDB->last_error;
+		}else{
+			return 'Suppression réussie';
+		}
 	}
 }

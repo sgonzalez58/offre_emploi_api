@@ -14,8 +14,8 @@
 
 
 $class = new Offre_emploi_Public('Offre_emploi','1.0.0');
-$offres_valides = $class->model->findByOffreValidation('valide', [], 50);
-$offres_valides_max = $class->model->findByOffreValidation('valide');
+$offres_valides = $class->model->findByOffreVisibles('visible', [], 50);
+$offres_valides_max = $class->model->findByOffreVisibles('visible');
 $villes = $class->model->findAllCommunes();
 get_header(); ?>
 
@@ -97,8 +97,12 @@ get_header(); ?>
             <p>Entreprise : <?=$offre['nom_entreprise']?></p>
         <?php
         }
+        if($offre['id_pole_emploi']){
         ?>
             <a class='lien_pole_emploi' href='<?=$offre['origine_offre']?>' target='_blank'>lien vers l'offre sur pole emploi.</a>
+        <?php
+        }
+        ?>
         </div>
     </li>
 <?php

@@ -1,0 +1,120 @@
+.fiche{
+    padding : 20px;
+    position:relative;
+}
+.carte{
+    float: right;
+    margin : 20px;
+}
+
+.carte > iframe{
+    width: 425px;
+    height: 350px;
+}
+
+.liste_boites{
+    display: grid;
+    margin-top: 20px;
+    margin-bottom:20px;
+}
+
+#intitule{
+    font-size: 25px;
+    font-weight: bold;
+}
+
+#ville{
+    color: darkred;
+    font-weight: 600;
+}
+
+.date{
+    color: grey;
+}
+
+#postes{
+    text-decoration: underline;
+}
+
+.separation2{
+    display: flex;
+    justify-content: center;
+    color:darkred;
+    margin: 10px;
+}
+
+.boite{
+    border-radius: 15px;
+    border: 1px solid lightgrey;
+    overflow: hidden;
+    width: calc(50% - 10px);
+    height: fit-content;
+}
+
+.titre_boite{
+    text-align: center;
+    margin: 0;
+    padding : 0.5em 0;
+    color:white;
+    background-color: rgb(221, 11, 11);
+}
+
+.corps_boite{
+    padding : 0 20px;
+    margin-top: 20px;
+}
+
+.choix{
+    display: flex;
+    justify-content: space-around;
+}
+
+.valider{
+    background-color: lightgreen;
+    padding: 10px 10px 7px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition-duration: 0.3s;
+}
+
+.valider:hover{
+    transform: scale(1.2);
+}
+
+.refuser{
+    background-color: red;
+    color: white;
+    padding: 10px 10px 7px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition-duration: 0.3s;
+}
+
+.refuser:hover{
+    transform: scale(1.2);
+}
+
+@media screen and (max-width:1024px){
+    .boite{
+        width: calc(100% - 10px);
+    }
+    .carte{
+        width: 300px;
+    }
+    .carte > iframe{
+        width: 300px;
+    }
+}
+
+@media screen and (max-width:768px){
+    .boite{
+        margin-bottom: 15px;
+    }
+    .carte{
+        float: none;
+        width: calc(100% - 40px);
+    }
+    .carte > iframe{
+        width: 100%;
+    }
+}
