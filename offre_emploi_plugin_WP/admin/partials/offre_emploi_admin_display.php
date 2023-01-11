@@ -197,7 +197,17 @@ setlocale (LC_TIME, 'fr_FR');
 </div>
 <div class='choix'>
     <button class='valider' data-bs-target='#modalOffre' data-bs-toggle='modal' data-bs-decision='valider'>Valider</button>
+<?php
+    if($offre['validation'] != 'refus'){
+?>
     <button class='refuser' data-bs-target='#modalOffre' data-bs-toggle='modal' data-bs-decision='refuser'>Refuser</button>
+<?php
+    }else{
+?>
+    <button class='archiver' data-bs-target='#modalOffre' data-bs-toggle='modal' data-bs-decision='archiver' id='bouton_archiver'>Archiver</button>
+<?php
+    }
+?>
 </div>
 <div class="modal fade" id="modalOffre" tabindex="-1" aria-labelledby="modalOffreLabel" aria-hidden="true">
     <div class="modal-dialog">

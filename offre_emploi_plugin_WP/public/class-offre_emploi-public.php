@@ -125,6 +125,9 @@ class Offre_emploi_Public {
 		wp_enqueue_script( $this->plugin_name.'.select2', 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js', array( 'jquery' ), $this->version, false );
 	}
 
+	/**
+	 * Récupères les offres d'autour d'une commune
+	 */
 	function get_offres_par_commune_action(){
 		check_ajax_referer('liste_offres');
 		$args = array(
@@ -224,6 +227,9 @@ class Offre_emploi_Public {
         wp_send_json_success($jsonData);
 	}
 
+	/**
+	 * Récupères toutes les offres
+	 */
 	function get_offres_sans_filtres_action(){
 		check_ajax_referer('liste_offres');
 
@@ -268,10 +274,16 @@ class Offre_emploi_Public {
         wp_send_json_success($jsonData);
 	}
 
+	/**
+	 * Sécurise partiellement les champs du formulaire
+	 */
 	function secureInput($input){
 		return htmlspecialchars(trim($input));
 	}
 
+	/**
+	 * Crée une offre d'emploi
+	 */
 	function creation_offre_emploi(){
 		$intitule = $this->secureInput($_POST['intitule']);
 		$appelation_metier = $this->secureInput($_POST['appelation_metier']);
@@ -341,6 +353,9 @@ class Offre_emploi_Public {
 		$this->model->createOneOffre($intitule, $appelation_metier, $type_contrat, $type_contrat_libelle, $nature_contrat, $experience_libelle, $alternance, $nb_postes, $latitude, $longitude, $nom_entreprise, $salaire, $duree_travail, $commune_id, get_current_user_id(), $description, $ville_libelle, $mail_entreprise, $numero_entreprise);
 	}
 
+	/**
+	 * Modifie une offre d'emploi
+	 */
 	function modification_offre(){
 		$intitule = $this->secureInput($_POST['intitule']);
 		$appelation_metier = $this->secureInput($_POST['appelation_metier']);
@@ -411,6 +426,9 @@ class Offre_emploi_Public {
 		$this->model->modifierOffre($_POST['id_offre'], $intitule, $appelation_metier, $type_contrat, $type_contrat_libelle, $nature_contrat, $experience_libelle, $alternance, $nb_postes, $latitude, $longitude, $nom_entreprise, $salaire, $duree_travail, $commune_id, get_current_user_id(), $description, $ville_libelle, $mail_entreprise, $numero_entreprise);
 	}
 
+	/**
+	 * Récupère une offre d'emploi
+	 */
 	function get_one_offre(){
 		check_ajax_referer('mon_offre');
 
@@ -454,6 +472,9 @@ class Offre_emploi_Public {
 
 	}
 
+	/**
+	 * Récupère les offres d'emploi d'un utilisateur
+	 */
 	function get_mes_offres(){
 		check_ajax_referer('mes_offres');
         
@@ -468,6 +489,9 @@ class Offre_emploi_Public {
         wp_send_json_success($jsonData);
 	}
 
+	/**
+	 * Supprime une offre d'emploi
+	 */
 	function supprimer_mon_offre(){
 		check_ajax_referer('mes_offres');
 
@@ -490,6 +514,9 @@ class Offre_emploi_Public {
 		}
 	}
 
+	/**
+	 * Modifie la visibilité d'une offre d'emploi
+	 */
 	function toggle_visibilite_offre(){
 		check_ajax_referer('mes_offres');
 
@@ -513,10 +540,13 @@ class Offre_emploi_Public {
 		$reponse = $this->model->toggleVisibiliteOffre($args['id_offre'], $args['visibilite']);
 
 		if($reponse != 'Suppression réussie'){
-			wp_send_json_error('Erreure lors de la supression.');
+			wp_send_json_error('Erreure lors de la supression : ' . $reponse);
 		}
 	}
 
+	/**
+	 * Ré-écritude des routes
+	 */
 	function offre_emploi_rewrite_rules() {	
 
 		add_rewrite_rule('^offreEmploi/([0-9]+)/?', 'index.php?idOffreEmploi=$matches[1]', 'top');
@@ -535,6 +565,9 @@ class Offre_emploi_Public {
   		
 	}
 	
+	/**
+	 * Initialisation des variables url
+	 */
 	function offre_emploi_register_query_var( $vars ) {
 		
 		$vars[] = 'offreEmploi';
@@ -548,11 +581,14 @@ class Offre_emploi_Public {
 		return $vars;
 	}
 	
-	
+	/**
+	 * affichage des pages du mode public
+	*/
 	function offre_emploi_front_end($template)
 	{
 		global $wp_query; //Load $wp_query object
 
+		//affichage de la liste des offres
 		if(array_key_exists('offreEmploi',$wp_query->query_vars) && $wp_query->query_vars['offreEmploi'] ==1){
 			if(file_exists(plugin_dir_path( __FILE__ ) .'partials/liste_offres_valides.php')) {
 				wp_enqueue_style( $this->plugin_name.'.liste_offres_valides_css', plugin_dir_url( __FILE__ ) . 'css/liste_offres_valides.css', array(), $this->version, 'all' );
@@ -570,6 +606,7 @@ class Offre_emploi_Public {
 				return;
 			}
 		}
+		//affichage de la fiche d'une offre
 		if(array_key_exists('idOffreEmploi',$wp_query->query_vars)){
 			if(file_exists(plugin_dir_path( __FILE__ ) .'partials/fiche_offre.php')) {
 				wp_enqueue_style( $this->plugin_name.'offre', plugin_dir_url( __FILE__ ) . 'css/offre.css', array(), $this->version, 'all' );
@@ -578,6 +615,7 @@ class Offre_emploi_Public {
 				return;
 			}
 		}
+		//formulaire de création d'une offre
 		if(array_key_exists('nouvelleOffre',$wp_query->query_vars)){
 			if(file_exists(plugin_dir_path( __FILE__ ) .'partials/nouvelle_offre.php')) {
 				if(is_user_logged_in()){
@@ -592,6 +630,7 @@ class Offre_emploi_Public {
 				}
 			}
 		}
+		//vérification du formulaire et création de l'offre
 		if(array_key_exists('verificationNouvelleOffre',$wp_query->query_vars)){
 			if(is_user_logged_in()){
 				$this->creation_offre_emploi();
@@ -606,6 +645,7 @@ class Offre_emploi_Public {
 				echo 'Vous devez être connecté(e) pour ajouter une nouvelle offre.';
 			}
 		}
+		//affichage des offres d'un utilisateur connecté
 		if(array_key_exists('mesOffres',$wp_query->query_vars) && $wp_query->query_vars['mesOffres'] ==1){
 			if(is_user_logged_in()){
 				if(file_exists(plugin_dir_path( __FILE__ ) .'partials/mes_offres.php')) {
@@ -619,6 +659,7 @@ class Offre_emploi_Public {
 					wp_enqueue_script( $this->plugin_name.'.luxon', 'https://cdn.jsdelivr.net/npm/luxon@3.0.4/build/global/luxon.min.js', array( 'jquery' ), $this->version, false);
 					wp_enqueue_script( $this->plugin_name.'.datatable', 'https://cdn.datatables.net/v/bs5/dt-1.12.1/date-1.1.2/r-2.3.0/sb-1.3.4/sp-2.0.2/sl-1.4.0/datatables.min.js', array( 'jquery' ), $this->version, false);
 					wp_enqueue_script( $this->plugin_name.'.luxon-datatable', 'https://cdn.datatables.net/plug-ins/1.10.24/sorting/datetime-luxon.js', array( 'jquery' ), $this->version, false);
+					wp_enqueue_script( $this->plugin_name.'.popperjs', 'https://unpkg.com/@popperjs/core@2.11.6/dist/umd/popper.min.js', array( 'jquery' ), $this->version, false);
 					wp_enqueue_script( $this->plugin_name.'.userGestion', plugin_dir_url( __FILE__ ) . 'js/userGestion_offre_emploi.js', array( 'jquery' ), $this->version, true);
 
 					$mesOffres = wp_create_nonce( 'mes_offres' );
@@ -641,6 +682,7 @@ class Offre_emploi_Public {
 				echo 'Vous devez être connecté(e) pour consulter vos offres.';
 			}
 		}
+		//formulaire de modification d'une offre d'un utilisateur connecté
 		if(array_key_exists('idMonOffreEmploi',$wp_query->query_vars)){
 			if(file_exists(plugin_dir_path( __FILE__ ) .'partials/nouvelle_offre.php')) {
 				if(is_user_logged_in()){
@@ -666,6 +708,7 @@ class Offre_emploi_Public {
 				}
 			}
 		}
+		//vérification d'une modification d'une offre
 		if(array_key_exists('modifier',$wp_query->query_vars) && $wp_query->query_vars['modifier'] ==1){
 			if(is_user_logged_in()){
 				$this->modification_offre();

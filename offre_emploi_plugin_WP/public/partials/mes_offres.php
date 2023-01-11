@@ -20,7 +20,7 @@ get_header(); ?>
 
 <div class='container'>
     <div class='d-flex justify-content-end'>
-        <a type='button 'href='offreEmploi/creer' class='btn btn-primary'>Créer une offre d'emploi</a>
+        <a type='button 'href='/offreEmploi/creer' class='btn btn-primary'>Créer une offre d'emploi</a>
     </div>
     <table id="liste_offre_en_attente" class="table table-striped">
         <thead>

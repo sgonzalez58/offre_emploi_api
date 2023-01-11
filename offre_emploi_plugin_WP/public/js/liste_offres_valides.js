@@ -1,13 +1,16 @@
+//remonte la page au debut des offres lorsqu'on navigue dans la pagination
 jQuery('.bouton_pagination').on('click', ()=>{
     document.getElementById('main').scrollIntoView({behavior:'smooth'});
 })
 
+//transforme la liste des communes en select2
 jQuery('#liste_ville').select2({
     placeholder: 'Selectionner une ville',
     allowClear : true,
     width:'resolve'
 });
 
+//lance la récupère des offres d'emploi lorsqu'on choisi une commune
 jQuery('#liste_ville').on('select2:select', function(e){
     var data = e.params.data;
     var this2 = this;
@@ -125,6 +128,7 @@ jQuery('#liste_ville').on('select2:select', function(e){
     })
 })
 
+//récupère la totalité des offres d'emploi quand on supprime la recherche par commune
 jQuery('#liste_ville').on('select2:clear', function(e){
     jQuery.ajax({
         type:'POST',
@@ -240,10 +244,12 @@ jQuery('#liste_ville').on('select2:clear', function(e){
     })
 })
 
+//transforme la liste des kilometres en select2
 jQuery('#liste_distance').select2({
     width:'resolve'
 });
 
+//récupère les offres d'emploi autour d'une commune en fonction de la distance choisie
 jQuery('#liste_distance').on('select2:select', function(e){
     var data = e.params.data;
     if(document.getElementById('liste_ville').value){
@@ -375,6 +381,7 @@ jQuery('.derniere_page').on('click', dernierePage);
 
 jQuery('.page_suivante').on('click', pageSuivante);
 
+//affiche les offres de la page précédente
 function pagePrecedente(){
     let action = '';
     if(document.getElementById('liste_ville').value){
@@ -453,6 +460,7 @@ function pagePrecedente(){
     })
 }
 
+//affiche les offres de la premiere page
 function premierePage(){
     let action = '';
     if(document.getElementById('liste_ville').value){
@@ -567,6 +575,7 @@ function premierePage(){
     })
 }
 
+//affiche les offres de la derniere page
 function dernierePage(){
     let action = '';
     if(document.getElementById('liste_ville').value){
@@ -681,6 +690,7 @@ function dernierePage(){
     })
 }
 
+//affiche les offres de la page suivante
 function pageSuivante(){
     let action = '';
     if(document.getElementById('liste_ville').value){

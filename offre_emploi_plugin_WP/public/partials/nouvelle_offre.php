@@ -48,7 +48,7 @@ get_header(); ?>
 
         <div class='ligne_formulaire'>
             <label for='mail_entreprise'>Mail de l'entreprise *: </label>
-            <input id='mail_entreprise' type='email' name='mail_entreprise' required>
+            <input id='mail_entreprise' type='email' name='mail_entreprise' required value='<?=wp_get_current_user()->user_email?>'>
         </div>
 
         <div class='ligne_formulaire'>
@@ -201,8 +201,7 @@ get_header(); ?>
         <div class='ligne_formulaire'>
             <div class='description'>
                 <label for='description'>Description&nbsp;*:</label>
-                <textarea name='description' id='description'>
-                </textarea>
+                <textarea name='description' id='description'></textarea>
             </div>
         </div>
     

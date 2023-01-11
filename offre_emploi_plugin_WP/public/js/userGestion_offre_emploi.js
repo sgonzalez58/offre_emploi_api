@@ -1,4 +1,9 @@
+//initiatlisation de luxon
 var DateTime = luxon.DateTime;
+//initialisation de popper.js
+const popoverTriggerList = document.querySelectorAll('[data-bs-toggle="popover"]')
+const popoverList = [...popoverTriggerList].map(popoverTriggerEl => new bootstrap.Popover(popoverTriggerEl))
+//initiatlisation de datatable
 let tableOffres = jQuery('#liste_offre_en_attente').DataTable({
     "language": {
         "url": "https://cdn.datatables.net/plug-ins/1.11.3/i18n/fr_fr.json",
@@ -19,10 +24,10 @@ let tableOffres = jQuery('#liste_offre_en_attente').DataTable({
         {targets: 5, render:function (data, type, row){                    //création des boutons modifier et supprimer pour chaque ligne
             let bouton_visible = '';
             if(row['visibilite'] == 'visible')
-                bouton_visible = `<div class='btn transparent rounded ms-2' onclick="toggleVisibilite('`+ data +`', 'non visible')"><i class='fa-solid fa-eye'></i></div>`;
+                bouton_visible = `<div data-toggle='tooltip' data-placement='bottom' title='visible' class='btn bulle transparent rounded ms-2' onclick="toggleVisibilite('`+ data +`', 'non visible', '`+row['etat']+`')"><i class='fa-solid fa-eye'></i></div>`;
             else
-                bouton_visible = `<div class='btn transparent rounded ms-2' onclick="toggleVisibilite('`+ data +`', 'visible')"><i class='fa-solid fa-eye-slash'></i></i></div>`;
-            return bouton_visible+`<a type='button' class='btn btn-success rounded ms-2' href='/offreEmploi/mesOffres/`+data+`'><i class='fa-regular fa-file-lines'></i></a><button type='button' class='btn btn-danger rounded ms-2' onclick="supprimerOffre('`+data+`')"><i class='fa-solid fa-xmark'></i></button>`; 
+                bouton_visible = `<div data-toggle='tooltip' data-placement='bottom' title='invisible' class='btn bulle transparent rounded ms-2' onclick="toggleVisibilite('`+ data +`', 'visible')"><i class='fa-solid fa-eye-slash'></i></i></div>`;
+            return bouton_visible+`<a type='button' data-toggle='tooltip' data-placement='bottom' title="modifier l'offre" class='btn bulle btn-success rounded ms-2' href='/offreEmploi/mesOffres/`+data+`'><i class='fa-regular fa-file-lines'></i></a><button type='button' data-toggle='tooltip' data-placement='bottom' title="supprimer l'offre" class='btn bulle btn-danger rounded ms-2' onclick="supprimerOffre('`+data+`')"><i class='fa-solid fa-xmark'></i></button>`; 
         }},
         {targets: [3], render:function (data, type){                    //mise en page de la colonne date de création
             return type === 'display' ?
@@ -38,29 +43,51 @@ let tableOffres = jQuery('#liste_offre_en_attente').DataTable({
     "autoWidth":false,                                          //desactivation des tailles automatiques pour les lignes (sinon le tableau casse lorsque la fenetre change de taille)
     responsive:true,                                            //activation du responsive (colonne disparait lorsqu'il n'y a plus de place et ajoute un bouton (+) en debut de ligne pour voir la colonne sur une ligne adjacente)
 })
-
-function toggleVisibilite(offre_id, visibilite){
-    jQuery.ajax({
-        type:'POST',
-        url:mes_offres_ajax.ajax_url,
-        data:{_ajax_nonce:mes_offres_ajax.nonce, action:'toggle_visibilite_offre', id_offre: offre_id, visibilite:visibilite},
-        success:function(){
-            tableOffres.ajax.reload();
-        },
-        error:function(data){
-            console.log(data.responseText);
-        }
-    })
+.on('init', function(){
+    jQuery(function () {
+        jQuery('.bulle').tooltip()
+      })
+});
+//initialisation des infobulles
+jQuery(function () {
+    jQuery('#bulle_ajout').tooltip()
+})
+//demande au serveur de modifier la visibilité d'une offre valide
+function toggleVisibilite(offre_id, visibilite, etat){
+    if(etat == 'valide'){
+        jQuery.ajax({
+            type:'POST',
+            url:mes_offres_ajax.ajax_url,
+            data:{_ajax_nonce:mes_offres_ajax.nonce, action:'toggle_visibilite_offre', id_offre: offre_id, visibilite:visibilite},
+            success:function(){
+                tableOffres.ajax.reload(function(){
+                    jQuery(function () {
+                        jQuery('.bulle').tooltip()
+                    })
+                });
+            },
+            error:function(data){
+                console.log(data.responseText);
+            }
+        })
+    }else{
+        alert("Vous ne pouvez pas rendre visible une annonce qui n'a pas été validée par un administrateur.")
+    }
 }
-
+//demande au serveur de supprimer une offre
 function supprimerOffre(offre_id){
+
     if(confirm('Êtes-vous sûr(e) de vouloir supprimer cette offre d\'emploi ?')){
         jQuery.ajax({
             type:'POST',
             url:mes_offres_ajax.ajax_url,
             data:{_ajax_nonce:mes_offres_ajax.nonce, action:'supprimer_mon_offre', id_offre: offre_id},
             success:function(){
-                tableOffres.ajax.reload();
+                tableOffres.ajax.reload(function(){
+                    jQuery(function () {
+                        jQuery('.bulle').tooltip()
+                    })
+                });
             },
             error:function(data){
                 console.log(data.responseText);

@@ -20,6 +20,11 @@
  * @subpackage Offre_emploi/admin
  * @author     dev-iticonseil <dev@iti-conseil.com>
  */
+
+ 
+use PHPMailer\PHPMailer\Exception;
+use PHPMailer\PHPMailer\PHPMailer;
+
 class Offre_emploi_Admin {
 
 	/**
@@ -65,6 +70,9 @@ class Offre_emploi_Admin {
 
 		add_action('wp_ajax_get_reponse_negative_offre', array($this,'get_reponse_negative_offre'));
 		add_action('wp_ajax_nopriv_get_reponse_negative_offre', array($this,'get_reponse_negative_offre'));
+
+		add_action('wp_ajax_set_offre_archive', array($this,'set_offre_archive'));
+		add_action('wp_ajax_nopriv_set_offre_archive', array($this,'set_offre_archive'));
 	}
 
 	/**
@@ -118,6 +126,9 @@ class Offre_emploi_Admin {
 
 	}
 
+	/**
+	 * Récupères les offres utilisateurs.
+	 */
 	function get_nouvelles_offres(){
 		check_ajax_referer('liste_nouvelles_offres');
         
@@ -132,11 +143,15 @@ class Offre_emploi_Admin {
         wp_send_json_success($jsonData);
 	}
 
+	/**
+	 * Valide une demande d'offre d'emploi et envoie un mail au demandeur
+	 */
 	function get_reponse_positive_offre(){
 		check_ajax_referer('reponse_offre');
 
 		$args = array(
-			'id_offre' => $_POST['id_offre']
+			'id_offre' => $_POST['id_offre'],
+			'commentaire' => $_POST['commentaire']
 		);
 
 		if(!$args['id_offre']){
@@ -150,17 +165,26 @@ class Offre_emploi_Admin {
 		if( $response != 'Sql succès'){
 			wp_send_json_error($response);
 		}
+
+		$this->envoi_email_utilisateur($this->model->findOneOffre($args['id_offre'])['mail_entreprise'], $args['commentaire'], 'valide');
 	}
 
+	/**
+	 * Refuse une demande d'offre d'emploi et envoie un mail au demandeur
+	 */
 	function get_reponse_negative_offre(){
 		check_ajax_referer('reponse_offre');
 
 		$args = array(
-			'id_offre' => $_POST['id_offre']
+			'id_offre' => $_POST['id_offre'],
+			'raison' => $_POST['raison']
 		);
 
 		if(!$args['id_offre']){
 			wp_send_json_error("L'id de l'offre n'a pas été envoyé.");
+		}
+		if(!$args['raison']){
+			wp_send_json_error("Les raisons du refus n'ont pas été envoyées.");
 		}
 		if(!$this->model->findOneOffre($args['id_offre'])){
 			wp_send_json_error("L'offre n'existe pas.");
@@ -170,20 +194,58 @@ class Offre_emploi_Admin {
 		if( $response != 'Sql succès'){
 			wp_send_json_error($response);
 		}
+
+		$this->envoi_email_utilisateur($this->model->findOneOffre($args['id_offre'])['mail_entreprise'], $args['raison'], 'refus');
 	}
 
+	/**
+	 * Archive une offre d'emploi refusée
+	 */
+	function set_offre_archive(){
+		check_ajax_referer('reponse_offre');
 
+		$args = array(
+			'id_offre' => $_POST['id_offre']
+		);
+		
+		if(!$args['id_offre']){
+			wp_send_json_error("L'id de l'offre n'a pas été envoyé. Erreure lors de la demande ajax.");
+		}
+
+		if(!$this->model->findOneOffre($args['id_offre'])){
+            wp_send_json_error("L'offre n'existe pas.");
+        }
+
+		$reponse = $this->model->setOffreArchive($args['id_offre']);
+
+		if($reponse != 'archivé'){
+			wp_send_json_error('Erreure lors de la supression : '.$reponse);
+		}
+	}
+
+	/**
+	 * Ajoute un menu de gestion d'offre d'emploi sur la page admin.
+	 */
 	function gestion_offre_emploi(){
 		$notification_count = $this->model->findCountPendingOffresUser();
-		add_menu_page('Offre Emploi', 'Offre Emploi <span class="awaiting-mod">' . $notification_count . '</span>', 'edit_posts', 'gestion_offre_emploi', array($this, 'gestion_offre'));
+		if($notification_count > 0){
+			add_menu_page('Offre Emploi', 'Offre Emploi <span class="awaiting-mod">' . $notification_count . '</span>', 'edit_posts', 'gestion_offre_emploi', array($this, 'gestion_offre'));
+		}else{
+			add_menu_page('Offre Emploi', 'Offre Emploi', 'edit_posts', 'gestion_offre_emploi', array($this, 'gestion_offre'));
+		}
 	}
 
+	/**
+	 * Rendu visuel du mode admin.
+	 * Affiche la fiche d'une offre d'emploi ou affiche le tableau de gestion des offres d'emploi.
+	 */
 	function gestion_offre(){
+		//Affiche ici la fiche d'offre d'emploi
 		if(isset($_GET['id_offre'])){
 			if(file_exists(plugin_dir_path( __FILE__ ) .'partials/offre_emploi_admin_display.php')) {
 				wp_enqueue_style( $this->plugin_name.'offre', plugin_dir_url( __FILE__ ) . 'css/offre.css', array(), $this->version, 'all' );
 				wp_enqueue_script( $this->plugin_name.'masonry', "https://unpkg.com/masonry-layout@4/dist/masonry.pkgd.js", array( 'jquery' ), $this->version, false);
-				wp_enqueue_script( $this->plugin_name.'fiche_admin_offre_emploi', plugin_dir_url( __FILE__ ) . 'js/fiche_admin_offre_emploi.js', array(), $this->version, true );
+				wp_enqueue_script( $this->plugin_name.'fiche_admin_offre_emploi', plugin_dir_url( __FILE__ ) . 'js/fiche_admin_offre_emploi.js', array( 'jquery' ), $this->version, true );
 				$reponse_offre = wp_create_nonce( 'reponse_offre' );
 				wp_localize_script(
 					$this->plugin_name.'fiche_admin_offre_emploi',
@@ -197,7 +259,9 @@ class Offre_emploi_Admin {
 				return;
 			}
 		}else{
+			//affiche ici la gestion des offres d'emploi
 			wp_enqueue_style( $this->plugin_name.'all', plugin_dir_url( __FILE__ ) . 'css/all.css', array(), $this->version, 'all' );
+			wp_enqueue_script( $this->plugin_name.'.popperjs', 'https://unpkg.com/@popperjs/core@2.11.6/dist/umd/popper.min.js', array( 'jquery' ), $this->version, false);
 			wp_enqueue_script( $this->plugin_name.'gestion', plugin_dir_url( __FILE__ ) . 'js/gestion_offre_emploi.js', array( 'jquery' ), $this->version, true );
 			$liste_offres = wp_create_nonce( 'liste_nouvelles_offres' );
 			$refus_offre = wp_create_nonce( 'reponse_offre');
@@ -218,6 +282,104 @@ class Offre_emploi_Admin {
 				)
 			);
 			include(plugin_dir_path( __FILE__ ) .'partials/gestion_offre_emploi.php');
+		}
+	}
+
+	/**
+	 * Envoi de mail
+	 */
+	public function envoi_email_utilisateur($user_email, $content, $response){
+		
+		$mail = new PHPMailer(true);
+		try {
+			$mail->isSMTP();                                            //Send using SMTP
+			$mail->Host       = 'smtp-out.iti-conseil.com';                     //Set the SMTP server to send through
+			$mail->SMTPAuth   = false;                                   //Enable SMTP authentication
+			$mail->Username   = '';                     //SMTP username
+			$mail->Password   = '';                               //SMTP password
+			$mail->SMTPSecure = 'tls';         //Enable TLS encryption; `PHPMailer::ENCRYPTION_SMTPS` encouraged
+			$mail->Port       = 587;                                    //TCP port to connect to, use 465 for `PHPMailer::ENCRYPTION_SMTPS` above
+			$mail->SMTPAutoTLS = false;
+			$mail->SMTPOptions = array(
+					'ssl' => array(
+							'verify_peer' => false,
+							'verify_peer_name' => false,
+							'allow_self_signed' => true
+					));
+			//Recipients
+			$mail->CharSet = 'utf-8';
+			$mail->setFrom('no-reply@koikispass.com', 'Koikispass.com');
+			$mail->addReplyTo('no-reply@koikispass.com', 'Koikispass');		
+			$mail->addAddress($user_email);		
+
+			//Content
+			$mail->isHTML(true);                                  //Set email format to HTML
+			if($response == 'valide'){
+				$mail->Subject = utf8_decode("Validation de votre demande d'offre d'emploi");
+				$message = "<table cellpadding=0 cellspacing=0>
+						<tr>
+							<td width='11px'></td>
+								<td width='10px'>&nbsp;</td>
+								<td width='729px'>
+	
+								<p>Bonjour,</p>
+	
+								<p>Votre offre a été validée et est visible dés maintenant sur notre site. </p>
+							
+								<p>".stripslashes($content)."</p>
+								<p>Cordialement.</p>
+							
+								</td>
+								<td width='10px'>&nbsp;</td>
+							<td width='11px'></td>
+						</tr>
+						
+					</table>";	
+			}else{
+				$mail->Subject = utf8_decode("Refus de votre demande d'offre d'emploi");
+				$message = "<table cellpadding=0 cellspacing=0>
+						<tr>
+							<td width='11px'></td>
+								<td width='10px'>&nbsp;</td>
+								<td width='729px'>
+	
+								<p>Bonjour,</p>
+	
+								<p>Votre offre a été refusée pour les raisons suivante : </p>
+							
+								<p>".stripslashes($content)."</p>
+								<p>Veuillez rectifier ces points et nous renvoyer la demande.<br>Cordialement.</p>
+							
+								</td>
+								<td width='10px'>&nbsp;</td>
+							<td width='11px'></td>
+						</tr>
+						
+					</table>";	
+			}
+			
+			$mail->Body    = $message;
+
+
+			$mail->send();
+			$filename = "/log_envoi.log";
+			$fp = fopen($filename, "a+");
+	 
+			fputs($fp, '----'.$user_email.'---'."\n");
+			fputs($fp, 'Message has been sent OK !'."\n");
+			
+			fclose($fp);
+			return 1;
+		} catch (Exception $e) {
+			$filename = "/log_envoi.log";
+			$fp = fopen($filename, "a+");
+	 
+			fputs($fp, '----'.$user_email.'---'."\n");
+			fputs($fp, $mail->ErrorInfo."\n");
+			
+			fclose($fp);
+			//echo "Message could not be sent. Mailer Error: {$mail->ErrorInfo}";
+			return 0;
 		}
 	}
 }

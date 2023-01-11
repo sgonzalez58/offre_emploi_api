@@ -1,5 +1,8 @@
+//on change le bouton de retour pour qu'il renvoi vers la gestion personnel des offres
 document.getElementById('retour_offres').setAttribute('href', '/offreEmploi/mesOffres');
+//modifie le formulaire pour qu'il renvoie vers la page de modification et non de création
 document.getElementById('formOffre').setAttribute('action', '/offreEmploi/mesOffres/modification');
+//demande au serveur de récupérer l'offre à modifier afin de préremplir le formulaire
 jQuery.ajax({
     type:'POST',
     url:mon_offre_ajax.ajax_url,
