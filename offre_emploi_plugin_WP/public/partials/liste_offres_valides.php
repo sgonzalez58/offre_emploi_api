@@ -14,8 +14,7 @@
 
 
 $class = new Offre_emploi_Public('Offre_emploi','1.0.0');
-$offres_valides = $class->model->findByOffreVisibles('visible', [], 50);
-$offres_valides_max = $class->model->findByOffreVisibles('visible');
+$offres_valides = $class->model->findByOffreVisibles('visible');
 $villes = $class->model->findAllCommunes();
 get_header(); ?>
 
@@ -61,9 +60,9 @@ get_header(); ?>
     </div>
 </div>
 
+<div id='liste_offres'></div>
+<div id='pagination_container' class='paginationjs-theme-red paginationjs-big'></div>
 
-<ul class='liste_offres'>
-</ul>
 <?php
 }else{
     ?>

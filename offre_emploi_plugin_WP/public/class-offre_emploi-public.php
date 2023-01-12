@@ -131,9 +131,10 @@ class Offre_emploi_Public {
 	function get_offres_par_commune_action(){
 		check_ajax_referer('liste_offres');
 		$args = array(
-			'idCommune' => $_POST['ville'],
-			'distance' => $_POST['distance'],
-			'page' => $_POST['page']
+			'idCommune' => $_GET['ville'],
+			'distance' => $_GET['distance'],
+			'page' => $_GET['pageNumber'],
+			'nombre_offres' => $_GET['pageSize']
 		);
 		
 		if(!$args['idCommune']){
@@ -149,7 +150,11 @@ class Offre_emploi_Public {
 			$page = $args['page'];
 		}
 
-		$nb_offres = 50;
+		if(!$args['nombre_offres']){
+			$nombre_offres = 50;
+		}else{
+			$nombre_offres = $args['nombre_offres'];
+		}
         
 		$liste_distances = array();
 		$liste_distances[$args['idCommune']] = 0;
@@ -195,14 +200,12 @@ class Offre_emploi_Public {
 		
 		array_multisort(array_column($offres, 'distance'), SORT_ASC,array_column($offres, 'id_pole_emploi'), SORT_ASC, $offres);
 
-		
-        //wp_send_json_success($offres);
 
 		$jsonData = [];
         $idx = 0;
-		$offset = ($page-1)*50;
-        $jsonData['info'] = ['nbOffres' => count($offres), 'nbOffresPage' => 50, 'pageActuelle' => (int)$page, 'pageMax' => ceil(count($offres) / 50)];
-        while($offset < $page*50){
+		$offset = ($page-1)*$nombre_offres;
+        $jsonData['info'] = ['nbOffres' => count($offres), 'nbOffresPage' => $nombre_offres, 'pageActuelle' => (int)$page, 'pageMax' => ceil(count($offres) / $nombre_offres)];
+        while($offset < $page*$nombre_offres){
 			if($offres[$offset]['ville_libelle'] && $offres[$offset]['ville_libelle'] != 'Non renseigné' && $offres[$offset]['id_pole_emploi']){
 				$nomVille = explode('- ', $offres[$offset]['ville_libelle'])[1];
 			}else{
@@ -225,7 +228,7 @@ class Offre_emploi_Public {
 			}else{
 				$nomEntreprise = 'Aucun';
 			}
-			$jsonData[$idx++] = ['id' => $offres[$offset]['id'], 'intitule' => $offres[$offset]['intitule'], 'nomVille' => $nomVille, 'lienMap' => $lienMap, 'description' => $description, 'nomEntreprise' => $nomEntreprise, 'lienOrigineOffre' => $offres[$offset]['origine_offre'], 'distance' => $offres[$offset]['distance'] ];
+			$jsonData['offres'][$idx++] = ['id' => $offres[$offset]['id'], 'intitule' => $offres[$offset]['intitule'], 'nomVille' => $nomVille, 'lienMap' => $lienMap, 'description' => $description, 'nomEntreprise' => $nomEntreprise, 'lienOrigineOffre' => $offres[$offset]['origine_offre'], 'distance' => $offres[$offset]['distance'] ];
 			$offset++;
         }
         wp_send_json_success($jsonData);
@@ -237,9 +240,28 @@ class Offre_emploi_Public {
 	function get_offres_sans_filtres_action(){
 		check_ajax_referer('liste_offres');
 
-		$offres = $this->model->findByOffreVisibles('visible');
+		$args = array(
+			'page' => $_GET['pageNumber'],
+			'nombre_offres' => $_GET['pageSize']
+		);
+
+		if(!$args['page']){
+			$page = 1;
+		}else{
+			$page = $args['page'];
+		}
+
+		if(!$args['nombre_offres']){
+			$nombre_offres = 50;
+		}else{
+			$nombre_offres = $args['nombre_offres'];
+		}
+
+		$offres = $this->model->findByOffreVisibles('visible', [], $nombre_offres, ($page - 1) * $nombre_offres);
+        $nb_offres_demandees = count($this->model->findByOffreVisibles());
         $jsonData = [];
         $idx = 0;
+        $jsonData['info'] = ['nbOffres' => $nb_offres_demandees, 'nbOffresPage' => $nombre_offres, 'pageActuelle' => (int)$page, 'pageMax' => ceil($nb_offres_demandees / $nombre_offres)];
         foreach($offres as $offre){
             if($offre['ville_libelle'] && $offre['ville_libelle'] != 'Non renseigné' && $offre['id_pole_emploi']){
                 $nomVille = explode('- ', $offre['ville_libelle'])[1];
@@ -263,7 +285,7 @@ class Offre_emploi_Public {
             }else{
                 $nomEntreprise = 'Aucun';
             }
-            $jsonData[$idx++] = ['id' => $offre['id'], 'intitule' => $offre['intitule'], 'nomVille' => $nomVille, 'lienMap' => $lienMap, 'description' => $description, 'nomEntreprise' => $nomEntreprise, 'lienOrigineOffre' => $offre['origine_offre']];
+            $jsonData['offres'][$idx++] = ['id' => $offre['id'], 'intitule' => $offre['intitule'], 'nomVille' => $nomVille, 'lienMap' => $lienMap, 'description' => $description, 'nomEntreprise' => $nomEntreprise, 'lienOrigineOffre' => $offre['origine_offre']];
         }
         wp_send_json_success($jsonData);
 	}
@@ -586,6 +608,8 @@ class Offre_emploi_Public {
 		if(array_key_exists('offreEmploi',$wp_query->query_vars) && $wp_query->query_vars['offreEmploi'] ==1){
 			if(file_exists(plugin_dir_path( __FILE__ ) .'partials/liste_offres_valides.php')) {
 				wp_enqueue_style( $this->plugin_name.'.liste_offres_valides_css', plugin_dir_url( __FILE__ ) . 'css/liste_offres_valides.css', array(), $this->version, 'all' );
+				wp_enqueue_style( $this->plugin_name.'.pagination', plugin_dir_url( __FILE__ ) . 'css/pagination.css', array(), $this->version, 'all' );
+				wp_enqueue_script( $this->plugin_name.'.pagination', plugin_dir_url( __FILE__ ) . 'js/pagination.js', array( 'jquery' ), $this->version, false );
 				wp_enqueue_script( $this->plugin_name.'.liste_offres_valides_js', plugin_dir_url( __FILE__ ) . 'js/liste_offres_valides.js', array( 'jquery' ), $this->version, true );
 				$liste_offres = wp_create_nonce( 'liste_offres' );
 				wp_localize_script(
