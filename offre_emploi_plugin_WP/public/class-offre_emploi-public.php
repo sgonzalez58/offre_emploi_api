@@ -185,6 +185,7 @@ class Offre_emploi_Public {
             }
             $offres = $this->model->findByOffreCommunes($ville_cible);
         }
+		
 		foreach($offres as &$offre){
 			$offre['distance'] = $liste_distances[$offre['commune_id']];
 			if(!$offre['commune_id']){
@@ -192,37 +193,40 @@ class Offre_emploi_Public {
 			}
 		}
 		
-		array_multisort(array_column($offres, 'distance'), SORT_ASC, $offres);
+		array_multisort(array_column($offres, 'distance'), SORT_ASC,array_column($offres, 'id_pole_emploi'), SORT_ASC, $offres);
+
+		
+        //wp_send_json_success($offres);
 
 		$jsonData = [];
         $idx = 0;
-		$offset = 0;
+		$offset = ($page-1)*50;
         $jsonData['info'] = ['nbOffres' => count($offres), 'nbOffresPage' => 50, 'pageActuelle' => (int)$page, 'pageMax' => ceil(count($offres) / 50)];
-        foreach($offres as $offre){
-			if($offset >= ($page - 1) * 50 && $offset < $page * 50){
-				if($offre['ville_libelle'] && $offre['ville_libelle'] != 'Non renseigné'){
-					$nomVille = explode('- ', $offre['ville_libelle'])[1];
-				}
-				if($offre['latitude']){
-					$lienMap = 'https://www.openstreetmap.org/?mlat=' . $offre['latitude'] . '&mlon=' . $offre['longitude'] . '#map=17/' . $offre['latitude'] . '/' . $offre['longitude'] . '&layers=N';
-				}else{
-					$lienMap = 'aucun';
-				}
-				if(strlen($offre['description']) > 150){
-					$description = substr(htmlentities($offre['description']), 0, 149) . '...';
-				}else{
-					$description = $offre['description'];
-				}
-				if($offre['nom_entreprise']){
-					$nomEntreprise = $offre['nom_entreprise'];
-				}else{
-					$nomEntreprise = 'Aucun';
-				}
-				$jsonData[$idx++] = ['id' => $offre['id'], 'intitule' => $offre['intitule'], 'nomVille' => $nomVille, 'lienMap' => $lienMap, 'description' => $description, 'nomEntreprise' => $nomEntreprise, 'lienOrigineOffre' => $offre['origine_offre'], 'distance' => $offre['distance'] ];
-				$offset++;
+        while($offset < $page*50){
+			if($offres[$offset]['ville_libelle'] && $offres[$offset]['ville_libelle'] != 'Non renseigné' && $offres[$offset]['id_pole_emploi']){
+				$nomVille = explode('- ', $offres[$offset]['ville_libelle'])[1];
 			}else{
-				$offset++;
+				if($offres[$offset]['ville_libelle'] && $offres[$offset]['ville_libelle'] != 'Non renseigné' && !$offres[$offset]['id_pole_emploi']){
+					$nomVille = $offres[$offset]['ville_libelle'];
+				}
 			}
+			if($offres[$offset]['latitude']){
+				$lienMap = 'https://www.openstreetmap.org/?mlat=' . $offres[$offset]['latitude'] . '&mlon=' . $offres[$offset]['longitude'] . '#map=17/' . $offres[$offset][$offset]['latitude'] . '/' . $offres[$offset]['longitude'] . '&layers=N';
+			}else{
+				$lienMap = 'aucun';
+			}
+			if(strlen($offres[$offset]['description']) > 150){
+				$description = substr(htmlentities($offres[$offset]['description']), 0, 149) . '...';
+			}else{
+				$description = $offres[$offset]['description'];
+			}
+			if($offres[$offset]['nom_entreprise']){
+				$nomEntreprise = $offres[$offset]['nom_entreprise'];
+			}else{
+				$nomEntreprise = 'Aucun';
+			}
+			$jsonData[$idx++] = ['id' => $offres[$offset]['id'], 'intitule' => $offres[$offset]['intitule'], 'nomVille' => $nomVille, 'lienMap' => $lienMap, 'description' => $description, 'nomEntreprise' => $nomEntreprise, 'lienOrigineOffre' => $offres[$offset]['origine_offre'], 'distance' => $offres[$offset]['distance'] ];
+			$offset++;
         }
         wp_send_json_success($jsonData);
 	}
@@ -251,9 +255,13 @@ class Offre_emploi_Public {
         $idx = 0;
         $jsonData['info'] = ['nbOffres' => $nb_offres_demandees, 'nbOffresPage' => 50, 'pageActuelle' => (int)$page, 'pageMax' => ceil($nb_offres_demandees / 50)];
         foreach($offres as $offre){
-            if($offre['ville_libelle'] && $offre['ville_libelle'] != 'Non renseigné'){
+            if($offre['ville_libelle'] && $offre['ville_libelle'] != 'Non renseigné' && $offre['id_pole_emploi']){
                 $nomVille = explode('- ', $offre['ville_libelle'])[1];
-            }
+            }else{
+				if($offre['ville_libelle'] && $offre['ville_libelle'] != 'Non renseigné' && !$offre['id_pole_emploi']){
+					$nomVille = $offre['ville_libelle'];
+				}
+			}
             if($offre['latitude']){
                 $lienMap = 'https://www.openstreetmap.org/?mlat=' . $offre['latitude'] . '&mlon=' . $offre['longitude'] . '#map=17/' . $offre['latitude'] . '/' . $offre['longitude'] . '&layers=N';
             }else{

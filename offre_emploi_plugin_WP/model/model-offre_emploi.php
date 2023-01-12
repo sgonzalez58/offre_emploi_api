@@ -98,10 +98,11 @@ class Offre_Emploi_Model {
 	 */
 	public function findByOffreVisibles($visibilite = 'visible', array $orderBy = null, $limit = null, $offset = null){
 
-		$baseSql = 'SELECT * FROM '.$this->TableOffreEmploi.' A WHERE A.visibilite = \''.$visibilite.'\'';
+		$baseSql = 'SELECT * FROM '.$this->TableOffreEmploi.' A WHERE A.visibilite = \''.$visibilite.'\' 
+															ORDER BY A.id_pole_emploi';
 
 		if($orderBy){
-			$baseSql .= ' ORDER BY A.'.key($orderBy).' '.$orderBy[key($orderBy)];
+			$baseSql .= ' , A.'.key($orderBy).' '.$orderBy[key($orderBy)];
 		}
 
 		if($limit){
