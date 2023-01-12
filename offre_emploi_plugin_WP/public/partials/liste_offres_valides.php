@@ -61,68 +61,9 @@ get_header(); ?>
     </div>
 </div>
 
-<div class='liste_offre_header'>
-    <button class='page_precedente bouton_pagination' disabled>precedent</button>
-    <button class='page_actuelle bouton_pagination'>1</button>
-    ...
-    <button class='derniere_page bouton_pagination'><?=ceil(count($offres_valides_max) / 50)?></button>
-    <button class='page_suivante bouton_pagination'>suivant</button>
-</div>
 
 <ul class='liste_offres'>
-<?php
-    foreach($offres_valides as $offre){
-?>
-    <li class='offre'>
-        <div class='corps_offre'>
-            <a class='lien_fiche' href='/offreEmploi/<?= $offre['id']?>'><h2><?=$offre['intitule']?></h2></a>
-            <a href='https://www.openstreetmap.org/?mlat=<?=$offre['latitude']?>&mon=<?=$offre['longitude']?>#map=17/<?=$offre['latitude']?>/<?=$offre['longitude']?>&layers=N' target='_blank'>
-                <h4 class='ville'><?php 
-                if($offre['id_pole_emploi']){
-                    echo explode(' - ', $offre['ville_libelle'])[1];
-                }else{
-                    echo $offre['ville_libelle'];
-                }
-                ?>
-                    <i class='fa-solid fa-map-pin'></i>
-                </h4>
-            </a>
-        <?php
-        if(strlen($offre['description']) > 150){
-            $description = substr(htmlentities($offre['description']), 0, 150).'...';
-        }else{
-            $description = $offre['description'];
-        }
-        ?>
-            <p id='description'><?=$description?></p>
-        </div>
-        <div class='entreprise_offre'>
-        <?php
-        if($offre['nom_entreprise']){
-        ?>
-            <p>Entreprise : <?=$offre['nom_entreprise']?></p>
-        <?php
-        }
-        if($offre['id_pole_emploi']){
-        ?>
-            <a class='lien_pole_emploi' href='<?=$offre['origine_offre']?>' target='_blank'>lien vers l'offre sur pole emploi.</a>
-        <?php
-        }
-        ?>
-        </div>
-    </li>
-<?php
-    }
-    ?>
-    
 </ul>
-<div class='liste_offre_footer'>
-    <button class='page_precedente bouton_pagination' disabled>precedent</button>
-    <button class='page_actuelle bouton_pagination'>1</button>
-    ...
-    <button class='derniere_page bouton_pagination'><?=ceil(count($offres_valides_max) / 50)?></button>
-    <button class='page_suivante bouton_pagination'>suivant</button>
-</div>
 <?php
 }else{
     ?>

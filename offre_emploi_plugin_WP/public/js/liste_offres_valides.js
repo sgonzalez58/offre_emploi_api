@@ -1,14 +1,50 @@
-//remonte la page au debut des offres lorsqu'on navigue dans la pagination
-jQuery('.bouton_pagination').on('click', ()=>{
-    document.getElementById('main').scrollIntoView({behavior:'smooth'});
-})
-
 //transforme la liste des communes en select2
 jQuery('#liste_ville').select2({
     placeholder: 'Selectionner une ville',
     allowClear : true,
     width:'resolve'
 });
+
+jQuery('.liste_offres').pagination({
+    dataSource : my_ajax_obj.ajax_url+"?_ajax_nonce="+my_ajax_obj.nonce+"&action=get_offres_sans_filtres_action",
+    pageSize:50,
+    ajax:{
+        beforeSend: function(){
+            dataContainer.html('Chargement des offres en cours...');
+        }
+    },
+    callback:function(data){
+        template_html = '';
+        Object.data['data'].forEach(offre => {
+            offre_html = "<li class='offre'>";
+            offre_html += "<div class='corps_offre";
+            offre_html += "<a class='lien_fiche' href='/offreEmploi/"+offre['id']+"'><h2>"+offre['intitule']+"</h2></a>";
+            offre_html += "<a href='https://www.openstreetmap.org/?mlat="+offre['latitude']+"&mlon="+offre['longitude']+"#map=17/"+offre['latitude']+"/"+offre['longitude']+"&layers=N' target='_blank'>";
+            offre_html += "<h4 class='ville'>";
+            if(offre['id_pole_emploi']){
+                offre_html = offre['ville_libelle'].split(' - ').pop();
+            }else{
+                offre_html = offre['ville_libelle'];
+            }
+            offre_html += "<i class='fa-solid fa-map-pin'></i>";
+            offre_html += "</h4></a>";
+            if(offre['description'].length > 150){
+                offre_html += "<p id='description'>"+offre['description'].replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').substr(0, 150)+'...</p></div>';
+            }else{
+                offre_html += "<p id='description'>"+offre['description']+"</p></div>";
+            }
+            if(offre['nom_entreprise']){
+                offre_html += "<p>Entreprise : "+offre['nom_entreprise']+"</p>";
+            }
+            if(offre['id_pole_emploi']){
+                offre_html += "<a class='lien_pole_emploi' href='"+offre['origine_offre']+"' target='_blank'>lien vers l'offre sur pole emploi.</a>";
+            }
+            offre_html += "</div></li>";
+            template_html += offre_html;
+        });
+        dataContainer.html(template_html);
+    }
+})
 
 //lance la récupère des offres d'emploi lorsqu'on choisi une commune
 jQuery('#liste_ville').on('select2:select', function(e){

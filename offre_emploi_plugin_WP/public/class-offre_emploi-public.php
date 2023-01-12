@@ -237,23 +237,9 @@ class Offre_emploi_Public {
 	function get_offres_sans_filtres_action(){
 		check_ajax_referer('liste_offres');
 
-		$args = array(
-			'page' => $_POST['page']
-		);
-
-		if(!$args['page']){
-			$page = 1;
-		}else{
-			$page = $args['page'];
-		}
-
-		$nb_offres = 50;
-
-		$offres = $this->model->findByOffreVisibles('visible', [], $nb_offres, ($page - 1) * $nb_offres);
-        $nb_offres_demandees = count($this->model->findByOffreVisibles());
+		$offres = $this->model->findByOffreVisibles('visible');
         $jsonData = [];
         $idx = 0;
-        $jsonData['info'] = ['nbOffres' => $nb_offres_demandees, 'nbOffresPage' => 50, 'pageActuelle' => (int)$page, 'pageMax' => ceil($nb_offres_demandees / 50)];
         foreach($offres as $offre){
             if($offre['ville_libelle'] && $offre['ville_libelle'] != 'Non renseigné' && $offre['id_pole_emploi']){
                 $nomVille = explode('- ', $offre['ville_libelle'])[1];
