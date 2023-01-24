@@ -49,8 +49,8 @@ setlocale (LC_TIME, 'fr_FR');
     <?php
     }
     ?>
-    <p>Offre créée le <?=date_i18n('l d F o, H:i:s', strtotime($offre['date_de_creation']))?></p>
-    <p>Mise à jour le <?=date_i18n('l d F o, H:i:s', strtotime($offre['date_actualisation']))?></p>
+    <p class='date'>Offre créée le <?=date_i18n('l d F o, H:i:s', strtotime($offre['date_de_creation']))?></p>
+    <p class='date'>Mise à jour le <?=date_i18n('l d F o, H:i:s', strtotime($offre['date_actualisation']))?></p>
     <p id='postes'><?=$offre['nb_postes']?> poste(s) à pourvoir</p>
     <div class='separation2'>********************</div>
     <p><?=nl2br($offre['description'])?></p>

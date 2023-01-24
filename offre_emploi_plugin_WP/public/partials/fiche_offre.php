@@ -44,13 +44,13 @@ get_header(); ?>
     if($offre['id_pole_emploi']){
     ?>
 
-    <h4>Offre n° <a href='<?=$offre['origine_offre']?>'><?=$offre['id_pole_emploi']?></a></h4>
+    <a href='<?=$offre['origine_offre']?>'><button>Postuler</button></a>
     
     <?php
     }
     ?>
     
-    <h2 id='intitule'><?=$offre['intitule']?></h2>
+    <h2 id='intitule' style="margin-top:24px"><?=$offre['intitule']?></h2>
     
     <?php
     if($offre['ville_libelle'] != 'Non renseigné'){
@@ -62,8 +62,8 @@ get_header(); ?>
     }
     ?>
 
-    <p class='date'>Offre créée le <?=date_i18n('l d F o, H:i:s', new DateTime($offre['date_de_creation']))?></p>
-    <p class='date'>Mise à jour le <?=date_i18n('l d F o, H:i:s', new DateTime($offre['date_de_creation']))?></p>
+    <p class='date'>Offre créée le <?=date_i18n('l d F o, H:i:s', strtotime($offre['date_de_creation']))?></p>
+    <p class='date'>Mise à jour le <?=date_i18n('l d F o, H:i:s', strtotime($offre['date_actualisation']))?></p>
     <p id='postes'><?=$offre['nb_postes']?> poste(s) à pourvoir</p>
     <div class='separation2'>********************</div>
     <p><?=nl2br($offre['description'])?></p>
@@ -203,9 +203,18 @@ get_header(); ?>
                 <p><?=$offre['secteur_activite_libelle']?></p>
             </div>
         </div>
-    </div>  
+        <?php
+        }
+        ?>
+    </div>
     <?php
-    }
+        if($offre['id_pole_emploi']){
+            ?>
+            <div class="centre">
+                <a href='<?=$offre['origine_offre']?>'><button>Postuler</button></a>
+            </div>
+            <?php
+        }
     ?>
 
 </div>

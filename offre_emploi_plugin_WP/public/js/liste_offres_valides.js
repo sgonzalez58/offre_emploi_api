@@ -30,7 +30,7 @@ jQuery('#pagination_container').pagination({
             offre_html += "<a href='"+offre['lienMap']+"' target='_blank'>";
             offre_html += "<h4 class='ville'>"+offre['nomVille']+"<i class='fa-solid fa-map-pin'></i>"+"</h4></a>";
             offre_html += "<p id='description'>"+offre['description']+"</p></div><div class='entreprise_offre'>";
-            if(offre['nomEntreprise']){
+            if(offre['nomEntreprise'] && offre['nomEntreprise'] != 'Aucun'){
                 offre_html += "<p>Entreprise : "+offre['nomEntreprise']+"</p>";
             }
             if(offre['lienOrigineOffre']){
@@ -75,7 +75,7 @@ jQuery('#liste_ville').on('select2:select', function(e){
                 offre_html += "<a href='"+offre['lienMap']+"' target='_blank'>";
                 offre_html += "<h4 class='ville'>"+offre['nomVille']+"<i class='fa-solid fa-map-pin'></i>"+"</h4></a>";
                 offre_html += "<p id='description'>"+offre['description']+"</p></div><div class='entreprise_offre'>";
-                if(offre['nomEntreprise']){
+                if(offre['nomEntreprise'] && offre['nomEntreprise'] != 'Aucun'){
                     offre_html += "<p>Entreprise : "+offre['nomEntreprise']+"</p>";
                 }
                 if(offre['lienOrigineOffre']){
@@ -120,7 +120,7 @@ jQuery('#liste_ville').on('select2:clear', function(e){
                 offre_html += "<a href='"+offre['lienMap']+"' target='_blank'>";
                 offre_html += "<h4 class='ville'>"+offre['nomVille']+"<i class='fa-solid fa-map-pin'></i>"+"</h4></a>";
                 offre_html += "<p id='description'>"+offre['description']+"</p></div><div class='entreprise_offre'>";
-                if(offre['nomEntreprise']){
+                if(offre['nomEntreprise'] && offre['nomEntreprise'] != 'Aucun'){
                     offre_html += "<p>Entreprise : "+offre['nomEntreprise']+"</p>";
                 }
                 if(offre['lienOrigineOffre']){
@@ -171,7 +171,7 @@ jQuery('#liste_distance').on('select2:select', function(e){
                 offre_html += "<a href='"+offre['lienMap']+"' target='_blank'>";
                 offre_html += "<h4 class='ville'>"+offre['nomVille']+"<i class='fa-solid fa-map-pin'></i>"+"</h4></a>";
                 offre_html += "<p id='description'>"+offre['description']+"</p></div><div class='entreprise_offre'>";
-                if(offre['nomEntreprise']){
+                if(offre['nomEntreprise'] && offre['nomEntreprise'] != 'Aucun'){
                     offre_html += "<p>Entreprise : "+offre['nomEntreprise']+"</p>";
                 }
                 if(offre['lienOrigineOffre']){

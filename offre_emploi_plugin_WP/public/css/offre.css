@@ -50,6 +50,12 @@
     height: fit-content;
 }
 
+.centre{
+    display:flex;
+    justify-content: center;
+    margin-top: 16px;
+}
+
 .titre_boite{
     text-align: center;
     margin: 0;
