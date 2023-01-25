@@ -214,6 +214,34 @@ get_header(); ?>
                 <a href='<?=$offre['origine_offre']?>'><button>Postuler</button></a>
             </div>
             <?php
+        }else{
+            ?>
+            <form id="envoie_candidature" method='post' action="candidature" class="centre">
+                <div>
+                    <input type='text' name='prenom' required minlength="3" maxlength="25" placeholder="Prénom">
+                </div>
+                <div>
+                    <input type='text' name='nom' required minlength="3" maxlength="25" placeholder="Nom">
+                </div>
+                <div>
+                <?php
+                    if(is_user_logged_in()){
+                ?>
+                <input type="mail" name='mail' id='mail_form' required value="<?=wp_get_current_user()->user_email?>" placeholder="adresse mail">
+                <?php
+                    }else{  
+                ?>
+                <input type="mail" name='mail' id='mail_form' required placeholder="adresse mail">
+                <?php
+                    }
+                ?>
+                </div>
+                <div>
+                    <textarea name='message' required placeholder="Votre demande"></textarea>
+                </div>
+                <input type='submit' value="Postuler">
+            </form>
+            <?php
         }
     ?>
 

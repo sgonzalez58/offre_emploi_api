@@ -14,7 +14,7 @@
 
 
 $class = new Offre_emploi_Public('Offre_emploi','1.0.0');
-$offres_valides = $class->model->findByOffreVisibles('visible');
+$offres_valides = $class->model->findByOffreVisibles('visible', '');
 $villes = $class->model->findAllCommunes();
 get_header(); ?>
 
@@ -26,6 +26,15 @@ get_header(); ?>
 
 <div class='tri_liste'>
     <div class='tri'>
+
+        <div class="selection">
+            <label for='mot_clef'>
+                Recherche : 
+            </label>
+            <input type="text" minlength="3" maxlength="30">
+            <button id='recherche'>go</button>
+        </div>
+
         <div class='selection'>
             <label for='liste_ville'>
                 Ville :
@@ -34,9 +43,11 @@ get_header(); ?>
                 <option></option>
                 <?php
                 foreach($villes as $ville){
+                    if($ville['nom_departement'] == 'Nièvre'){
                 ?>
                 <option value='<?=$ville['id']?>'><?=$ville['nom_commune']?></option>
                 <?php
+                    }
                 }
                 ?>
             </select>
@@ -52,6 +63,23 @@ get_header(); ?>
                 <option value='25'>25</option>
                 <option value='50'>50</option>
                 <option value='100'>100</option>
+            </select>
+        </div>
+
+        <div class='selection'>
+            <label for='liste_type_contrat'>
+                Type de contrat :
+            </label>
+            <select id='liste_type_contrat'>
+                <option value='' selected></option>
+                <option value='CDD'>Contrat à durée déterminée</option>
+                <option value='CDI'>Contrat à durée indéterminée</option>
+                <option value='DDI'>CDD insertion</option>
+                <option value='DIN'>CDI intérimaire</option>
+                <option value='FRA'>Franchise</option>
+                <option value='LIB'>Profession libérale</option>
+                <option value='MIS'>Mission intérimaire</option>
+                <option value='SAI'>Contrat travail saisonnier</option>
             </select>
         </div>
     </div>

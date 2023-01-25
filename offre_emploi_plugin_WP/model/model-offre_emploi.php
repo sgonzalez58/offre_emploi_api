@@ -35,6 +35,7 @@ class Offre_Emploi_Model {
 	
 	private $TableOffreEmploi;
 	private $TableCommune;
+	private $TableCandidature;
 
 	/**
 	 * Initialize the class and set its properties.
@@ -46,6 +47,7 @@ class Offre_Emploi_Model {
 		$offreEmploiDB = new wpdb( 'emploikkp', 'qk5ou2cn3tcpj', 'emploikkp_db', 'localhost' );		
 		$this->offreEmploiDB 	 = $offreEmploiDB;
 		$this->TableOffreEmploi = 'offre_emploi';
+		$this->TableCandidature = 'candidature';
 		$this->TableCommune = 'commune';
 	}
 	
@@ -96,14 +98,14 @@ class Offre_Emploi_Model {
 	/**
 	 * Récupère les offres d'emploi visibles par les visiteurs
 	 */
-	public function findByOffreVisibles($visibilite = 'visible', array $orderBy = null, $limit = null, $offset = null){
+	public function findByOffreVisibles($visibilite = 'visible', $type_contrat, $limit = null, $offset = null){
 
-		$baseSql = 'SELECT * FROM '.$this->TableOffreEmploi.' A WHERE A.visibilite = \''.$visibilite.'\' 
-															ORDER BY A.id_pole_emploi';
-
-		if($orderBy){
-			$baseSql .= ' , A.'.key($orderBy).' '.$orderBy[key($orderBy)];
+		$baseSql = 'SELECT * FROM '.$this->TableOffreEmploi.' A WHERE A.visibilite = \''.$visibilite.'\'';
+		
+		if($type_contrat){
+			$baseSql .= " AND A.type_contrat = '".$type_contrat."'";
 		}
+		$baseSql .= ' ORDER BY A.id_pole_emploi';
 
 		if($limit){
 			$baseSql .= ' LIMIT '.$limit;
@@ -126,22 +128,15 @@ class Offre_Emploi_Model {
 	/**
 	 * Récupères les offres d'emploi présentenr autour d'une ville
 	 */
-	public function findByOffreCommunes(array $communes = [], array $orderBy = null, $limit = null, $offset = null){
+	public function findByOffreCommunes(array $communes = [], $type_de_contrat){
 
 		$baseSql = 'SELECT * FROM '.$this->TableOffreEmploi.' A WHERE A.visibilite = \'visible\' AND (A.commune_id IS NULL';
 
 		$baseSql .= ' OR A.commune_id IN ('.implode(', ',$communes);
 		$baseSql .= '))';
-		if($orderBy){
-			$baseSql .= ' ORDER BY A.'.key($orderBy).' '.$orderBy[key($orderBy)];
-		}
-
-		if($limit){
-			$baseSql .= ' LIMIT '.$limit;
-		}
-
-		if($offset){
-			$baseSql .= ' OFFSET '.$offset;
+		
+		if($type_de_contrat){
+			$baseSql .= " AND A.type_contrat = '".$type_de_contrat."'";
 		}
 
 		$sql = $this->offreEmploiDB->prepare($baseSql);
@@ -176,7 +171,7 @@ class Offre_Emploi_Model {
 	 */
 	public function findAllCommunes(){
 		
-		$sql = $this -> offreEmploiDB ->prepare('SELECT C.id, C.code_postal, C.nom_commune, C.slug, C.latitude, C.longitude FROM
+		$sql = $this -> offreEmploiDB ->prepare('SELECT C.id, C.code_postal, C.nom_departement, C.nom_commune, C.slug, C.latitude, C.longitude FROM
 				'.$this->TableCommune.' C ORDER BY C.nom_commune ASC');
 
 		$this->offreEmploiDB->query( $sql );
@@ -330,6 +325,39 @@ class Offre_Emploi_Model {
 			return 'Erreur sql : '.$this->offreEmploiDB->last_error;
 		}else{
 			return 'archivé';
+		}
+	}
+
+	public function createCandidature($id_offre, $mail, $id_user=NULL){
+		$sql = $this->offreEmploiDB->prepare('INSERT INTO '.$this->TableCandidature." (id_offre_id, id_user, mail)
+											values (".$id_offre.", ".$id_user.", '".$mail."')");
+
+		$this->offreEmploiDB->query($sql);
+
+		if($this->offreEmploiDB->last_error){
+			return 'Erreur sql : '.$this->offreEmploiDB->last_error;
+		}else{
+			return 'Candidature créée.';
+		}
+	}
+
+	public function findCandidatures($id_offre, $mail = NULL){
+		if($mail){
+			$sql = $this->offreEmploiDB->prepare('SELECT * FROM '.$this->TableCandidature."
+												WHERE id_offre_id = ".$id_offre." AND mail = '".$mail."'");
+		}else{
+			$sql = $this->offreEmploiDB->prepare('SELECT * FROM '.$this->TableCandidature."
+												WHERE id_offre_id = ".$id_offre);
+		}
+		$this->offreEmploiDB->query($sql);
+
+		if($this->offreEmploiDB->last_error){
+			return 'Erreur sql : '.$this->offreEmploiDB->last_error;
+		}else{
+			if($this->offreEmploiDB->num_rows > 0){
+				$return = $this->offreEmploiDB->get_results($sql, ARRAY_A);
+			}
+			return $return;
 		}
 	}
 }

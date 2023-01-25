@@ -52,8 +52,13 @@
 
 .centre{
     display:flex;
-    justify-content: center;
+    flex-direction: column;
+    align-items: center;
     margin-top: 16px;
+}
+
+.centre input{
+    border-radius: 5px;
 }
 
 .titre_boite{

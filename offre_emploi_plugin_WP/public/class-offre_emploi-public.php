@@ -20,6 +20,10 @@
  * @subpackage Offre_emploi/public
  * @author     dev-iticonseil <dev@iti-conseil.com>
  */
+ 
+use PHPMailer\PHPMailer\Exception;
+use PHPMailer\PHPMailer\PHPMailer;
+
 class Offre_emploi_Public {
 
 	/**
@@ -55,8 +59,11 @@ class Offre_emploi_Public {
 		require_once plugin_dir_path( __FILE__ ) . '../model/model-offre_emploi.php';
 		$this->model = new Offre_Emploi_Model();
 		
-		add_action('wp_ajax_get_offres_par_commune', array($this,'get_offres_par_commune_action'));
-		add_action('wp_ajax_nopriv_get_offres_par_commune', array($this,'get_offres_par_commune_action'));
+		add_action('wp_ajax_get_offres_avec_filtres', array($this,'get_offres_avec_filtres_action'));
+		add_action('wp_ajax_nopriv_get_offres_avec_filtres', array($this,'get_offres_avec_filtres_action'));
+
+		add_action('wp_ajax_recherche_mot_clef', array($this,'recherche_mot_clef'));
+		add_action('wp_ajax_nopriv_recherche_mot_clef', array($this,'recherche_mot_clef'));
 
 		add_action('wp_ajax_get_offres_sans_filtres', array($this,'get_offres_sans_filtres_action'));
 		add_action('wp_ajax_nopriv_get_offres_sans_filtres', array($this,'get_offres_sans_filtres_action'));
@@ -72,6 +79,9 @@ class Offre_emploi_Public {
 
 		add_action('wp_ajax_toggle_visibilite_offre', array($this,'toggle_visibilite_offre'));
 		add_action('wp_ajax_nopriv_toggle_visibilite_offre', array($this,'toggle_visibilite_offre'));
+
+		add_action('wp_ajax_get_candidatures', array($this,'get_candidatures'));
+		add_action('wp_ajax_nopriv_get_candidatures', array($this,'get_candidatures'));
 
 		add_action('init', array($this,'offre_emploi_rewrite_rules'));
 		add_filter('query_vars', array($this,'offre_emploi_register_query_var' ));
@@ -128,11 +138,12 @@ class Offre_emploi_Public {
 	/**
 	 * Récupères les offres d'autour d'une commune
 	 */
-	function get_offres_par_commune_action(){
+	function get_offres_avec_filtres_action(){
 		check_ajax_referer('liste_offres');
 		$args = array(
 			'idCommune' => $_GET['ville'],
 			'distance' => $_GET['distance'],
+			'type_de_contrat' => $_GET['type_de_contrat'],
 			'page' => $_GET['pageNumber'],
 			'nombre_offres' => $_GET['pageSize']
 		);
@@ -160,7 +171,7 @@ class Offre_emploi_Public {
 		$liste_distances[$args['idCommune']] = 0;
 		
         if($args['distance'] == 'aucune'){
-            $offres = $this->model->findByOffreCommunes(array($args['idCommune']));
+            $offres = $this->model->findByOffreCommunes(array($args['idCommune']), $args['type_de_contrat']);
         }else{
             $offres = array();
             $ville_cible = array();
@@ -188,7 +199,7 @@ class Offre_emploi_Public {
                     }
                 }
             }
-            $offres = $this->model->findByOffreCommunes($ville_cible);
+            $offres = $this->model->findByOffreCommunes($ville_cible, $args['type_de_contrat']);
         }
 		
 		foreach($offres as &$offre){
@@ -205,7 +216,120 @@ class Offre_emploi_Public {
         $idx = 0;
 		$offset = ($page-1)*$nombre_offres;
         $jsonData['info'] = ['nbOffres' => count($offres), 'nbOffresPage' => $nombre_offres, 'pageActuelle' => (int)$page, 'pageMax' => ceil(count($offres) / $nombre_offres)];
-        while($offset < $page*$nombre_offres){
+		$jsonData['offres'] = [];
+        while($offset < $page*$nombre_offres && isset($offres[$offset])){
+			if($offres[$offset]['ville_libelle'] && $offres[$offset]['ville_libelle'] != 'Non renseigné' && $offres[$offset]['id_pole_emploi']){
+				$nomVille = explode('- ', $offres[$offset]['ville_libelle'])[1];
+			}else{
+				if($offres[$offset]['ville_libelle'] && $offres[$offset]['ville_libelle'] != 'Non renseigné' && !$offres[$offset]['id_pole_emploi']){
+					$nomVille = $offres[$offset]['ville_libelle'];
+				}
+			}
+			if($offres[$offset]['latitude']){
+				$lienMap = 'https://www.openstreetmap.org/?mlat=' . $offres[$offset]['latitude'] . '&mlon=' . $offres[$offset]['longitude'] . '#map=17/' . $offres[$offset][$offset]['latitude'] . '/' . $offres[$offset]['longitude'] . '&layers=N';
+			}else{
+				$lienMap = 'aucun';
+			}
+			if(strlen($offres[$offset]['description']) > 150){
+				$description = substr(htmlentities($offres[$offset]['description']), 0, 149) . '...';
+			}else{
+				$description = $offres[$offset]['description'];
+			}
+			if($offres[$offset]['nom_entreprise']){
+				$nomEntreprise = $offres[$offset]['nom_entreprise'];
+			}else{
+				$nomEntreprise = 'Aucun';
+			}
+			$jsonData['offres'][$idx++] = ['id' => $offres[$offset]['id'], 'intitule' => $offres[$offset]['intitule'], 'nomVille' => $nomVille, 'lienMap' => $lienMap, 'description' => $description, 'nomEntreprise' => $nomEntreprise, 'lienOrigineOffre' => $offres[$offset]['origine_offre'], 'distance' => $offres[$offset]['distance'] ];
+			$offset++;
+        }
+        wp_send_json_success($jsonData);
+	}
+
+	/**
+	 * Récupères les offres par mot clef
+	 */
+	function recherche_mot_clef(){
+		check_ajax_referer('liste_offres');
+		$args = array(
+			'mots_clef' => explode(' ', $_GET['mots_clef']),
+			'idCommune' => $_GET['ville'],
+			'distance' => $_GET['distance'],
+			'type_de_contrat' => $_GET['type_de_contrat'],
+			'page' => $_GET['pageNumber'],
+			'nombre_offres' => $_GET['pageSize']
+		);
+		
+		if(!$args['idCommune']){
+			wp_send_json_error("L'id de la ville n'a pas été envoyé. Erreure lors de la demande ajax.");
+		}
+		if(!$args['distance']){
+            wp_send_json_error("La distance maximale de la recherche n'a pas été envoyée. Erreure lors de la demande ajax.");
+        }
+
+		if(!$args['page']){
+			$page = 1;
+		}else{
+			$page = $args['page'];
+		}
+
+		if(!$args['nombre_offres']){
+			$nombre_offres = 50;
+		}else{
+			$nombre_offres = $args['nombre_offres'];
+		}
+        
+		$liste_distances = array();
+		$liste_distances[$args['idCommune']] = 0;
+		
+        if($args['distance'] == 'aucune'){
+            $offres = $this->model->findByOffreCommunes(array($args['idCommune']), $args['type_de_contrat']);
+        }else{
+            $offres = array();
+            $ville_cible = array();
+            $ville_a_trier = $this->model->findAllCommunes();
+
+            foreach($ville_a_trier as $commune){
+                if($commune['id'] == $args['idCommune']){
+                    array_push($ville_cible, $commune['id']); 
+                }else{
+                    $villeFrom = $this->model->findOneCommune($args['idCommune']);
+                    $villeTo = $commune;
+                    $latFrom = deg2rad($villeFrom['latitude']);
+                    $lonFrom = deg2rad($villeFrom['longitude']);
+                    $latTo = deg2rad($villeTo['latitude']);
+                    $lonTo = deg2rad($villeTo['longitude']);
+					$lonDelta = $lonTo - $lonFrom;
+                    $a = pow(cos($latTo) * sin($lonDelta), 2) +
+                        pow(cos($latFrom) * sin($latTo) - sin($latFrom) * cos($latTo) * cos($lonDelta), 2);
+                    $b = sin($latFrom) * sin($latTo) + cos($latFrom) * cos($latTo) * cos($lonDelta);
+                    $angle = atan2(sqrt($a), $b);
+                    $distanceVilles = $angle * 6371;
+                    if($distanceVilles < $args['distance']){
+                        array_push($ville_cible, $commune['id']);
+						$liste_distances[$commune['id']] = $distanceVilles;
+                    }
+                }
+            }
+            $offres = $this->model->findByOffreCommunes($ville_cible, $args['type_de_contrat']);
+        }
+		
+		foreach($offres as &$offre){
+			$offre['distance'] = $liste_distances[$offre['commune_id']];
+			if(!$offre['commune_id']){
+				$offre['distance'] = 101;
+			}
+		}
+		
+		array_multisort(array_column($offres, 'distance'), SORT_ASC,array_column($offres, 'id_pole_emploi'), SORT_ASC, $offres);
+
+
+		$jsonData = [];
+        $idx = 0;
+		$offset = ($page-1)*$nombre_offres;
+        $jsonData['info'] = ['nbOffres' => count($offres), 'nbOffresPage' => $nombre_offres, 'pageActuelle' => (int)$page, 'pageMax' => ceil(count($offres) / $nombre_offres)];
+		$jsonData['offres'] = [];
+        while($offset < $page*$nombre_offres && isset($offres[$offset])){
 			if($offres[$offset]['ville_libelle'] && $offres[$offset]['ville_libelle'] != 'Non renseigné' && $offres[$offset]['id_pole_emploi']){
 				$nomVille = explode('- ', $offres[$offset]['ville_libelle'])[1];
 			}else{
@@ -242,7 +366,8 @@ class Offre_emploi_Public {
 
 		$args = array(
 			'page' => $_GET['pageNumber'],
-			'nombre_offres' => $_GET['pageSize']
+			'nombre_offres' => $_GET['pageSize'],
+			'type_de_contrat' => $_GET['type_de_contrat']
 		);
 
 		if(!$args['page']){
@@ -257,11 +382,12 @@ class Offre_emploi_Public {
 			$nombre_offres = $args['nombre_offres'];
 		}
 
-		$offres = $this->model->findByOffreVisibles('visible', [], $nombre_offres, ($page - 1) * $nombre_offres);
-        $nb_offres_demandees = count($this->model->findByOffreVisibles());
+		$offres = $this->model->findByOffreVisibles('visible', $args['type_de_contrat'], $nombre_offres, ($page - 1) * $nombre_offres);
+        $nb_offres_demandees = count($this->model->findByOffreVisibles('visible', $args['type_de_contrat']));
         $jsonData = [];
         $idx = 0;
         $jsonData['info'] = ['nbOffres' => $nb_offres_demandees, 'nbOffresPage' => $nombre_offres, 'pageActuelle' => (int)$page, 'pageMax' => ceil($nb_offres_demandees / $nombre_offres)];
+		$jsonData['offres'] = [];
         foreach($offres as $offre){
             if($offre['ville_libelle'] && $offre['ville_libelle'] != 'Non renseigné' && $offre['id_pole_emploi']){
                 $nomVille = explode('- ', $offre['ville_libelle'])[1];
@@ -561,9 +687,79 @@ class Offre_emploi_Public {
 	}
 
 	/**
+	 * Envoie un mail au propriétaire de l'offre d'emploi et ajoute une candidature dans la table correspondante
+	 */
+	function envoie_candidature($id_offre_emploi){
+		if(!$id_offre_emploi){
+			echo('Erreur à l\'envoie de la candidature. L\'id de l\'offre n\'a pas été précisé. A voir avec l\administrateur.');
+		}else{
+			$args = array(
+				'id_user' => get_current_user_id(),
+				'prenom' => $_POST['prenom'],
+				'nom' => $_POST['nom'],
+				'mail' => $_POST['mail'],
+				'message' => $_POST['message']
+			);
+			$form_complet = true;
+			if(!$args['prenom']){
+				echo('Le prénom n\'a pas été fourni');
+				$form_complet = false;
+			}
+			if(!$args['nom']){
+				echo('Le nom n\'a pas été fourni');
+				$form_complet = false;
+			}
+			if(!$args['mail']){
+				echo('Le mail n\'a pas été fourni');
+				$form_complet = false;
+			}
+			if(!$args['message']){
+				echo('Le message n\'a pas été fourni');
+				$form_complet = false;
+			}
+			if($form_complet){
+				if($args['id_user']){
+					$this->model->createCandidature($id_offre_emploi, $args['mail'], $args['id_user']);
+				}else{
+					$this->model->createCandidature($id_offre_emploi, $args['mail']);
+				}
+				$offre = $this->model->findOneOffre($id_offre_emploi);
+				$mail_offre = $offre['mail_entreprise'];
+
+				$this->envoi_email_utilisateur($mail_offre, $offre['intitule'].' - '.$args['prenom'].' '.$args['nom'].' - '.$args['mail'].' - '.$args['message'] , 'candidature');
+			}
+		}
+	}
+
+	/**
+	 * Récupère le nombre de candidature d'un mail sur une offre
+	 */
+	function get_candidatures(){
+		check_ajax_referer('mes_candidatures');
+
+		$args=[
+			'id_offre' => $_POST['id_offre'],
+			'mail' => $_POST['mail']
+		];
+
+		if(!$args['id_offre']){
+			wp_send_json_error('Erreur à la demande. L\'id de l\'offre n\'a pas été précisé. A voir avec l\administrateur.');
+		}
+		if(!$args['mail']){
+			wp_send_json_error('Le mail n\'a pas été fourni');
+		}
+		
+		$candidatures = $this->model->findCandidatures($args['id_offre'], $args['mail']);
+		
+		wp_send_json_success(['nombre_de_demande' => count($candidatures)]);
+	}
+
+	/**
 	 * Ré-écritude des routes
 	 */
 	function offre_emploi_rewrite_rules() {	
+
+		add_rewrite_rule('^offreEmploi/([0-9]+)/candidature/?', 'index.php?idOffreEmploi=$matches[1]&candidature=1', 'top');
 
 		add_rewrite_rule('^offreEmploi/([0-9]+)/?', 'index.php?idOffreEmploi=$matches[1]', 'top');
 
@@ -593,6 +789,7 @@ class Offre_emploi_Public {
 		$vars[] = 'idMonOffreEmploi';
 		$vars[] = 'modifier';
 		$vars[] = 'verificationNouvelleOffre';
+		$vars[] = 'candidature';
 
 		return $vars;
 	}
@@ -625,10 +822,27 @@ class Offre_emploi_Public {
 			}
 		}
 		//affichage de la fiche d'une offre
-		if(array_key_exists('idOffreEmploi',$wp_query->query_vars)){
+		if(array_key_exists('idOffreEmploi',$wp_query->query_vars)){	
+			if(array_key_exists('candidature', $wp_query->query_vars)){
+				$this->envoie_candidature($wp_query->query_vars['idOffreEmploi']);
+				wp_redirect("^/offreEmploi/".$wp_query->query_vars['idOffreEmploi']);
+				exit;
+				return;
+			}
 			if(file_exists(plugin_dir_path( __FILE__ ) .'partials/fiche_offre.php')) {
 				wp_enqueue_style( $this->plugin_name.'offre', plugin_dir_url( __FILE__ ) . 'css/offre.css', array(), $this->version, 'all' );
 				wp_enqueue_script( $this->plugin_name.'masonry', "https://unpkg.com/masonry-layout@4/dist/masonry.pkgd.js", array( 'jquery' ), $this->version, false);
+				wp_enqueue_script( $this->plugin_name.'fiche_offre', plugin_dir_url( __FILE__ ) . 'js/fiche_offre.js', array( 'jquery'), $this->version, true);
+				$mesCandidatures = wp_create_nonce( 'mes_candidatures' );
+				wp_localize_script(
+					$this->plugin_name.'fiche_offre',
+					'mes_candidature_ajax',
+					array(
+						'ajax_url' => admin_url( 'admin-ajax.php' ),
+						'nonce'    => $mesCandidatures,
+						'id_offre_emploi' => $wp_query->query_vars['idOffreEmploi']
+					)
+				);
 				include(plugin_dir_path( __FILE__ ) .'partials/fiche_offre.php');
 				return;
 			}
@@ -743,5 +957,127 @@ class Offre_emploi_Public {
 			}
 		}
 		return $template;
+	}
+
+	public function envoi_email_utilisateur($user_email, $content, $response){
+		
+		$mail = new PHPMailer(true);
+		try {
+			$mail->isSMTP();                                            //Send using SMTP
+			$mail->Host       = 'smtp-out.iti-conseil.com';                     //Set the SMTP server to send through
+			$mail->SMTPAuth   = false;                                   //Enable SMTP authentication
+			$mail->Username   = '';                     //SMTP username
+			$mail->Password   = '';                               //SMTP password
+			$mail->SMTPSecure = 'tls';         //Enable TLS encryption; `PHPMailer::ENCRYPTION_SMTPS` encouraged
+			$mail->Port       = 587;                                    //TCP port to connect to, use 465 for `PHPMailer::ENCRYPTION_SMTPS` above
+			$mail->SMTPAutoTLS = false;
+			$mail->SMTPOptions = array(
+					'ssl' => array(
+							'verify_peer' => false,
+							'verify_peer_name' => false,
+							'allow_self_signed' => true
+					));
+			//Recipients
+			$mail->CharSet = 'utf-8';
+			$mail->setFrom('no-reply@koikispass.com', 'Koikispass.com');
+			$mail->addReplyTo('no-reply@koikispass.com', 'Koikispass');		
+			$mail->addAddress($user_email);		
+
+			//Content
+			$mail->isHTML(true);                                  //Set email format to HTML
+			if($response == 'valide'){
+				$mail->Subject = utf8_decode("Validation de votre demande d'offre d'emploi");
+				$message = "<table cellpadding=0 cellspacing=0>
+						<tr>
+							<td width='11px'></td>
+								<td width='10px'>&nbsp;</td>
+								<td width='729px'>
+	
+								<p>Bonjour,</p>
+	
+								<p>Votre offre a été validée et est visible dés maintenant sur notre site. </p>
+							
+								<p>".stripslashes($content)."</p>
+								<p>Cordialement.</p>
+							
+								</td>
+								<td width='10px'>&nbsp;</td>
+							<td width='11px'></td>
+						</tr>
+						
+					</table>";	
+			}elseif('candidature'){
+				$demande = explode(' - ', $content);
+				$intitule_offre = $demande[0];
+				$prenom_nom_user = $demande[1];
+				$mail_user = $demande[2];
+				$demande = $demande[3];
+
+				$mail->Subject = utf8_decode("Candidature pour votre offre '".$intitule_offre."' - ".$prenom_nom_user);
+				$message = "<table cellpadding=0 cellspacing=0>
+								<tr>
+									<td width='11px'></td>
+										<td width='10px'>&nbsp;</td>
+										<td width='729px'>
+
+										<p>Bonjour,</p>
+
+										<p>".$prenom_nom_user." a candidaté(e) pour votre offre '".$intitule_offre."' :
+										<br>'".nl2br($demande)."'</p>
+
+										<p>Vous pouvez le contacter sur le mail <a href='mailto:".$mail_user."?subject=RE:Candidature [".$intitule_offre."]'>".$mail_user."</a></p>
+										<p><br>Cordialement.</p>
+									
+										</td>
+										<td width='10px'>&nbsp;</td>
+									<td width='11px'></td>
+								</tr>
+							</table>";	
+			}else{
+				$mail->Subject = utf8_decode("Refus de votre demande d'offre d'emploi");
+				$message = "<table cellpadding=0 cellspacing=0>
+						<tr>
+							<td width='11px'></td>
+								<td width='10px'>&nbsp;</td>
+								<td width='729px'>
+	
+								<p>Bonjour,</p>
+	
+								<p>Votre offre a été refusée pour les raisons suivante : </p>
+							
+								<p>".stripslashes($content)."</p>
+								<p>Veuillez rectifier ces points et nous renvoyer la demande.<br>Cordialement.</p>
+							
+								</td>
+								<td width='10px'>&nbsp;</td>
+							<td width='11px'></td>
+						</tr>
+						
+					</table>";	
+			}
+			
+			$mail->Body    = $message;
+
+
+			$mail->send();
+			$filename = "/log_envoi.log";
+			$fp = fopen($filename, "a+");
+	 
+			fputs($fp, '----'.$user_email.'---'."\n");
+			fputs($fp, 'Message has been sent OK !'."\n");
+			
+			fclose($fp);
+			return 1;
+		} catch (Exception $e) {
+			$filename = "/log_envoi.log";
+			$fp = fopen($filename, "a+");
+	 
+			fputs($fp, '----'.$user_email.'---'."\n");
+			fputs($fp, $mail->ErrorInfo."\n");
+			
+			fclose($fp);
+			//echo "Message could not be sent. Mailer Error: {$mail->ErrorInfo}";
+			return 0;
+		}
 	}
 }

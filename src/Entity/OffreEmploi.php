@@ -2,6 +2,8 @@
 
 namespace App\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -244,6 +246,16 @@ class OffreEmploi
      * @ORM\Column(type="string", length=255, nullable=true)
      */
     private $visibilite;
+
+    /**
+     * @ORM\OneToMany(targetEntity=Candidature::class, mappedBy="id_offre", orphanRemoval=true)
+     */
+    private $candidatures;
+
+    public function __construct()
+    {
+        $this->candidatures = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -654,6 +666,36 @@ class OffreEmploi
     public function setVisibilite(?string $visibilite): self
     {
         $this->visibilite = $visibilite;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Candidature>
+     */
+    public function getCandidatures(): Collection
+    {
+        return $this->candidatures;
+    }
+
+    public function addCandidature(Candidature $candidature): self
+    {
+        if (!$this->candidatures->contains($candidature)) {
+            $this->candidatures[] = $candidature;
+            $candidature->setIdOffre($this);
+        }
+
+        return $this;
+    }
+
+    public function removeCandidature(Candidature $candidature): self
+    {
+        if ($this->candidatures->removeElement($candidature)) {
+            // set the owning side to null (unless already changed)
+            if ($candidature->getIdOffre() === $this) {
+                $candidature->setIdOffre(null);
+            }
+        }
 
         return $this;
     }
