@@ -149,6 +149,33 @@ class Offre_Emploi_Model {
 		return $return;
 	}
 
+	public function findByMotsClef(array $mots_clef, $type_de_contrat, array $communes = []){
+		$baseSql = 'SELECT * FROM '.$this->TableOffreEmploi." WHERE visibilite = 'visible'";
+		foreach($mots_clef as $key=>$mot_clef){
+			$baseSql .= " AND ( LOWER(intitule) LIKE %s OR LOWER(appellation_metier) LIKE %s OR LOWER(description) LIKE %s )";
+			$prepare_mots_clef[$key*3] = "%".$mot_clef."%";
+			$prepare_mots_clef[$key*3 + 1] = "%".$mot_clef."%";
+			$prepare_mots_clef[$key*3 + 2] = "%".$mot_clef."%";
+		}
+		if($type_de_contrat){
+			$baseSql .= " AND type_contrat = '".$type_de_contrat."'";
+		}
+		if(count($communes) > 0){
+			$baseSql .= " AND (commune_id IS NULL OR commune_id IN (".implode(', ', $communes)."))";
+		}
+		if(count($mots_clef) > 0){
+			$sql = $this->offreEmploiDB->prepare($baseSql, $prepare_mots_clef);
+		}else{
+			$sql = $this->offreEmploiDB->prepare($baseSql);
+		}
+		$test = $this->offreEmploiDB->query( $sql );
+		if($this->offreEmploiDB->last_error){
+			return 'Erreur sql : ' . $this->offreEmploiDB->last_error;
+		}else{
+			return $this->offreEmploiDB->get_results($sql, ARRAY_A);
+		}
+	}
+
 	/**
 	 * Récupère les offres d'emploi d'un utilisateur
 	 */

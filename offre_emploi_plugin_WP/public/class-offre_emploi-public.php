@@ -252,21 +252,13 @@ class Offre_emploi_Public {
 	function recherche_mot_clef(){
 		check_ajax_referer('liste_offres');
 		$args = array(
-			'mots_clef' => explode(' ', $_GET['mots_clef']),
+			'mots_clef' => strtolower($_GET['mots_clef']),
 			'idCommune' => $_GET['ville'],
 			'distance' => $_GET['distance'],
 			'type_de_contrat' => $_GET['type_de_contrat'],
 			'page' => $_GET['pageNumber'],
 			'nombre_offres' => $_GET['pageSize']
 		);
-		
-		if(!$args['idCommune']){
-			wp_send_json_error("L'id de la ville n'a pas été envoyé. Erreure lors de la demande ajax.");
-		}
-		if(!$args['distance']){
-            wp_send_json_error("La distance maximale de la recherche n'a pas été envoyée. Erreure lors de la demande ajax.");
-        }
-
 		if(!$args['page']){
 			$page = 1;
 		}else{
@@ -278,52 +270,58 @@ class Offre_emploi_Public {
 		}else{
 			$nombre_offres = $args['nombre_offres'];
 		}
-        
-		$liste_distances = array();
-		$liste_distances[$args['idCommune']] = 0;
-		
-        if($args['distance'] == 'aucune'){
-            $offres = $this->model->findByOffreCommunes(array($args['idCommune']), $args['type_de_contrat']);
-        }else{
-            $offres = array();
-            $ville_cible = array();
-            $ville_a_trier = $this->model->findAllCommunes();
 
-            foreach($ville_a_trier as $commune){
-                if($commune['id'] == $args['idCommune']){
-                    array_push($ville_cible, $commune['id']); 
-                }else{
-                    $villeFrom = $this->model->findOneCommune($args['idCommune']);
-                    $villeTo = $commune;
-                    $latFrom = deg2rad($villeFrom['latitude']);
-                    $lonFrom = deg2rad($villeFrom['longitude']);
-                    $latTo = deg2rad($villeTo['latitude']);
-                    $lonTo = deg2rad($villeTo['longitude']);
-					$lonDelta = $lonTo - $lonFrom;
-                    $a = pow(cos($latTo) * sin($lonDelta), 2) +
-                        pow(cos($latFrom) * sin($latTo) - sin($latFrom) * cos($latTo) * cos($lonDelta), 2);
-                    $b = sin($latFrom) * sin($latTo) + cos($latFrom) * cos($latTo) * cos($lonDelta);
-                    $angle = atan2(sqrt($a), $b);
-                    $distanceVilles = $angle * 6371;
-                    if($distanceVilles < $args['distance']){
-                        array_push($ville_cible, $commune['id']);
-						$liste_distances[$commune['id']] = $distanceVilles;
-                    }
-                }
-            }
-            $offres = $this->model->findByOffreCommunes($ville_cible, $args['type_de_contrat']);
-        }
-		
-		foreach($offres as &$offre){
-			$offre['distance'] = $liste_distances[$offre['commune_id']];
-			if(!$offre['commune_id']){
-				$offre['distance'] = 101;
-			}
+		if($args['mots_clef'] == ""){
+			$args['mots_clef'] = [];
+		}else{
+			$args['mots_clef'] = explode(' ', $args['mots_clef']);
 		}
-		
-		array_multisort(array_column($offres, 'distance'), SORT_ASC,array_column($offres, 'id_pole_emploi'), SORT_ASC, $offres);
+        
+		if(!$args['idCommune']){
+			$offres = $this->model->findByMotsClef($args['mots_clef'], $args['type_de_contrat']);
+		}else{
+			$liste_distances = array();
+			$liste_distances[$args['idCommune']] = 0;
+			if($args['distance'] == 'aucune'){
+				$offres = $this->model->findByMotsClef($args['mots_clef'], $args['type_de_contrat'], array($args['idCommune']));
+			}else{
+				$offres = array();
+				$ville_cible = array();
+				$ville_a_trier = $this->model->findAllCommunes();
 
-
+				foreach($ville_a_trier as $commune){
+					if($commune['id'] == $args['idCommune']){
+						array_push($ville_cible, $commune['id']); 
+					}else{
+						$villeFrom = $this->model->findOneCommune($args['idCommune']);
+						$villeTo = $commune;
+						$latFrom = deg2rad($villeFrom['latitude']);
+						$lonFrom = deg2rad($villeFrom['longitude']);
+						$latTo = deg2rad($villeTo['latitude']);
+						$lonTo = deg2rad($villeTo['longitude']);
+						$lonDelta = $lonTo - $lonFrom;
+						$a = pow(cos($latTo) * sin($lonDelta), 2) +
+							pow(cos($latFrom) * sin($latTo) - sin($latFrom) * cos($latTo) * cos($lonDelta), 2);
+						$b = sin($latFrom) * sin($latTo) + cos($latFrom) * cos($latTo) * cos($lonDelta);
+						$angle = atan2(sqrt($a), $b);
+						$distanceVilles = $angle * 6371;
+						if($distanceVilles < $args['distance']){
+							array_push($ville_cible, $commune['id']);
+							$liste_distances[$commune['id']] = $distanceVilles;
+						}
+					}
+				}
+				$offres = $this->model->findByMotsClef($args['mots_clef'], $args['type_de_contrat'], $ville_cible);
+			}
+			foreach($offres as &$offre){
+				$offre['distance'] = $liste_distances[$offre['commune_id']];
+				if(!$offre['commune_id']){
+					$offre['distance'] = 101;
+				}
+			}
+			
+			array_multisort(array_column($offres, 'distance'), SORT_ASC,array_column($offres, 'id_pole_emploi'), SORT_ASC, $offres);
+		}
 		$jsonData = [];
         $idx = 0;
 		$offset = ($page-1)*$nombre_offres;
