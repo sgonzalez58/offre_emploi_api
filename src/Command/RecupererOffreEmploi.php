@@ -39,9 +39,11 @@ class RecupererOffreEmploi extends Command
                 $nouvelle_offre
                     ->setIdPoleEmploi($offre->id)
                     ->setIntitule($offre->intitule)
-                    ->setDescription($offre->description)
                     ->setDateDeCreation(new \DateTime($offre->dateCreation))
                     ->setDateActualisation(new \DateTime($offre->dateActualisation));
+                if(property_exists($offre, 'description')){
+                    $nouvelle_offre->setDescription($offre->description);
+                }
                 if(property_exists($offre->lieuTravail, 'latitude')){
                     $nouvelle_offre->setLatitude($offre->lieuTravail->latitude);
                 }

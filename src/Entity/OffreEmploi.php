@@ -208,7 +208,7 @@ class OffreEmploi
     /**
      * @var string
      *
-     * @ORM\Column(name="description", type="text", length=0, nullable=false)
+     * @ORM\Column(name="description", type="text", length=0, nullable=true)
      */
     private $description;
 
@@ -579,7 +579,7 @@ class OffreEmploi
         return $this->description;
     }
 
-    public function setDescription(string $description): self
+    public function setDescription(?string $description): self
     {
         $this->description = $description;
 

@@ -346,11 +346,15 @@ class Offre_emploi_Public {
 				$description = $offres[$offset]['description'];
 			}
 			if($offres[$offset]['nom_entreprise']){
-				$nomEntreprise = $offres[$offset]['nom_entreprise'];
+				if(strlen($offres[$offset]['nom_entreprise']) > 23){
+					$nomEntreprise = substr(htmlentities($offres[$offset]['nom_entreprise']), 0, 22);
+				}else{
+					$nomEntreprise = $offres[$offset]['nom_entreprise'];
+				}
 			}else{
 				$nomEntreprise = 'Aucun';
 			}
-			$jsonData['offres'][$idx++] = ['id' => $offres[$offset]['id'], 'intitule' => $offres[$offset]['intitule'], 'nomVille' => $nomVille, 'lienMap' => $lienMap, 'description' => $description, 'nomEntreprise' => $nomEntreprise, 'lienOrigineOffre' => $offres[$offset]['origine_offre'], 'distance' => $offres[$offset]['distance'] ];
+			$jsonData['offres'][$idx++] = ['id' => $offres[$offset]['id'], 'intitule' => $offres[$offset]['intitule'], 'nomVille' => $nomVille, 'lienMap' => $lienMap, 'description' => $description, 'nomEntreprise' => $nomEntreprise, 'lienOrigineOffre' => $offres[$offset]['origine_offre'], 'distance' => $offres[$offset]['distance'], 'type_contrat' => $offres[$offset]['type_contrat'] ];
 			$offset++;
         }
         wp_send_json_success($jsonData);
