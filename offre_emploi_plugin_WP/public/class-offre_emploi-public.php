@@ -59,14 +59,8 @@ class Offre_emploi_Public {
 		require_once plugin_dir_path( __FILE__ ) . '../model/model-offre_emploi.php';
 		$this->model = new Offre_Emploi_Model();
 		
-		add_action('wp_ajax_get_offres_avec_filtres', array($this,'get_offres_avec_filtres_action'));
-		add_action('wp_ajax_nopriv_get_offres_avec_filtres', array($this,'get_offres_avec_filtres_action'));
-
 		add_action('wp_ajax_recherche_mot_clef', array($this,'recherche_mot_clef'));
 		add_action('wp_ajax_nopriv_recherche_mot_clef', array($this,'recherche_mot_clef'));
-
-		add_action('wp_ajax_get_offres_sans_filtres', array($this,'get_offres_sans_filtres_action'));
-		add_action('wp_ajax_nopriv_get_offres_sans_filtres', array($this,'get_offres_sans_filtres_action'));
 
 		add_action('wp_ajax_get_one_offre', array($this,'get_one_offre'));
 		add_action('wp_ajax_nopriv_get_one_offre', array($this,'get_one_offre'));
@@ -133,117 +127,6 @@ class Offre_emploi_Public {
 
 		wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/offre_emploi-public.js', array( 'jquery' ), $this->version, false );
 		wp_enqueue_script( $this->plugin_name.'.select2', 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js', array( 'jquery' ), $this->version, false );
-	}
-
-	/**
-	 * Récupères les offres d'autour d'une commune
-	 */
-	function get_offres_avec_filtres_action(){
-		check_ajax_referer('liste_offres');
-		$args = array(
-			'idCommune' => $_GET['ville'],
-			'distance' => $_GET['distance'],
-			'type_de_contrat' => $_GET['type_de_contrat'],
-			'page' => $_GET['pageNumber'],
-			'nombre_offres' => $_GET['pageSize']
-		);
-		
-		if(!$args['idCommune']){
-			wp_send_json_error("L'id de la ville n'a pas été envoyé. Erreure lors de la demande ajax.");
-		}
-		if(!$args['distance']){
-            wp_send_json_error("La distance maximale de la recherche n'a pas été envoyée. Erreure lors de la demande ajax.");
-        }
-
-		if(!$args['page']){
-			$page = 1;
-		}else{
-			$page = $args['page'];
-		}
-
-		if(!$args['nombre_offres']){
-			$nombre_offres = 50;
-		}else{
-			$nombre_offres = $args['nombre_offres'];
-		}
-        
-		$liste_distances = array();
-		$liste_distances[$args['idCommune']] = 0;
-		
-        if($args['distance'] == 'aucune'){
-            $offres = $this->model->findByOffreCommunes(array($args['idCommune']), $args['type_de_contrat']);
-        }else{
-            $offres = array();
-            $ville_cible = array();
-            $ville_a_trier = $this->model->findAllCommunes();
-
-            foreach($ville_a_trier as $commune){
-                if($commune['id'] == $args['idCommune']){
-                    array_push($ville_cible, $commune['id']); 
-                }else{
-                    $villeFrom = $this->model->findOneCommune($args['idCommune']);
-                    $villeTo = $commune;
-                    $latFrom = deg2rad($villeFrom['latitude']);
-                    $lonFrom = deg2rad($villeFrom['longitude']);
-                    $latTo = deg2rad($villeTo['latitude']);
-                    $lonTo = deg2rad($villeTo['longitude']);
-					$lonDelta = $lonTo - $lonFrom;
-                    $a = pow(cos($latTo) * sin($lonDelta), 2) +
-                        pow(cos($latFrom) * sin($latTo) - sin($latFrom) * cos($latTo) * cos($lonDelta), 2);
-                    $b = sin($latFrom) * sin($latTo) + cos($latFrom) * cos($latTo) * cos($lonDelta);
-                    $angle = atan2(sqrt($a), $b);
-                    $distanceVilles = $angle * 6371;
-                    if($distanceVilles < $args['distance']){
-                        array_push($ville_cible, $commune['id']);
-						$liste_distances[$commune['id']] = $distanceVilles;
-                    }
-                }
-            }
-            $offres = $this->model->findByOffreCommunes($ville_cible, $args['type_de_contrat']);
-        }
-		
-		foreach($offres as &$offre){
-			$offre['distance'] = $liste_distances[$offre['commune_id']];
-			if(!$offre['commune_id']){
-				$offre['distance'] = 101;
-			}
-		}
-		
-		array_multisort(array_column($offres, 'distance'), SORT_ASC,array_column($offres, 'id_pole_emploi'), SORT_ASC, $offres);
-
-
-		$jsonData = [];
-        $idx = 0;
-		$offset = ($page-1)*$nombre_offres;
-        $jsonData['info'] = ['nbOffres' => count($offres), 'nbOffresPage' => $nombre_offres, 'pageActuelle' => (int)$page, 'pageMax' => ceil(count($offres) / $nombre_offres)];
-		$jsonData['offres'] = [];
-        while($offset < $page*$nombre_offres && isset($offres[$offset])){
-			if($offres[$offset]['ville_libelle'] && $offres[$offset]['ville_libelle'] != 'Non renseigné' && $offres[$offset]['id_pole_emploi']){
-				$nomVille = explode('- ', $offres[$offset]['ville_libelle'])[1];
-			}else{
-				if($offres[$offset]['ville_libelle'] && $offres[$offset]['ville_libelle'] != 'Non renseigné' && !$offres[$offset]['id_pole_emploi']){
-					$nomVille = $offres[$offset]['ville_libelle'];
-				}
-			}
-			if($offres[$offset]['latitude']){
-				$lienMap = 'https://www.openstreetmap.org/?mlat=' . $offres[$offset]['latitude'] . '&mlon=' . $offres[$offset]['longitude'] . '#map=17/' . $offres[$offset][$offset]['latitude'] . '/' . $offres[$offset]['longitude'] . '&layers=N';
-			}else{
-				$lienMap = 'aucun';
-			}
-			if(strlen($offres[$offset]['description']) > 150){
-				$description = substr(htmlentities($offres[$offset]['description']), 0, 149) . '...';
-			}else{
-				$description = $offres[$offset]['description'];
-			}
-			if($offres[$offset]['nom_entreprise']){
-				$nomEntreprise = $offres[$offset]['nom_entreprise'];
-			}else{
-				$nomEntreprise = 'Aucun';
-			}
-			$jsonData['offres'][$idx++] = ['id' => $offres[$offset]['id'], 'intitule' => $offres[$offset]['intitule'], 'nomVille' => $nomVille, 'lienMap' => $lienMap, 'description' => $description, 'nomEntreprise' => $nomEntreprise, 'lienOrigineOffre' => $offres[$offset]['origine_offre'], 'distance' => $offres[$offset]['distance'] ];
-			$offset++;
-        }
-        wp_send_json_success($jsonData);
 	}
 
 	/**
@@ -356,64 +239,6 @@ class Offre_emploi_Public {
 			}
 			$jsonData['offres'][$idx++] = ['id' => $offres[$offset]['id'], 'intitule' => $offres[$offset]['intitule'], 'nomVille' => $nomVille, 'lienMap' => $lienMap, 'description' => $description, 'nomEntreprise' => $nomEntreprise, 'lienOrigineOffre' => $offres[$offset]['origine_offre'], 'distance' => $offres[$offset]['distance'], 'type_contrat' => $offres[$offset]['type_contrat'] ];
 			$offset++;
-        }
-        wp_send_json_success($jsonData);
-	}
-
-	/**
-	 * Récupères toutes les offres
-	 */
-	function get_offres_sans_filtres_action(){
-		check_ajax_referer('liste_offres');
-
-		$args = array(
-			'page' => $_GET['pageNumber'],
-			'nombre_offres' => $_GET['pageSize'],
-			'type_de_contrat' => $_GET['type_de_contrat']
-		);
-
-		if(!$args['page']){
-			$page = 1;
-		}else{
-			$page = $args['page'];
-		}
-
-		if(!$args['nombre_offres']){
-			$nombre_offres = 50;
-		}else{
-			$nombre_offres = $args['nombre_offres'];
-		}
-
-		$offres = $this->model->findByOffreVisibles('visible', $args['type_de_contrat'], $nombre_offres, ($page - 1) * $nombre_offres);
-        $nb_offres_demandees = count($this->model->findByOffreVisibles('visible', $args['type_de_contrat']));
-        $jsonData = [];
-        $idx = 0;
-        $jsonData['info'] = ['nbOffres' => $nb_offres_demandees, 'nbOffresPage' => $nombre_offres, 'pageActuelle' => (int)$page, 'pageMax' => ceil($nb_offres_demandees / $nombre_offres)];
-		$jsonData['offres'] = [];
-        foreach($offres as $offre){
-            if($offre['ville_libelle'] && $offre['ville_libelle'] != 'Non renseigné' && $offre['id_pole_emploi']){
-                $nomVille = explode('- ', $offre['ville_libelle'])[1];
-            }else{
-				if($offre['ville_libelle'] && $offre['ville_libelle'] != 'Non renseigné' && !$offre['id_pole_emploi']){
-					$nomVille = $offre['ville_libelle'];
-				}
-			}
-            if($offre['latitude']){
-                $lienMap = 'https://www.openstreetmap.org/?mlat=' . $offre['latitude'] . '&mlon=' . $offre['longitude'] . '#map=17/' . $offre['latitude'] . '/' . $offre['longitude'] . '&layers=N';
-            }else{
-                $lienMap = 'aucun';
-            }
-            if(strlen($offre['description']) > 150){
-                $description = substr(htmlentities($offre['description']), 0, 149) . '...';
-            }else{
-                $description = $offre['description'];
-            }
-            if($offre['nom_entreprise']){
-                $nomEntreprise = $offre['nom_entreprise'];
-            }else{
-                $nomEntreprise = 'Aucun';
-            }
-            $jsonData['offres'][$idx++] = ['id' => $offre['id'], 'intitule' => $offre['intitule'], 'nomVille' => $nomVille, 'lienMap' => $lienMap, 'description' => $description, 'nomEntreprise' => $nomEntreprise, 'lienOrigineOffre' => $offre['origine_offre']];
         }
         wp_send_json_success($jsonData);
 	}
@@ -833,7 +658,6 @@ class Offre_emploi_Public {
 			}
 			if(file_exists(plugin_dir_path( __FILE__ ) .'partials/fiche_offre.php')) {
 				wp_enqueue_style( $this->plugin_name.'offre', plugin_dir_url( __FILE__ ) . 'css/offre.css', array(), $this->version, 'all' );
-				wp_enqueue_script( $this->plugin_name.'masonry', "https://unpkg.com/masonry-layout@4/dist/masonry.pkgd.js", array( 'jquery' ), $this->version, false);
 				wp_enqueue_script( $this->plugin_name.'fiche_offre', plugin_dir_url( __FILE__ ) . 'js/fiche_offre.js', array( 'jquery'), $this->version, true);
 				$mesCandidatures = wp_create_nonce( 'mes_candidatures' );
 				wp_localize_script(

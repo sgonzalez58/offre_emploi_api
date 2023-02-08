@@ -95,6 +95,7 @@ main{
     font-size: 14px;
     border: none!important;
     box-shadow: 0px 0px 2px 0px rgb(200, 200, 200);
+    overflow: hidden;
 }
 
 .select2-container--default .select2-selection--single .select2-selection__rendered{
@@ -185,6 +186,8 @@ main{
     font-weight: bold;
     font-size: 30px;
     line-height: 1em;
+    word-break: break-word;
+    hyphens: auto;
 }
 
 .details{
@@ -239,26 +242,78 @@ main{
     letter-spacing: 1px;
 }
 
-.select2-selection__clear{
-    color:black;
-    padding:0;
+.select2-container--default .select2-selection--single .select2-selection__clear {
+    z-index:2;
+    background-color: white!important;
+    height: 100%!important;
+    position: absolute!important;
+    right:0;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    font-size: 20px!important;
+    color: black;
+    margin-right: 0!important;
+    padding-right: 0!important;
+    padding:0.5rem!important;
+    border-radius: 5px;
 }
 
-.select2-selection__clear:hover{
-    color:black;
-    transform: scale(1.5);
-}
-
-@media screen and (max-width:520px) {
-    .tri_liste{
-        flex-direction: column-reverse;
+@media screen and (max-width:1080px) {
+    #liste_offres{
+        grid-template-columns: repeat(2, 1fr);
     }
 
-    .offre{
+    #filtre_recherche{
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        grid-gap: 1rem;
+    }
+
+    #liste_filtres{
+        align-items: center;
+    }
+}
+
+@media screen and (max-width:780px) {
+    #liste_offres{
+        grid-template-columns: repeat(1, 1fr);
+        width: 100%;
+    }
+
+    #liste_filtres{
+        display: grid;
+        grid-template-columns: repeat(1, 1fr);
+        grid-gap: 1rem;
+        justify-items: center;
+    }
+
+    #filtre_recherche{
+        grid-template-columns: repeat(1, 1fr);
+        justify-items: center;
+    }
+
+    #filtre_label{
+        text-align: center;
+    }
+
+    .head_liste_offre{
+        display: grid;
+        grid-template-columns: repeat(1, 1fr);
+        grid-gap: 1rem;
+        text-align: center;
+        justify-items: center;
+    }
+
+    .ajout{
+        display: flex;
         flex-direction: column;
+        align-items: center;
     }
 
-    .corps_offre, .entreprise_offre{
-        width: calc(100% - 40px);
+    .recherche{
+        display: flex;
+        width: clamp(250px, 70%, 500px);
+        margin:auto;
     }
 }

@@ -14,7 +14,7 @@
 
 
 $class = new Offre_emploi_Public('Offre_emploi','1.0.0');
-$offres_valides = $class->model->findByOffreVisibles('visible', '');
+$offres_valides = $class->model->findByMotsClef();
 $villes = $class->model->findAllCommunes();
 get_header(); ?>
 

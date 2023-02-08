@@ -95,62 +95,8 @@ class Offre_Emploi_Model {
 		return $return[0];
 	}
 
-	/**
-	 * Récupère les offres d'emploi visibles par les visiteurs
-	 */
-	public function findByOffreVisibles($visibilite = 'visible', $type_contrat, $limit = null, $offset = null){
-
-		$baseSql = 'SELECT * FROM '.$this->TableOffreEmploi.' A WHERE A.visibilite = \''.$visibilite.'\'';
-		
-		if($type_contrat){
-			$baseSql .= " AND A.type_contrat = '".$type_contrat."'";
-		}
-		$baseSql .= ' ORDER BY A.id_pole_emploi';
-
-		if($limit){
-			$baseSql .= ' LIMIT '.$limit;
-		}
-
-		if($offset){
-			$baseSql .= ' OFFSET '.$offset;
-		}
-
-		$sql = $this->offreEmploiDB->prepare($baseSql);
-		
-		$this->offreEmploiDB->query( $sql );
-		
-		if( $this->offreEmploiDB->num_rows > 0 )
-			$return = $this->offreEmploiDB->get_results($sql, ARRAY_A);
-		
-		return $return;
-	}
-
-	/**
-	 * Récupères les offres d'emploi présentenr autour d'une ville
-	 */
-	public function findByOffreCommunes(array $communes = [], $type_de_contrat){
-
-		$baseSql = 'SELECT * FROM '.$this->TableOffreEmploi.' A WHERE A.visibilite = \'visible\' AND (A.commune_id IS NULL';
-
-		$baseSql .= ' OR A.commune_id IN ('.implode(', ',$communes);
-		$baseSql .= '))';
-		
-		if($type_de_contrat){
-			$baseSql .= " AND A.type_contrat = '".$type_de_contrat."'";
-		}
-
-		$sql = $this->offreEmploiDB->prepare($baseSql);
-		
-		$this->offreEmploiDB->query( $sql );
-		
-		if( $this->offreEmploiDB->num_rows > 0 )
-			$return = $this->offreEmploiDB->get_results($sql, ARRAY_A);
-		
-		return $return;
-	}
-
-	public function findByMotsClef(array $mots_clef, $type_de_contrat, array $communes = []){
-		$baseSql = 'SELECT * FROM '.$this->TableOffreEmploi." WHERE visibilite = 'visible'";
+	public function findByMotsClef(array $mots_clef = [], $type_de_contrat = null, array $communes = []){
+		$baseSql = 'SELECT * FROM '.$this->TableOffreEmploi." WHERE visibilite = 'visible' AND nom_entreprise IS NOT NULL";
 		foreach($mots_clef as $key=>$mot_clef){
 			$baseSql .= " AND ( LOWER(intitule) LIKE %s OR LOWER(appellation_metier) LIKE %s OR LOWER(description) LIKE %s )";
 			$prepare_mots_clef[$key*3] = "%".$mot_clef."%";
@@ -168,7 +114,6 @@ class Offre_Emploi_Model {
 		}else{
 			$sql = $this->offreEmploiDB->prepare($baseSql);
 		}
-		$test = $this->offreEmploiDB->query( $sql );
 		if($this->offreEmploiDB->last_error){
 			return 'Erreur sql : ' . $this->offreEmploiDB->last_error;
 		}else{
