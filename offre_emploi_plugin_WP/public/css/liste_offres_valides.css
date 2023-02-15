@@ -27,6 +27,12 @@ main{
     color : grey;
 }
 
+.ajout{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
 #ajout_bouton{
     padding : 1rem 2rem;
     border-radius: 5px;
@@ -34,7 +40,7 @@ main{
     display: flex;
     align-items: center;
     font-weight: bold;
-    background-color: red;
+    background-color: grey;
     letter-spacing: 1px;
 }
 
@@ -303,12 +309,6 @@ main{
         grid-gap: 1rem;
         text-align: center;
         justify-items: center;
-    }
-
-    .ajout{
-        display: flex;
-        flex-direction: column;
-        align-items: center;
     }
 
     .recherche{

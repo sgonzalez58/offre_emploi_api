@@ -31,7 +31,8 @@ get_header(); ?>
     </div>
 
     <div class='ajout'>
-        <a class='ajouter_offre' href='/offreEmploi/creer'><button id="ajout_bouton"><i class="fa-solid fa-circle-plus"></i>Créer une offre</button></a>
+        <a class='ajouter_offre' href=''><button id="ajout_bouton" disabled><i class="fa-solid fa-circle-plus"></i>Créer une offre</button></a>
+        <h4>Bientôt disponible, l'ajout de vos offres d'emploi.</h4>
     </div>
 </div>
 
@@ -56,6 +57,10 @@ get_header(); ?>
                 <option value='LIB'>Profession libérale</option>
                 <option value='MIS'>Mission intérimaire</option>
                 <option value='SAI'>Contrat travail saisonnier</option>
+                <option value='APT'>Contrat d'apprentissage</option>
+                <option value='STG'>Stage</option>
+                <option value='CCE'>Profession commerciale</option>
+                <option value='CPR'>Contrat de professionnalisation</option>
             </select>
         </div>
 
