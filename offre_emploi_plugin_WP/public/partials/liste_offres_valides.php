@@ -16,6 +16,7 @@
 $class = new Offre_emploi_Public('Offre_emploi','1.0.0');
 $offres_valides = $class->model->findByMotsClef();
 $villes = $class->model->findAllCommunes();
+$types_contrat = $class->model->getAllTypeContrat();
 get_header(); ?>
 
 		<div id="primary" <?php generate_do_element_classes( 'content' ); ?>>
@@ -49,18 +50,13 @@ get_header(); ?>
             <label class='sort_icon' for="liste_type_contrat"><i class="fa-solid fa-sort"></i></label>
             <select id='liste_type_contrat'>
                 <option value='' selected></option>
-                <option value='CDD'>Contrat à durée déterminée</option>
-                <option value='CDI'>Contrat à durée indéterminée</option>
-                <option value='DDI'>CDD insertion</option>
-                <option value='DIN'>CDI intérimaire</option>
-                <option value='FRA'>Franchise</option>
-                <option value='LIB'>Profession libérale</option>
-                <option value='MIS'>Mission intérimaire</option>
-                <option value='SAI'>Contrat travail saisonnier</option>
-                <option value='APT'>Contrat d'apprentissage</option>
-                <option value='STG'>Stage</option>
-                <option value='CCE'>Profession commerciale</option>
-                <option value='CPR'>Contrat de professionnalisation</option>
+                <?php
+                foreach($types_contrat as $type_contrat){
+                ?>
+                <option value='<?=$type_contrat['type_contrat']?>'><?=$type_contrat['type_contrat']?></option>
+                <?php
+                }
+                ?>
             </select>
         </div>
 

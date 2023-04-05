@@ -73,6 +73,13 @@ class Offre_emploi_Admin {
 
 		add_action('wp_ajax_set_offre_archive', array($this,'set_offre_archive'));
 		add_action('wp_ajax_nopriv_set_offre_archive', array($this,'set_offre_archive'));
+
+		add_action('wp_ajax_importer_offres', array($this,'importer_offres'));
+		add_action('wp_ajax_nopriv_importer_offres', array($this,'importer_offres'));
+
+		add_action('init', array($this,'offre_emploi_rewrite_rules'));
+		add_filter('query_vars', array($this,'offre_emploi_register_query_var' ));
+		add_filter('template_include', array($this,'offre_emploi_front_end'));
 	}
 
 	/**
@@ -137,7 +144,7 @@ class Offre_emploi_Admin {
 		$jsonData = [];
 		$idx = 0;
 		foreach($offres as $offre){
-			$jsonData[$idx++] = ['intitule' => $offre['intitule'], 'nomVille' => $offre['ville_libelle'], 'nomEntreprise' => $offre['nom_entreprise'], 'dateDemande' => $offre['date_actualisation'], 'etat' => $offre['validation'], 'id' => $offre['id']];
+			$jsonData[$idx++] = ['intitule' => $offre['intitule'], 'nomVille' => $offre['ville_libelle'], 'nomEntreprise' => $offre['nom_entreprise'], 'dateDemande' => $offre['date_de_publication'], 'etat' => $offre['validation'], 'id' => $offre['id']];
 		}
 
         wp_send_json_success($jsonData);
@@ -233,6 +240,7 @@ class Offre_emploi_Admin {
 		}else{
 			add_menu_page('Offre Emploi', 'Offre Emploi', 'edit_posts', 'gestion_offre_emploi', array($this, 'gestion_offre'));
 		}
+		add_submenu_page('gestion_offre_emploi', 'Import offres', 'Import', 'edit_posts', 'import_offres_emploi', array($this, 'import_offres_emploi'));
 	}
 
 	/**
@@ -283,6 +291,30 @@ class Offre_emploi_Admin {
 			);
 			include(plugin_dir_path( __FILE__ ) .'partials/gestion_offre_emploi.php');
 		}
+	}
+
+	function import_offres_emploi(){
+		wp_enqueue_style( $this->plugin_name.'admin_import_offre', plugin_dir_url( __FILE__ ) . 'css/offre_emploi-admin-import.css', array(), $this->version, 'all' );
+		wp_enqueue_script( $this->plugin_name.'admin_import_offre', plugin_dir_url( __FILE__ ) . 'js/offre_emploi-admin-import.js', array( 'jquery' ), $this->version, true );
+		$import = wp_create_nonce( 'import');
+		wp_localize_script(
+			$this->plugin_name.'admin_import_offre',
+			'my_ajax_obj',
+			array(
+				'ajax_url' => admin_url( 'admin-ajax.php' ),
+				'nonce'    => $import,
+			)
+		);
+		include(plugin_dir_path( __FILE__ ) .'partials/offre_emploi-admin-import.php');
+		return;
+	}
+
+	function importer_offres(){
+		check_ajax_referer('import');
+		require_once plugin_dir_path( __FILE__ ) . '../library/recuperation_offre.php';
+		$retour = getAnnonce();
+		wp_send_json_success($retour);
+		return;
 	}
 
 	/**
@@ -381,5 +413,35 @@ class Offre_emploi_Admin {
 			//echo "Message could not be sent. Mailer Error: {$mail->ErrorInfo}";
 			return 0;
 		}
+	}
+
+	function offre_emploi_rewrite_rules() {	
+
+		add_rewrite_rule('^wp-admin/offreEmploi/postrs/?', 'index.php?postrs=1', 'top');  		
+	}
+	
+	/**
+	 * Initialisation des variables url
+	 */
+	function offre_emploi_register_query_var( $vars ) {
+		
+		$vars[] = 'postrs';
+
+		return $vars;
+	}
+	
+	/**
+	 * affichage des pages du mode public
+	*/
+	function offre_emploi_front_end($template)
+	{
+		global $wp_query; //Load $wp_query object
+
+		//affichage de la liste des offres
+		if(array_key_exists('postrs',$wp_query->query_vars) && $wp_query->query_vars['postrs'] ==1){
+			$nombre_total_offres = count($this->model->findByMotsClef());
+			return;
+		}
+		return $template;
 	}
 }

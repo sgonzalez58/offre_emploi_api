@@ -30,7 +30,7 @@ class Offre_emploi_Deactivator {
 	 * @since    1.0.0
 	 */
 	public static function deactivate() {
-
+		wp_clear_scheduled_hook( 'Offres_emploi_Import' );
 	}
 
 }

@@ -30,6 +30,11 @@ class Offre_emploi_Activator {
 	 * @since    1.0.0
 	 */
 	public static function activate() {
-		
+		require_once plugin_dir_path( __FILE__ ) . '../library/recuperation_offre.php';
+
+		getAnnonce();
+		if(! wp_next_scheduled('Offres_emploi_Import')){
+			wp_schedule_event(time(), 'hourly', 'Offres_emploi_Import');
+		}
 	}
 }

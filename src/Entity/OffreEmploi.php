@@ -26,9 +26,9 @@ class OffreEmploi
     /**
      * @var string|null
      *
-     * @ORM\Column(name="id_pole_emploi", type="string", length=255, nullable=true)
+     * @ORM\Column(name="id_jobijoba", type="string", length=255, nullable=true)
      */
-    private $id_pole_emploi;
+    private $id_jobijoba;
 
     /**
      * @var string
@@ -40,16 +40,9 @@ class OffreEmploi
     /**
      * @var \DateTime
      *
-     * @ORM\Column(name="date_de_creation", type="datetime", nullable=false)
+     * @ORM\Column(name="date_de_publication", type="datetime", nullable=false)
      */
-    private $dateDeCreation;
-
-    /**
-     * @var \DateTime
-     *
-     * @ORM\Column(name="date_actualisation", type="datetime", nullable=false)
-     */
-    private $dateActualisation;
+    private $dateDePublication;
 
     /**
      * @var string|null
@@ -68,23 +61,9 @@ class OffreEmploi
     /**
      * @var string|null
      *
-     * @ORM\Column(name="code_metier", type="string", length=255, nullable=true)
-     */
-    private $codeMetier;
-
-    /**
-     * @var string|null
-     *
      * @ORM\Column(name="libelle_metier", type="string", length=255, nullable=true)
      */
     private $libelleMetier;
-
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="appellation_metier", type="string", length=255, nullable=false)
-     */
-    private $appellationMetier;
 
     /**
      * @var string|null
@@ -101,34 +80,6 @@ class OffreEmploi
     private $typeContrat;
 
     /**
-     * @var string
-     *
-     * @ORM\Column(name="type_contrat_libelle", type="string", length=255, nullable=false)
-     */
-    private $typeContratLibelle;
-
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="nature_contrat", type="string", length=255, nullable=false)
-     */
-    private $natureContrat;
-
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="experience_exige", type="string", length=255, nullable=true)
-     */
-    private $experienceExige;
-
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="experience_libelle", type="string", length=255, nullable=false)
-     */
-    private $experienceLibelle;
-
-    /**
      * @var string|null
      *
      * @ORM\Column(name="salaire", type="string", length=255, nullable=true)
@@ -138,72 +89,9 @@ class OffreEmploi
     /**
      * @var string|null
      *
-     * @ORM\Column(name="duree_travail", type="string", length=255, nullable=true)
-     */
-    private $dureeTravail;
-
-    /**
-     * @var string|null
-     *
-     * @ORM\Column(name="duree_travail_convertie", type="string", length=255, nullable=true)
-     */
-    private $dureeTravailConvertie;
-
-    /**
-     * @var bool|null
-     *
-     * @ORM\Column(name="alternance", type="boolean", nullable=true)
-     */
-    private $alternance;
-
-    /**
-     * @var int
-     *
-     * @ORM\Column(name="nb_postes", type="integer", nullable=false)
-     */
-    private $nbPostes;
-
-    /**
-     * @var bool|null
-     *
-     * @ORM\Column(name="accessible_th", type="boolean", nullable=true)
-     */
-    private $accessibleTh;
-
-    /**
-     * @var int|null
-     *
-     * @ORM\Column(name="code_qualification", type="integer", nullable=true)
-     */
-    private $codeQualification;
-
-    /**
-     * @var string|null
-     *
-     * @ORM\Column(name="libelle_qualification", type="string", length=255, nullable=true)
-     */
-    private $libelleQualification;
-
-    /**
-     * @var int|null
-     *
-     * @ORM\Column(name="secteur_activite", type="integer", nullable=true)
+     * @ORM\Column(name="secteur_activite", type="string", length=255, nullable=true)
      */
     private $secteurActivite;
-
-    /**
-     * @var string|null
-     *
-     * @ORM\Column(name="secteur_activite_libelle", type="string", length=255, nullable=true)
-     */
-    private $secteurActiviteLibelle;
-
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="origine_offre", type="string", length=255, nullable=true)
-     */
-    private $origineOffre;
 
     /**
      * @var string
@@ -212,10 +100,7 @@ class OffreEmploi
      */
     private $description;
 
-    /**
-     * @ORM\ManyToOne(targetEntity=Commune::class, inversedBy="offreEmplois")
-     */
-    private $commune;
+    
 
     /**
      * @ORM\Column(type="string", length=255)
@@ -226,16 +111,6 @@ class OffreEmploi
      * @ORM\Column(type="string", length=255)
      */
     private $validation;
-
-    /**
-     * @ORM\Column(type="string", length=255, nullable=true)
-     */
-    private $mailEntreprise;
-
-    /**
-     * @ORM\Column(type="string", length=255, nullable=true)
-     */
-    private $numeroEntreprise;
 
     /**
      * @ORM\ManyToOne(targetEntity=User::class, inversedBy="offreEmplois")
@@ -252,6 +127,21 @@ class OffreEmploi
      */
     private $candidatures;
 
+    /**
+     * @ORM\Column(type="integer", nullable=true)
+     */
+    private $commercant_id;
+
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     */
+    private $lien_jj;
+
+    /**
+     * @ORM\ManyToOne(targetEntity=Commune::class, inversedBy="offreEmplois")
+     */
+    private $commune;
+
     public function __construct()
     {
         $this->candidatures = new ArrayCollection();
@@ -262,14 +152,14 @@ class OffreEmploi
         return $this->id;
     }
 
-    public function getIdPoleEmploi(): ?string
+    public function getIdJobiJoba(): ?string
     {
-        return $this->id_pole_emploi;
+        return $this->id_jobijoba;
     }
 
-    public function setIdPoleEmploi(?string $idPoleEmploi): self
+    public function setIdJobiJoba(?string $idJobiJoba): self
     {
-        $this->id_pole_emploi = $idPoleEmploi;
+        $this->id_jobijoba = $idJobiJoba;
 
         return $this;
     }
@@ -286,26 +176,14 @@ class OffreEmploi
         return $this;
     }
 
-    public function getDateDeCreation(): ?\DateTimeInterface
+    public function getDateDePublication(): ?\DateTimeInterface
     {
-        return $this->dateDeCreation;
+        return $this->dateDePublication;
     }
 
-    public function setDateDeCreation(\DateTimeInterface $dateDeCreation): self
+    public function setDateDePublication(\DateTimeInterface $dateDePublication): self
     {
-        $this->dateDeCreation = $dateDeCreation;
-
-        return $this;
-    }
-
-    public function getDateActualisation(): ?\DateTimeInterface
-    {
-        return $this->dateActualisation;
-    }
-
-    public function setDateActualisation(\DateTimeInterface $dateActualisation): self
-    {
-        $this->dateActualisation = $dateActualisation;
+        $this->dateDePublication = $dateDePublication;
 
         return $this;
     }
@@ -334,18 +212,6 @@ class OffreEmploi
         return $this;
     }
 
-    public function getCodeMetier(): ?string
-    {
-        return $this->codeMetier;
-    }
-
-    public function setCodeMetier(string $codeMetier): self
-    {
-        $this->codeMetier = $codeMetier;
-
-        return $this;
-    }
-
     public function getLibelleMetier(): ?string
     {
         return $this->libelleMetier;
@@ -354,18 +220,6 @@ class OffreEmploi
     public function setLibelleMetier(string $libelleMetier): self
     {
         $this->libelleMetier = $libelleMetier;
-
-        return $this;
-    }
-
-    public function getAppellationMetier(): ?string
-    {
-        return $this->appellationMetier;
-    }
-
-    public function setAppellationMetier(string $appellationMetier): self
-    {
-        $this->appellationMetier = $appellationMetier;
 
         return $this;
     }
@@ -394,54 +248,6 @@ class OffreEmploi
         return $this;
     }
 
-    public function getTypeContratLibelle(): ?string
-    {
-        return $this->typeContratLibelle;
-    }
-
-    public function setTypeContratLibelle(string $typeContratLibelle): self
-    {
-        $this->typeContratLibelle = $typeContratLibelle;
-
-        return $this;
-    }
-
-    public function getNatureContrat(): ?string
-    {
-        return $this->natureContrat;
-    }
-
-    public function setNatureContrat(string $natureContrat): self
-    {
-        $this->natureContrat = $natureContrat;
-
-        return $this;
-    }
-
-    public function getExperienceExige(): ?string
-    {
-        return $this->experienceExige;
-    }
-
-    public function setExperienceExige(?string $experienceExige): self
-    {
-        $this->experienceExige = $experienceExige;
-
-        return $this;
-    }
-
-    public function getExperienceLibelle(): ?string
-    {
-        return $this->experienceLibelle;
-    }
-
-    public function setExperienceLibelle(string $experienceLibelle): self
-    {
-        $this->experienceLibelle = $experienceLibelle;
-
-        return $this;
-    }
-
     public function getSalaire(): ?string
     {
         return $this->salaire;
@@ -454,122 +260,14 @@ class OffreEmploi
         return $this;
     }
 
-    public function getDureeTravail(): ?string
-    {
-        return $this->dureeTravail;
-    }
-
-    public function setDureeTravail(?string $dureeTravail): self
-    {
-        $this->dureeTravail = $dureeTravail;
-
-        return $this;
-    }
-
-    public function getDureeTravailConvertie(): ?string
-    {
-        return $this->dureeTravailConvertie;
-    }
-
-    public function setDureeTravailConvertie(?string $dureeTravailConvertie): self
-    {
-        $this->dureeTravailConvertie = $dureeTravailConvertie;
-
-        return $this;
-    }
-
-    public function isAlternance(): ?bool
-    {
-        return $this->alternance;
-    }
-
-    public function setAlternance(?bool $alternance): self
-    {
-        $this->alternance = $alternance;
-
-        return $this;
-    }
-
-    public function getNbPostes(): ?int
-    {
-        return $this->nbPostes;
-    }
-
-    public function setNbPostes(int $nbPostes): self
-    {
-        $this->nbPostes = $nbPostes;
-
-        return $this;
-    }
-
-    public function isAccessibleTh(): ?bool
-    {
-        return $this->accessibleTh;
-    }
-
-    public function setAccessibleTh(?bool $accessibleTh): self
-    {
-        $this->accessibleTh = $accessibleTh;
-
-        return $this;
-    }
-
-    public function getCodeQualification(): ?int
-    {
-        return $this->codeQualification;
-    }
-
-    public function setCodeQualification(?int $codeQualification): self
-    {
-        $this->codeQualification = $codeQualification;
-
-        return $this;
-    }
-
-    public function getLibelleQualification(): ?string
-    {
-        return $this->libelleQualification;
-    }
-
-    public function setLibelleQualification(?string $libelleQualification): self
-    {
-        $this->libelleQualification = $libelleQualification;
-
-        return $this;
-    }
-
-    public function getSecteurActivite(): ?int
+    public function getSecteurActivite(): ?string
     {
         return $this->secteurActivite;
     }
 
-    public function setSecteurActivite(?int $secteurActivite): self
+    public function setSecteurActivite(?string $secteurActivite): self
     {
         $this->secteurActivite = $secteurActivite;
-
-        return $this;
-    }
-
-    public function getSecteurActiviteLibelle(): ?string
-    {
-        return $this->secteurActiviteLibelle;
-    }
-
-    public function setSecteurActiviteLibelle(?string $secteurActiviteLibelle): self
-    {
-        $this->secteurActiviteLibelle = $secteurActiviteLibelle;
-
-        return $this;
-    }
-
-    public function getOrigineOffre(): ?string
-    {
-        return $this->origineOffre;
-    }
-
-    public function setOrigineOffre(?string $origineOffre): self
-    {
-        $this->origineOffre = $origineOffre;
 
         return $this;
     }
@@ -586,17 +284,7 @@ class OffreEmploi
         return $this;
     }
 
-    public function getCommune(): ?Commune
-    {
-        return $this->commune;
-    }
-
-    public function setCommune(?Commune $commune): self
-    {
-        $this->commune = $commune;
-
-        return $this;
-    }
+    
 
     public function getVilleLibelle(): ?string
     {
@@ -618,30 +306,6 @@ class OffreEmploi
     public function setValidation(string $validation): self
     {
         $this->validation = $validation;
-
-        return $this;
-    }
-
-    public function getMailEntreprise(): ?string
-    {
-        return $this->mailEntreprise;
-    }
-
-    public function setMailEntreprise(?string $mailEntreprise): self
-    {
-        $this->mailEntreprise = $mailEntreprise;
-
-        return $this;
-    }
-
-    public function getNumeroEntreprise(): ?string
-    {
-        return $this->numeroEntreprise;
-    }
-
-    public function setNumeroEntreprise(?string $numeroEntreprise): self
-    {
-        $this->numeroEntreprise = $numeroEntreprise;
 
         return $this;
     }
@@ -700,5 +364,39 @@ class OffreEmploi
         return $this;
     }
 
+    public function getCommercantId(): ?int
+    {
+        return $this->commercant_id;
+    }
 
+    public function setCommercantId(?int $commercant_id): self
+    {
+        $this->commercant_id = $commercant_id;
+
+        return $this;
+    }
+
+    public function getLienJj(): ?string
+    {
+        return $this->lien_jj;
+    }
+
+    public function setLienJj(?string $lien_jj): self
+    {
+        $this->lien_jj = $lien_jj;
+
+        return $this;
+    }
+
+    public function getCommune(): ?Commune
+    {
+        return $this->commune;
+    }
+
+    public function setCommune(?Commune $commune): self
+    {
+        $this->commune = $commune;
+
+        return $this;
+    }
 }

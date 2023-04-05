@@ -44,13 +44,13 @@ get_header(); ?>
         ?>
         <div id='date_de_creation'>
             <i class="fa-solid fa-calendar-days"></i>
-            <p class='date'>Offre créée le <?=date_i18n('l d F o, H:i:s', strtotime($offre['date_de_creation']))?></p>
+            <p class='date'>Offre créée le <?=date_i18n('l d F o, H:i:s', strtotime($offre['date_de_publication']))?></p>
         </div>
     </div>
     <?php
-    if($offre['id_pole_emploi']){
+    if($offre['id_jobijoba']){
     ?>
-        <a href='<?=$offre['origine_offre']?>'><button id='bouton_postuler'>Postuler</button></a>
+        <a href='<?=$offre['lien_jj']?>'><button id='bouton_postuler'>Postuler</button></a>
     <?php
     }else{
     ?>
@@ -69,7 +69,7 @@ get_header(); ?>
         <iframe frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="https://www.openstreetmap.org/export/embed.html?bbox=<?=($offre['longitude'] - 0.0360)?>%2C<?=($offre['latitude'] - 0.0133)?>%2C<?=($offre['longitude'] + 0.0360)?>%2C<?=($offre['latitude'] + 0.0133)?>&layer=mapnik&marker=<?=$offre['latitude']?>%2C<?=$offre['longitude']?>"></iframe>
         <br/>
         <small>
-            <a href="https://www.openstreetmap.org/?mlat=<?=$offre['latitude']?>&amp;mlon=<?=$offre['longitude']?>#map=16/<?=$offre['latitude']?>/<?=$offre['longitude']?>&amp;layers=N">Afficher une carte plus grande</a>
+            <a href="https://www.openstreetmap.org/?mlat=<?=$offre['latitude']?>&amp;mlon=<?=$offre['longitude']?>#map=12/<?=$offre['latitude']?>/<?=$offre['longitude']?>&amp;layers=N">Afficher une carte plus grande</a>
         </small>
         <?php
         }
@@ -78,35 +78,24 @@ get_header(); ?>
 </div>
 
 <div class='liste_boites'>
+    <?php
+    if($offre['libelle_metier']){
+    ?>
     <div class='boite'>
         <h4 class='titre_boite'>Information métier</h4>
-        
-        <?php
-        if($offre['libelle_metier']){
-        ?>
-
-            <p><?=$offre['get_libelle_metier']?></p>
-
-        <?php
-        }
-        if($offre['appellation_metier']){
-        ?>
-
-            <p><?=$offre['appellation_metier']?></p>
-
-        <?php
-        }
-        ?>
+        <p><?=$offre['libelle_metier']?></p>
     </div>
+    <?php
+    }
+    if($offre['type_contrat']){
+    ?>
     <div class='boite'>
         <h4 class='titre_boite'>Contrat</h4>
-        <p><?=$offre['type_contrat_libelle']?></p>
+        <p><?=$offre['type_contrat']?></p>
     </div>
-    <div class='boite'>
-        <h4 class='titre_boite'>Experience</h4>
-        <p><?=$offre['experience_libelle']?></p>
-    </div>
-
+    <?php
+    }
+    ?>
     <?php
     if($offre['nom_entreprise'] || $offre['numero_entreprise'] || $offre['mail_entreprise']){
     ?>
@@ -151,55 +140,19 @@ get_header(); ?>
 
     <?php
     }
-    if($offre['duree_travail'] || $offre['duree_travail_convertie']){
-    ?>
-    
-    <div class='boite'>
-        <h4 class='titre_boite'>Durée</h4>
-        
-            <?php
-            if($offre['duree_travail']){
-            ?>
 
-            <p><?=$offre['duree_travail']?></p>
-
-            <?php
-            }
-            if($offre['duree_travail_convertie']){
-            ?>
-
-            <p><?=$offre['duree_travail_convertie']?></p>
-
-            <?php
-            }
-            ?>
-
-    </div>
-
-    <?php
-    }
-    if($offre['libelle_qualification'] ){
-    ?>
-
-    <div class='boite'>
-        <h4 class='titre_boite'>Qualification</h4>
-        <p><?=$offre['libelle_qualification']?></p>
-    </div>
-    
-    <?php
-    }
-    if($offre['secteur_activite_libelle'] ){
+    if($offre['secteur_activite'] ){
     ?>
     <div class='boite'>
         <h4 class='titre_boite'>Secteur d'activité</h4>
-        <p><?=$offre['secteur_activite_libelle']?></p>
+        <p><?=$offre['secteur_activite']?></p>
     </div>
     <?php
     }
     ?>
 </div>
 <?php
-    if(!$offre['id_pole_emploi']){
+    if(!$offre['id_jobijoba']){
 ?>
     <div id='modal'>
         <div id='overlay'></div>
