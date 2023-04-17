@@ -142,7 +142,7 @@ class Offre_Emploi_Model {
 	public function getAllTypeContrat(){
 		
 		$sql = $this -> offreEmploiDB ->prepare('SELECT UNIQUE(type_contrat) FROM '.$this->TableOffreEmploi.'
-												WHERE type_contrat IS NOT NULL AND visibilite = "visible" ');
+												WHERE type_contrat IS NOT NULL AND type_contrat != "" AND visibilite = "visible" ');
 
 		$this->offreEmploiDB->query( $sql );
 		
@@ -199,6 +199,32 @@ class Offre_Emploi_Model {
 			$return = 0;
 		}
 		return $return;
+	}
+
+	/**
+	 * Récupère une commune
+	 */
+	public function findOneCommuneBySlug($name){
+		
+		$sql = $this->offreEmploiDB->prepare('SELECT * FROM '.$this->TableCommune." WHERE slug = '".$name."'");
+
+		$this->offreEmploiDB->query( $sql );
+		
+		if( $this->offreEmploiDB->num_rows > 0 ){
+			$return = ($this->offreEmploiDB->get_results($sql, ARRAY_A))[0];
+		}else{
+			$return = NULL;
+		}
+		return $return;
+	}
+
+	public function offreCommuneExist($id){
+
+		$sql = $this->offreEmploiDB->prepare('SELECT * FROM '.$this->TableOffreEmploi." WHERE commune_id = '".$id."'");
+
+		$this->offreEmploiDB->query( $sql );
+		
+		return $this->offreEmploiDB->num_rows > 0;
 	}
 
 	public function offreExist($id){

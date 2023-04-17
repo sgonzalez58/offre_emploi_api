@@ -5,6 +5,10 @@ jQuery('#liste_ville').select2({
     width:'resolve',
 });
 
+if(my_ajax_obj.ville){
+    jQuery('#liste_ville').val(my_ajax_obj.ville.toString());
+}
+
 recherche_mot_clef();
 
 //lance la récupère des offres d'emploi lorsqu'on choisi une commune
@@ -65,7 +69,9 @@ function recherche_mot_clef(){
                     offre_html +=           "<a href='"+offre['lienMap']+"' target='_blank' class='ville'>";
                     offre_html +=              "<i class='fa-solid fa-location-pin'></i><h4>"+offre['nomVille']+"</h4></a>";
                     offre_html +=           "<div class='contrat'><i class='fa-solid fa-tag'></i><h4>"+offre['type_contrat']+"</h4></div></div>";
-                    offre_html +=       "<h3 class='nom_entreprise'>Entreprise : "+offre['nomEntreprise']+"</h3>";
+                    if(offre['nomEntreprise'] != 'Aucun'){
+                        offre_html +=       "<h3 class='nom_entreprise'>Entreprise : "+offre['nomEntreprise']+"</h3>";
+                    }
                     offre_html +=       "<p id='description'>"+offre['description']+"</p></div>";
                     offre_html +=   "<a class='lien_fiche' href='/offres-emploi/"+offre['id']+"'><button class='bouton_lien_fiche'>Voir l'offre</button></a>";
                     offre_html +=   "<a class='lien_fiche_big' href='/offres-emploi/"+offre['id']+"'></a>";
@@ -104,7 +110,9 @@ function recherche_mot_clef(){
                     offre_html +=           "<a href='"+offre['lienMap']+"' target='_blank' class='ville'>";
                     offre_html +=              "<i class='fa-solid fa-location-pin'></i><h4>"+offre['nomVille']+"</h4></a>";
                     offre_html +=           "<div class='contrat'><i class='fa-solid fa-tag'></i><h4>"+offre['type_contrat']+"</h4></div></div>";
-                    offre_html +=       "<h3 class='nom_entreprise'>Entreprise : "+offre['nomEntreprise']+"</h3>";
+                    if(offre['nomEntreprise'] != 'Aucun'){
+                        offre_html +=       "<h3 class='nom_entreprise'>Entreprise : "+offre['nomEntreprise']+"</h3>";
+                    }
                     offre_html +=       "<p id='description'>"+offre['description']+"</p></div>";
                     offre_html +=   "<a class='lien_fiche' href='/offres-emploi/"+offre['id']+"'><button class='bouton_lien_fiche'>Voir l'offre</button></h2></a>";
                     offre_html +=   "<a class='lien_fiche_big' href='/offres-emploi/"+offre['id']+"'></a>";
@@ -144,7 +152,9 @@ function recherche_mot_clef(){
                     offre_html +=           "<a href='"+offre['lienMap']+"' target='_blank' class='ville'>";
                     offre_html +=              "<i class='fa-solid fa-location-pin'></i><h4>"+offre['nomVille']+"</h4></a>";
                     offre_html +=           "<div class='contrat'><i class='fa-solid fa-tag'></i><h4>"+offre['type_contrat']+"</h4></div></div>";
-                    offre_html +=       "<h3 class='nom_entreprise'>Entreprise : "+offre['nomEntreprise']+"</h3>";
+                    if(offre['nomEntreprise'] != 'Aucun'){
+                        offre_html +=       "<h3 class='nom_entreprise'>Entreprise : "+offre['nomEntreprise']+"</h3>";
+                    }
                     offre_html +=       "<p id='description'>"+offre['description']+"</p></div>";
                     offre_html +=   "<a class='lien_fiche' href='/offres-emploi/"+offre['id']+"'><button class='bouton_lien_fiche'>Voir l'offre</button></h2></a>";
                     offre_html +=   "<a class='lien_fiche_big' href='/offres-emploi/"+offre['id']+"'></a>";

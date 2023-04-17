@@ -18,10 +18,12 @@ jQuery('#envoie_candidature').one('submit', function(e){
         }
     })
 })
-
-document.getElementById('fermer_formulaire').addEventListener('click', function(e){
-    e.preventDefault();
-    document.getElementById('modal').style.display = 'none';
-});
-document.getElementById('bouton_postuler').addEventListener('click', ()=>{document.getElementById('modal').style.display = 'flex'});
-document.getElementById('overlay').addEventListener('click', ()=>{document.getElementById('modal').style.display = 'none';})
+if(document.getElementById('fermer_formulaire')){
+    document.getElementById('fermer_formulaire').addEventListener('click', function(e){
+        e.preventDefault();
+        document.getElementById('modal').style.display = 'none';
+    });
+    
+    document.getElementById('bouton_postuler').addEventListener('click', ()=>{document.getElementById('modal').style.display = 'flex'});
+    document.getElementById('overlay').addEventListener('click', ()=>{document.getElementById('modal').style.display = 'none';})
+}

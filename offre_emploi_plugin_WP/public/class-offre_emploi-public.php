@@ -80,6 +80,10 @@ class Offre_emploi_Public {
 		add_action('init', array($this,'offre_emploi_rewrite_rules'));
 		add_filter('query_vars', array($this,'offre_emploi_register_query_var' ));
 		add_filter('template_include', array($this,'offre_emploi_front_end'));
+
+		add_shortcode('offre_emploi', array($this, 'liste_villes_offre'));
+
+		add_filter('wpseo_title', array($this, 'prefix_filter_title'));
 	}
 
 	/**
@@ -127,6 +131,38 @@ class Offre_emploi_Public {
 
 		wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/offre_emploi-public.js', array( 'jquery' ), $this->version, false );
 		wp_enqueue_script( $this->plugin_name.'.select2', 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js', array( 'jquery' ), $this->version, false );
+	}
+
+	/**
+	 * Shortcode liste des villes avec au moins un offre existante avec le lien vers les offres
+	 */
+	function liste_villes_offre(){
+		$retour = '<ul>';
+		$communes = $this->model->findAllCommunes();
+		foreach($communes as $commune){
+			if($this->model->offreCommuneExist($commune['id'])){
+				$retour .= "<li><a href='/offres-emploi/ville/".$commune['slug']."/'>".$commune['nom_commune']."</a></li>";
+			}
+		}
+		$retour .= '</ul>';
+		return $retour;
+	}
+	
+	function prefix_filter_title( $title ){
+		global $wp_query; //Load $wp_query object
+		if(array_key_exists('ville',$wp_query->query_vars)){
+			$commune = $this->model->findOneCommuneBySlug($wp_query->query_vars['ville']);
+			$title = "Offres d'emploi à ".$commune['nom_commune']." - Nièvre 58 - Koikispass";
+		}
+		if(array_key_exists('idOffreEmploi',$wp_query->query_vars)){	
+			$offre = $this->model->findOneOffre($wp_query->query_vars['idOffreEmploi']);
+			$commune = $this->model->findOneCommune($offre['commune_id']);
+			$title = $offre['libelle_metier'].' à '.$commune['nom_commune'].' - Nièvre 58 - Koikispass';
+		}
+		if(array_key_exists('offreEmploi',$wp_query->query_vars)){	
+			$title = "Offres d'emploi - Nièvre 58 - Koikispass";
+		}
+		return $title;
 	}
 
 	/**
@@ -418,18 +454,10 @@ class Offre_emploi_Public {
 		$jsonData = [
 			'id' => $response['id'], 
 			'intitule' => $response['intitule'], 
-			'metier' => $response['appellation_metier'], 
-			'nomEntreprise' => $response['nom_entreprise'], 
-			'mailEntreprise' => $response['mail_entreprise'], 
-			'telephone_contact' => $response['numero_entreprise'], 
+			'metier' => $response['libelle_metier'], 
+			'nomEntreprise' => $response['nom_entreprise'],
 			'type_contrat' => $response['type_contrat'], 
-			'nature_contrat' => $response['nature_contrat'], 
-			'alternance' => $response['alternance'], 
-			'temps_contrat' => $response['type_contrat_libelle'], 
 			'salaire' => $response['salaire'], 
-			'duree' => $response['duree_travail'], 
-			'experience' => $response['experience_libelle'], 
-			'nb_poste' => $response['nb_postes'],
 			'description' => $response['description'], 
 			'commune_id' => $response['commune_id'], 
 			'ville' => $response['ville_libelle'], 
@@ -586,21 +614,23 @@ class Offre_emploi_Public {
 	 */
 	function offre_emploi_rewrite_rules() {	
 
-		add_rewrite_rule('^offreEmploi/([0-9]+)/candidature/?', 'index.php?idOffreEmploi=$matches[1]&candidature=1', 'top');
+		add_rewrite_rule("^offres-emploi/ville/([a-z-]+)/?", 'index.php?ville=$matches[1]', 'top');
 
-		add_rewrite_rule('^offreEmploi/([0-9]+)/?', 'index.php?idOffreEmploi=$matches[1]', 'top');
+		add_rewrite_rule('^offres-emploi/([0-9]+)/candidature/?', 'index.php?idOffreEmploi=$matches[1]&candidature=1', 'top');
 
-		add_rewrite_rule('^offreEmploi/creer/verification/?', 'index.php?verificationNouvelleOffre=1', 'top');
+		add_rewrite_rule('^offres-emploi/([0-9]+)/?', 'index.php?idOffreEmploi=$matches[1]', 'top');
 
-		add_rewrite_rule('^offreEmploi/creer/?', 'index.php?nouvelleOffre=1', 'top');
+		add_rewrite_rule('^offres-emploi/creer/verification/?', 'index.php?verificationNouvelleOffre=1', 'top');
 
-		add_rewrite_rule('^offreEmploi/mesOffres/modification/?', 'index.php?modifier=1', 'top');
+		add_rewrite_rule('^offres-emploi/creer/?', 'index.php?nouvelleOffre=1', 'top');
 
-		add_rewrite_rule('^offreEmploi/mesOffres/([0-9]+)/?', 'index.php?idMonOffreEmploi=$matches[1]', 'top');
+		add_rewrite_rule('^offres-emploi/mesOffres/modification/?', 'index.php?modifier=1', 'top');
 
-		add_rewrite_rule('^offreEmploi/mesOffres/?', 'index.php?mesOffres=1', 'top');
+		add_rewrite_rule('^offres-emploi/mesOffres/([0-9]+)/?', 'index.php?idMonOffreEmploi=$matches[1]', 'top');
 
-		add_rewrite_rule('^offreEmploi/?', 'index.php?offreEmploi=1', 'top');
+		add_rewrite_rule('^offres-emploi/mesOffres/?', 'index.php?mesOffres=1', 'top');
+
+		add_rewrite_rule('^offres-emploi/?', 'index.php?offreEmploi=1', 'top');
   		
 	}
 	
@@ -617,6 +647,7 @@ class Offre_emploi_Public {
 		$vars[] = 'modifier';
 		$vars[] = 'verificationNouvelleOffre';
 		$vars[] = 'candidature';
+		$vars[] = 'ville';
 
 		return $vars;
 	}
@@ -652,7 +683,7 @@ class Offre_emploi_Public {
 		if(array_key_exists('idOffreEmploi',$wp_query->query_vars)){	
 			if(array_key_exists('candidature', $wp_query->query_vars)){
 				$this->envoie_candidature($wp_query->query_vars['idOffreEmploi']);
-				wp_redirect("^/offreEmploi/".$wp_query->query_vars['idOffreEmploi']);
+				wp_redirect("^/offres-emploi/".$wp_query->query_vars['idOffreEmploi']);
 				exit;
 				return;
 			}
@@ -780,6 +811,29 @@ class Offre_emploi_Public {
 				return;
 			}else{
 				echo 'Vous devez être connecté(e) pour modifier une offre.';
+			}
+		}
+		//liste offres par ville
+		if(array_key_exists('ville',$wp_query->query_vars)){
+			if(file_exists(plugin_dir_path( __FILE__ ) .'partials/liste_offres_valides.php')) {
+				wp_enqueue_style( $this->plugin_name.'.liste_offres_valides_css', plugin_dir_url( __FILE__ ) . 'css/liste_offres_valides.css', array(), $this->version, 'all' );
+				wp_enqueue_style( $this->plugin_name.'.pagination', plugin_dir_url( __FILE__ ) . 'css/pagination.css', array(), $this->version, 'all' );
+				wp_enqueue_script( $this->plugin_name.'.pagination', plugin_dir_url( __FILE__ ) . 'js/pagination.js', array( 'jquery' ), $this->version, false );
+				wp_enqueue_script( $this->plugin_name.'.liste_offres_valides_js', plugin_dir_url( __FILE__ ) . 'js/liste_offres_valides.js', array( 'jquery' ), $this->version, true );
+				$liste_offres = wp_create_nonce( 'liste_offres' );
+				$commune = $this->model->findOneCommuneBySlug($wp_query->query_vars['ville']);
+				wp_localize_script(
+					$this->plugin_name.'.liste_offres_valides_js',
+					'my_ajax_obj',
+					array(
+						'ajax_url'	=> admin_url( 'admin-ajax.php' ),
+						'nonce'   	=> $liste_offres,
+						'ville'		=> $commune['id'],
+						'test' 		=> $wp_query->query_vars['ville']
+					)
+				);
+				include(plugin_dir_path( __FILE__ ) .'partials/liste_offres_valides.php');
+				return;
 			}
 		}
 		return $template;

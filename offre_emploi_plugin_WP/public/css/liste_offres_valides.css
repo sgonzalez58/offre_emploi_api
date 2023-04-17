@@ -49,6 +49,10 @@ main{
     margin-right: 0.5rem;
 }
 
+.recherche{
+    position: relative; 
+}
+
 #recherche_icon {
     position : absolute;
     width: 100%;
