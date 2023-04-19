@@ -1,3 +1,7 @@
+h2{
+    margin-top: 0;
+}
+
 #fiche_head{
     display: flex;
     justify-content: space-between;

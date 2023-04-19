@@ -96,7 +96,7 @@ class Offre_Emploi_Model {
 	public function findByMotsClef(array $mots_clef = [], $type_de_contrat = null, array $communes = []){
 		$baseSql = 'SELECT * FROM '.$this->TableOffreEmploi." WHERE visibilite = 'visible' AND nom_entreprise IS NOT NULL";
 		foreach($mots_clef as $key=>$mot_clef){
-			$baseSql .= " AND ( LOWER(intitule) LIKE %s OR LOWER(libelle_metier) LIKE %s OR LOWER(description) LIKE %s )";
+			$baseSql .= " AND ( LOWER(intitule) LIKE %s OR LOWER(libelle_metier) LIKE %s)";
 			$prepare_mots_clef[$key*3] = "%".$mot_clef."%";
 			$prepare_mots_clef[$key*3 + 1] = "%".$mot_clef."%";
 			$prepare_mots_clef[$key*3 + 2] = "%".$mot_clef."%";
