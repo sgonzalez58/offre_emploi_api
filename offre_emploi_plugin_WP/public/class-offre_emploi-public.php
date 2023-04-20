@@ -260,13 +260,13 @@ class Offre_emploi_Public {
 				$lienMap = 'aucun';
 			}
 			if(strlen($offres[$offset]['description']) > 150){
-				$description = substr(htmlentities($offres[$offset]['description']), 0, 149) . '...';
+				$description = substr($offres[$offset]['description'], 0, 149) . '...';
 			}else{
 				$description = $offres[$offset]['description'];
 			}
 			if($offres[$offset]['nom_entreprise']){
 				if(strlen($offres[$offset]['nom_entreprise']) > 23){
-					$nomEntreprise = substr(htmlentities($offres[$offset]['nom_entreprise']), 0, 22);
+					$nomEntreprise = substr($offres[$offset]['nom_entreprise'], 0, 22);
 				}else{
 					$nomEntreprise = $offres[$offset]['nom_entreprise'];
 				}

@@ -11,6 +11,12 @@ if(my_ajax_obj.ville){
 
 recherche_mot_clef();
 
+jQuery('#recherche_input').on('keyup', (e)=>{
+    if(e.keyCode === 13){
+        jQuery('#recherche').click();
+    }
+})
+
 //lance la récupère des offres d'emploi lorsqu'on choisi une commune
 jQuery('#liste_ville').on('select2:select', recherche_mot_clef)
 
