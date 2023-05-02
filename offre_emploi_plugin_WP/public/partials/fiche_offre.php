@@ -21,6 +21,11 @@ get_header(); ?>
 
 		<div id="primary" <?php generate_do_element_classes( 'content' ); ?>>
 			<main id="main" <?php generate_do_element_classes( 'main' ); ?>>
+            <?php
+					if($_GET['postule'] == 1){
+						echo "<h4 class='text-success'>Votre candidature a bien été envoyée.</h4>";
+					}
+                    ?>
 <?php
     if(!empty($offre)){
 ?>

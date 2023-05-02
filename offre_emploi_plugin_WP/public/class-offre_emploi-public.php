@@ -77,6 +77,9 @@ class Offre_emploi_Public {
 		add_action('wp_ajax_get_candidatures', array($this,'get_candidatures'));
 		add_action('wp_ajax_nopriv_get_candidatures', array($this,'get_candidatures'));
 
+		add_action('wp_ajax_get_mes_candidatures', array($this,'get_mes_candidatures'));
+		add_action('wp_ajax_nopriv_get_mes_candidatures', array($this,'get_mes_candidatures'));
+
 		add_action('init', array($this,'offre_emploi_rewrite_rules'));
 		add_filter('query_vars', array($this,'offre_emploi_register_query_var' ));
 		add_filter('template_include', array($this,'offre_emploi_front_end'));
@@ -148,6 +151,9 @@ class Offre_emploi_Public {
 		return $retour;
 	}
 	
+	/**
+	 * SEO des titres
+	 */
 	function prefix_filter_title( $title ){
 		global $wp_query; //Load $wp_query object
 		if(array_key_exists('ville',$wp_query->query_vars)){
@@ -291,56 +297,13 @@ class Offre_emploi_Public {
 	 */
 	function creation_offre_emploi(){
 		$intitule = $this->secureInput($_POST['intitule']);
-		$appelation_metier = $this->secureInput($_POST['appelation_metier']);
+		$libelle_metier = $this->secureInput($_POST['libelle_metier']);
 		$nom_entreprise = $this->secureInput($_POST['nom_entreprise']);
-		$mail_entreprise = $this->secureInput($_POST['mail_entreprise']);
-		$numero_entreprise = $this->secureInput($_POST['numero_entreprise']);
+		$secteur_activite = $this->secureInput($_POST['secteur_activite']);
 		$type_contrat = $this->secureInput($_POST['type_contrat']);
-		$nature_contrat = $this->secureInput($_POST['nature_contrat']);
-		if($_POST['alternance'] == 'on'){
-			$alternance = 1;
-		}else{
-			$alternance = 0;
-		}
-		switch($type_contrat){
-			case 'CDD':
-				$contratLibelle = 'Contrat à durée déterminée';
-				break;
-			case 'CDI':
-				$contratLibelle = 'Contrat à durée indéterminée';
-				break;
-			case 'DDI':
-				$contratLibelle = 'CDD insertion';
-				break;
-			case 'DIN':
-				$contratLibelle = 'CDI intérimaire';
-				break;
-			case 'FRA':
-				$contratLibelle = 'Franchise';
-				break;
-			case 'LIB':
-				$contratLibelle = 'Profession libérale';
-				break;
-			case 'MIS':
-				$contratLibelle = 'Mission intérimaire';
-				break;
-			case 'SAI':
-				$contratLibelle = 'Contrat travail saisonnier';
-				break;
-		}
-		if($_POST['mois'] != ''){
-			$type_contrat_libelle = ( $contratLibelle . ' - ' . $_POST['mois'] .' Mois');
-		}else if ($_POST['jours'] != ''){
-			$type_contrat_libelle = ( $contratLibelle . ' - ' . $_POST['jours'] .' Jours(s)');
-		}else{
-			$type_contrat_libelle = 'Durée indeterminée';
-		}
 		if(!empty($_POST['montant_salaire'])){
 			$salaire = $_POST['montant_salaire'].'€ par '.$_POST['periode_salaire'];
 		}
-		$duree_travail = $this->secureInput($_POST['duree_travail']);
-		$experience_libelle = $this->secureInput($_POST['experience_libelle']);
-		$nb_postes = $_POST['nb_postes'];
 		$description = $this->secureInput($_POST['description']);
 		if($_POST['commune'] != ''){
 			$commune_id = $_POST['commune'];
@@ -355,7 +318,7 @@ class Offre_emploi_Public {
 			$latitude = $_POST['latitude'];
 			$longitude = $_POST['longitude'];
 		}
-		$this->model->createOneOffre($intitule, $appelation_metier, $type_contrat, $type_contrat_libelle, $nature_contrat, $experience_libelle, $alternance, $nb_postes, $latitude, $longitude, $nom_entreprise, $salaire, $duree_travail, $commune_id, get_current_user_id(), $description, $ville_libelle, $mail_entreprise, $numero_entreprise);
+		$this->model->createOneOffre($intitule, $libelle_metier, $secteur_activite, $nom_entreprise, $type_contrat, $latitude, $longitude, $salaire, $commune_id, get_current_user_id(), $description, $ville_libelle);
 	}
 
 	/**
@@ -363,56 +326,13 @@ class Offre_emploi_Public {
 	 */
 	function modification_offre(){
 		$intitule = $this->secureInput($_POST['intitule']);
-		$appelation_metier = $this->secureInput($_POST['appelation_metier']);
+		$libelle_metier = $this->secureInput($_POST['libelle_metier']);
+		$secteur_activite = $this->secureInput($_POST['secteur_activite']);
 		$nom_entreprise = $this->secureInput($_POST['nom_entreprise']);
-		$mail_entreprise = $this->secureInput($_POST['mail_entreprise']);
-		$numero_entreprise = $this->secureInput($_POST['numero_entreprise']);
 		$type_contrat = $this->secureInput($_POST['type_contrat']);
-		$nature_contrat = $this->secureInput($_POST['nature_contrat']);
-		if($_POST['alternance'] == 'on'){
-			$alternance = 1;
-		}else{
-			$alternance = 0;
-		}
-		switch($type_contrat){
-			case 'CDD':
-				$contratLibelle = 'Contrat à durée déterminée';
-				break;
-			case 'CDI':
-				$contratLibelle = 'Contrat à durée indéterminée';
-				break;
-			case 'DDI':
-				$contratLibelle = 'CDD insertion';
-				break;
-			case 'DIN':
-				$contratLibelle = 'CDI intérimaire';
-				break;
-			case 'FRA':
-				$contratLibelle = 'Franchise';
-				break;
-			case 'LIB':
-				$contratLibelle = 'Profession libérale';
-				break;
-			case 'MIS':
-				$contratLibelle = 'Mission intérimaire';
-				break;
-			case 'SAI':
-				$contratLibelle = 'Contrat travail saisonnier';
-				break;
-		}
-		if($_POST['mois'] != ''){
-			$type_contrat_libelle = ( $contratLibelle . ' - ' . $_POST['mois'] .' Mois');
-		}else if ($_POST['jours'] != ''){
-			$type_contrat_libelle = ( $contratLibelle . ' - ' . $_POST['jours'] .' Jours(s)');
-		}else{
-			$type_contrat_libelle = 'Durée indeterminée';
-		}
 		if(!empty($_POST['montant_salaire'])){
 			$salaire = $_POST['montant_salaire'].'€ par '.$_POST['periode_salaire'];
 		}
-		$duree_travail = $this->secureInput($_POST['duree_travail']);
-		$experience_libelle = $this->secureInput($_POST['experience_libelle']);
-		$nb_postes = $_POST['nb_postes'];
 		$description = $this->secureInput($_POST['description']);
 		if($_POST['commune'] != ''){
 			$commune_id = $_POST['commune'];
@@ -428,7 +348,7 @@ class Offre_emploi_Public {
 			$longitude = $_POST['longitude'];
 		}
 
-		$this->model->modifierOffre($_POST['id_offre'], $intitule, $appelation_metier, $type_contrat, $type_contrat_libelle, $nature_contrat, $experience_libelle, $alternance, $nb_postes, $latitude, $longitude, $nom_entreprise, $salaire, $duree_travail, $commune_id, get_current_user_id(), $description, $ville_libelle, $mail_entreprise, $numero_entreprise);
+		$this->model->modifierOffre($_POST['id_offre'], $intitule, $libelle_metier, $secteur_activite, $nom_entreprise, $type_contrat, $latitude, $longitude, $salaire, $commune_id, get_current_user_id(), $description, $ville_libelle);
 	}
 
 	/**
@@ -455,6 +375,7 @@ class Offre_emploi_Public {
 			'id' => $response['id'], 
 			'intitule' => $response['intitule'], 
 			'metier' => $response['libelle_metier'], 
+			'secteur_activite' => $response['secteur_activite'],
 			'nomEntreprise' => $response['nom_entreprise'],
 			'type_contrat' => $response['type_contrat'], 
 			'salaire' => $response['salaire'], 
@@ -480,7 +401,7 @@ class Offre_emploi_Public {
 		$jsonData = [];
 		$idx = 0;
 		foreach($offres as $offre){
-			$jsonData[$idx++] = ['intitule' => $offre['intitule'], 'nomVille' => $offre['ville_libelle'], 'nomEntreprise' => $offre['nom_entreprise'], 'dateCreation' => $offre['date_de_creation'], 'etat' => $offre['validation'], 'id' => $offre['id'], 'visibilite' => $offre['visibilite']];
+			$jsonData[$idx++] = ['intitule' => $offre['intitule'], 'nomVille' => $offre['ville_libelle'], 'nomEntreprise' => $offre['nom_entreprise'], 'dateCreation' => $offre['date_de_publication'], 'etat' => $offre['validation'], 'id' => $offre['id'], 'visibilite' => $offre['visibilite']];
 		}
 
         wp_send_json_success($jsonData);
@@ -546,7 +467,7 @@ class Offre_emploi_Public {
 	 */
 	function envoie_candidature($id_offre_emploi){
 		if(!$id_offre_emploi){
-			echo('Erreur à l\'envoie de la candidature. L\'id de l\'offre n\'a pas été précisé. A voir avec l\administrateur.');
+			echo('Erreur à l\'envoie de la candidature. L\'id de l\'offre n\'a pas été précisé. A voir avec l\'administrateur.');
 		}else{
 			$args = array(
 				'id_user' => get_current_user_id(),
@@ -579,7 +500,7 @@ class Offre_emploi_Public {
 					$this->model->createCandidature($id_offre_emploi, $args['mail']);
 				}
 				$offre = $this->model->findOneOffre($id_offre_emploi);
-				$mail_offre = $offre['mail_entreprise'];
+				$mail_offre = wp_get_current_user()->user_email;
 
 				$this->envoi_email_utilisateur($mail_offre, $offre['intitule'].' - '.$args['prenom'].' '.$args['nom'].' - '.$args['mail'].' - '.$args['message'] , 'candidature');
 			}
@@ -607,6 +528,23 @@ class Offre_emploi_Public {
 		$candidatures = $this->model->findCandidatures($args['id_offre'], $args['mail']);
 		
 		wp_send_json_success(['nombre_de_demande' => count($candidatures)]);
+	}
+
+	/**
+	 * Récupère les candidatures d'un utilisateur
+	 */
+	function get_mes_candidatures(){
+		check_ajax_referer('mes_offres');
+        
+        $offres = $this->model->findMesCandidatures(get_current_user_id());
+
+		$jsonData = [];
+		$idx = 0;
+		foreach($offres as $offre){
+			$jsonData[$idx++] = ['intitule' => $offre['intitule'], 'nomVille' => $offre['ville_libelle'], 'nomEntreprise' => $offre['nom_entreprise'], 'dateCreation' => $offre['date_envoi'], 'mail' => $offre['mail'] , 'etat' => $offre['validation'], 'id' => $offre['id']];
+		}
+
+        wp_send_json_success($jsonData);
 	}
 
 	/**
@@ -683,7 +621,7 @@ class Offre_emploi_Public {
 		if(array_key_exists('idOffreEmploi',$wp_query->query_vars)){	
 			if(array_key_exists('candidature', $wp_query->query_vars)){
 				$this->envoie_candidature($wp_query->query_vars['idOffreEmploi']);
-				wp_redirect("^/offres-emploi/".$wp_query->query_vars['idOffreEmploi']);
+				wp_redirect("^/offres-emploi/".$wp_query->query_vars['idOffreEmploi']."?postule=1");
 				exit;
 				return;
 			}
@@ -709,7 +647,9 @@ class Offre_emploi_Public {
 			if(file_exists(plugin_dir_path( __FILE__ ) .'partials/nouvelle_offre.php')) {
 				if(is_user_logged_in()){
 					wp_enqueue_style( $this->plugin_name.'.formulaire_offre_emploi_css', plugin_dir_url( __FILE__ ) . 'css/formulaire_offre_emploi.css', array(), $this->version, 'all' );
+					wp_enqueue_style( $this->plugin_name.'bootstrap', 'https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css', array(), $this->version, 'all' );
 					wp_enqueue_style( $this->plugin_name.'.leaflet', 'https://unpkg.com/leaflet@1.9.2/dist/leaflet.css', array(), $this->version, 'all' );
+					wp_enqueue_script( $this->plugin_name.'.bootstrap', 'https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js', array( 'jquery' ), $this->version, false);
 					wp_enqueue_script( $this->plugin_name.'.leaflet', 'https://unpkg.com/leaflet@1.9.2/dist/leaflet.js', array( 'jquery' ), $this->version, false);
 					wp_enqueue_script( $this->plugin_name.'.formulaire_offre_emploi_js', plugin_dir_url( __FILE__ ) . 'js/formulaire_offre_emploi.js', array( 'jquery' ), $this->version, true);
 					include(plugin_dir_path( __FILE__ ) .'partials/nouvelle_offre.php');
@@ -724,12 +664,8 @@ class Offre_emploi_Public {
 			if(is_user_logged_in()){
 				$this->creation_offre_emploi();
 				unset($_POST);
-				if(file_exists(plugin_dir_path( __FILE__ ) .'partials/reponse_nouvelle_offre.php')) {
-					include(plugin_dir_path( __FILE__ ) .'partials/reponse_nouvelle_offre.php');
-					return;
-				}else{
-					echo 'Une erreur s\'est produite, votre demande de nouvelle offre a toutefois été envoyée.';
-				}
+				wp_redirect("^/offres-emploi/mesOffres?creation=1");
+				exit;
 			}else{
 				echo 'Vous devez être connecté(e) pour ajouter une nouvelle offre.';
 			}
@@ -776,7 +712,9 @@ class Offre_emploi_Public {
 			if(file_exists(plugin_dir_path( __FILE__ ) .'partials/nouvelle_offre.php')) {
 				if(is_user_logged_in()){
 					wp_enqueue_style( $this->plugin_name.'.formulaire_offre_emploi_css', plugin_dir_url( __FILE__ ) . 'css/formulaire_offre_emploi.css', array(), $this->version, 'all' );
+					wp_enqueue_style( $this->plugin_name.'bootstrap', 'https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css', array(), $this->version, 'all' );
 					wp_enqueue_style( $this->plugin_name.'.leaflet', 'https://unpkg.com/leaflet@1.9.2/dist/leaflet.css', array(), $this->version, 'all' );
+					wp_enqueue_script( $this->plugin_name.'.bootstrap', 'https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js', array( 'jquery' ), $this->version, false);
 					wp_enqueue_script( $this->plugin_name.'.leaflet', 'https://unpkg.com/leaflet@1.9.2/dist/leaflet.js', array( 'jquery' ), $this->version, false);
 					wp_enqueue_script( $this->plugin_name.'.formulaire_offre_emploi_js', plugin_dir_url( __FILE__ ) . 'js/formulaire_offre_emploi.js', array( 'jquery' ), $this->version, true);
 					wp_enqueue_script( $this->plugin_name.'.preremplissage_formulaire', plugin_dir_url( __FILE__ ) . 'js/preremplissage_formulaire.js', array( 'jquery' ), $this->version, true);
@@ -802,12 +740,8 @@ class Offre_emploi_Public {
 			if(is_user_logged_in()){
 				$this->modification_offre();
 				unset($_POST);
-				if(file_exists(plugin_dir_path( __FILE__ ) .'partials/modification_offre.php')) {
-					include(plugin_dir_path( __FILE__ ) .'partials/modification_offre.php');
-					return;
-				}else{
-					echo 'Une erreur s\'est produite, votre demande de nouvelle offre a toutefois été envoyée.';
-				}
+				wp_redirect("^/offres-emploi/mesOffres?modification=1");
+				exit;
 				return;
 			}else{
 				echo 'Vous devez être connecté(e) pour modifier une offre.';

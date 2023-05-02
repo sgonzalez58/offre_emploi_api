@@ -33,6 +33,11 @@ class Candidature
      */
     private $mail;
 
+    /**
+     * @ORM\Column(type="datetime")
+     */
+    private $date_envoi;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -70,6 +75,18 @@ class Candidature
     public function setMail(string $mail): self
     {
         $this->mail = $mail;
+
+        return $this;
+    }
+
+    public function getDateEnvoi(): ?\DateTimeInterface
+    {
+        return $this->date_envoi;
+    }
+
+    public function setDateEnvoi(\DateTimeInterface $date_envoi): self
+    {
+        $this->date_envoi = $date_envoi;
 
         return $this;
     }

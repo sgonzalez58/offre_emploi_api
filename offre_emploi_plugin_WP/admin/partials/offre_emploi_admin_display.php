@@ -25,175 +25,120 @@ setlocale (LC_TIME, 'fr_FR');
 ?>
 
 <a href='/wp-admin/admin.php?page=gestion_offre_emploi'>retour</a>
-<div class='fiche'>
-    <?php
-    if(!empty($offre['latitude'])){
-    ?>
+<div id='fiche_head'>
+    <div id='informations_principales'>
+        <h2 id='intitule'><?=$offre['intitule']?></h2>
+        <div id='adresse'>
+            <i class="fa-solid fa-shop"></i>
+            <p><?=$offre['nom_entreprise']?></p>
+        </div>
+        <?php
+        if($offre['ville_libelle'] != 'Non renseigné'){
+        ?>
+        <div id='ville'>
+            <i class="fa-solid fa-location-dot"></i>
+            <p id='ville'><?=array_pop(explode(' - ', $offre['ville_libelle']))?></p>
+        </div>
+        <?php
+        }
+        ?>
+        <div id='date_de_creation'>
+            <i class="fa-solid fa-calendar-days"></i>
+            <p class='date'>Offre créée le <?=date_i18n('l d F o, H:i:s', strtotime($offre['date_de_publication']))?></p>
+        </div>
+    </div>
+</div>
 
+<div id='fiche_content'>
+    <p id='description'><span style='font-weight : bold'>Description</span><br><br><?=nl2br($offre['description'])?></p>
     <div class='carte'>
-        <iframe frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="https://www.openstreetmap.org/export/embed.html?bbox=<?=($offre['longitude'] - 0.0360)?>%2C<?=($offre['latitude'] - 0.0133)?>%2C<?=($offre['longitude'] + 0.0360)?>%2C<?=($offre['latitude'] + 0.0133)?>&layer=mapnik&marker=<?=$offre['latitude']?>%2C<?=$offre['longitude']?>" style="border: 1px solid black"></iframe>
+        <?php
+        if($offre['latitude']){
+        ?>
+        <iframe frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="https://www.openstreetmap.org/export/embed.html?bbox=<?=($offre['longitude'] - 0.0360)?>%2C<?=($offre['latitude'] - 0.0133)?>%2C<?=($offre['longitude'] + 0.0360)?>%2C<?=($offre['latitude'] + 0.0133)?>&layer=mapnik&marker=<?=$offre['latitude']?>%2C<?=$offre['longitude']?>"></iframe>
         <br/>
         <small>
-            <a href="https://www.openstreetmap.org/?mlat=<?=$offre['latitude']?>&amp;mlon=<?=$offre['longitude']?>#map=16/<?=$offre['latitude']?>/<?=$offre['longitude']?>&amp;layers=N">Afficher une carte plus grande</a>
+            <a href="https://www.openstreetmap.org/?mlat=<?=$offre['latitude']?>&amp;mlon=<?=$offre['longitude']?>#map=12/<?=$offre['latitude']?>/<?=$offre['longitude']?>&amp;layers=N">Afficher une carte plus grande</a>
         </small>
+        <?php
+        }
+        ?>
+    </div>
+</div>
+
+<div class='liste_boites'>
+    <?php
+    if($offre['libelle_metier']){
+    ?>
+    <div class='boite'>
+        <h4 class='titre_boite'>Information métier</h4>
+        <p><?=$offre['libelle_metier']?></p>
+    </div>
+    <?php
+    }
+    if($offre['type_contrat']){
+    ?>
+    <div class='boite'>
+        <h4 class='titre_boite'>Contrat</h4>
+        <p><?=$offre['type_contrat']?></p>
+    </div>
+    <?php
+    }
+    ?>
+    <?php
+    if($offre['nom_entreprise'] || $offre['numero_entreprise'] || $offre['mail_entreprise']){
+    ?>
+
+    <div class='boite'>
+        <h4 class='titre_boite'>Entreprise</h4>
+            
+            <?php
+            if($offre['nom_entreprise']){
+            ?>
+
+            <p><?=$offre['nom_entreprise']?></p>
+
+            <?php
+            }
+            if($offre['getMailEntreprise']){
+            ?>
+
+            <p><?=$offre['getMailEntreprise']?></p>
+
+            <?php
+            }
+            if($offre['numero_entreprise']){
+            ?>
+
+            <p><?=$offre['numero_entreprise']?></p>
+
+            <?php
+            }
+            ?>
     </div>
     
     <?php
     }
+    if($offre['salaire']){
     ?>
-    <h2><?=$offre['intitule']?></h2>
+    
+    <div class='boite'>
+        <h4 class='titre_boite'>Salaire</h4>
+        <p><?=$offre['salaire']?></p>
+    </div>
+
     <?php
-    if($offre['ville_libelle'] != 'Non renseigné'){
+    }
+
+    if($offre['secteur_activite'] ){
     ?>
-        <h4><?=array_pop(explode('- ', $offre['ville_libelle']))?></h4>
+    <div class='boite'>
+        <h4 class='titre_boite'>Secteur d'activité</h4>
+        <p><?=$offre['secteur_activite']?></p>
+    </div>
     <?php
     }
     ?>
-    <p class='date'>Offre créée le <?=date_i18n('l d F o, H:i:s', strtotime($offre['date_de_creation']))?></p>
-    <p class='date'>Mise à jour le <?=date_i18n('l d F o, H:i:s', strtotime($offre['date_actualisation']))?></p>
-    <p id='postes'><?=$offre['nb_postes']?> poste(s) à pourvoir</p>
-    <div class='separation2'>********************</div>
-    <p><?=nl2br($offre['description'])?></p>
-    <div class='liste_boites' data-masonry='{ "itemSelector": ".boite", "columnWidth":".boite"}'>
-        <div class='boite'>
-            <h4 class='titre_boite'>Information métier</h4>
-            <div class='corps_boite'>
-
-            <?php
-            if($offre['libelle_metier']){
-            ?>
-
-                <p><?=$offre['get_libelle_metier']?></p>
-
-            <?php
-            }
-            if($offre['appellation_metier']){
-            ?>
-
-                <p><?=$offre['appellation_metier']?></p>
-
-            <?php
-            }
-            ?>
-            </div>
-        </div>
-        <div class='boite'>
-            <h4 class='titre_boite'>Contrat</h4>
-            <div class='corps_boite'>
-                <p><?=$offre['type_contrat']?></p>
-                <p><?=$offre['type_contrat_libelle']?></p>
-                <p><?=$offre['nature_contrat']?></p>
-            </div>
-        </div>
-        <div class='boite'>
-            <h4 class='titre_boite'>Experience</h4>
-            <div class='corps_boite'>
-                <p><?=$offre['experience_libelle']?></p>
-            </div>
-        </div>
-
-        <?php
-        if($offre['nom_entreprise'] || $offre['numero_entreprise'] || $offre['mail_entreprise']){
-        ?>
-
-        <div class='boite'>
-            <h4 class='titre_boite'>Entreprise</h4>
-            <div class='corps_boite'>
-
-                <?php
-                if($offre['nom_entreprise']){
-                ?>
-
-                <p><?=$offre['nom_entreprise']?></p>
-
-                <?php
-                }
-                if($offre['mail_entreprise']){
-                ?>
-
-                <p><?=$offre['mail_entreprise']?></p>
-
-                <?php
-                }
-                if($offre['numero_entreprise']){
-                ?>
-
-                <p><?=$offre['numero_entreprise']?></p>
-
-                <?php
-                }
-                ?>
-
-            </div>
-        </div>
-        
-        <?php
-        }
-        if($offre['salaire']){
-        ?>
-        
-        <div class='boite'>
-            <h4 class='titre_boite'>Salaire</h4>
-            <div class='corps_boite'>
-                <p><?=$offre['salaire']?></p>
-            </div>
-        </div>
-
-        <?php
-        }
-        if($offre['duree_travail'] || $offre['duree_travail_convertie']){
-        ?>
-        
-        <div class='boite'>
-            <h4 class='titre_boite'>Durée</h4>
-            <div class='corps_boite'>
-            
-                <?php
-                if($offre['duree_travail']){
-                ?>
-
-                <p><?=$offre['duree_travail']?></p>
-
-                <?php
-                }
-                if($offre['duree_travail_convertie']){
-                ?>
-
-                <p><?=$offre['duree_travail_convertie']?></p>
-
-                <?php
-                }
-                ?>
-
-            </div>
-        </div>
-
-        <?php
-        }
-        if($offre['libelle_qualification'] ){
-        ?>
-
-        <div class='boite'>
-            <h4 class='titre_boite'>Qualification</h4>
-            <div class='corps_boite'>
-                <p><?=$offre['libelle_qualification']?></p>
-            </div>
-        </div>
-        
-        <?php
-        }
-        if($offre['secteur_activite_libelle'] ){
-        ?>
-        <div class='boite'>
-            <h4 class='titre_boite'>Secteur d'activité</h4>
-            <div class='corps_boite'>
-                <p><?=$offre['secteur_activite_libelle']?></p>
-            </div>
-        </div>
-    </div>  
-        <?php
-        }
-        ?>
 </div>
 <div class='choix'>
     <button class='valider' data-bs-target='#modalOffre' data-bs-toggle='modal' data-bs-decision='valider'>Valider</button>

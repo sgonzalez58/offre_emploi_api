@@ -115,7 +115,7 @@ function archiver(id_offre, etat){
             type:'POST',
             url:confirmation_ajax.ajax_url,
             data:{_ajax_nonce:confirmation_ajax.nonce, action:'set_offre_archive', id_offre:id_offre},
-            succes:function(){
+            success:function(){
                 tableOffres.ajax.reload(function(){
                     jQuery(function () {
                         jQuery('.bulle').tooltip()

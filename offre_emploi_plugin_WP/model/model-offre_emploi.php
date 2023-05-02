@@ -341,18 +341,15 @@ class Offre_Emploi_Model {
 	/**
 	 * Crée une offre d'emploi utilisateur
 	 */
-	public function createOneOffre($intitule, $appellation_metier, $type_contrat, $type_contrat_libelle, $nature_contrat, $experience_libelle, $alternance = 'NULL', $nb_postes, $latitude = 'NULL', $longitude ='NULL',  $nom_entreprise = 'NULL', $salaire ='NULL', $duree_travail='NULL', $commune_id = 'NULL', $user_id, $description, $ville_libelle, $mail_entreprise = 'NULL', $numero_entreprise ='NULL'){
+	public function createOneOffre($intitule, $libelle_metier, $secteur_activite, $nom_entreprise, $type_contrat, $latitude = 'NULL', $longitude ='NULL', $salaire ='NULL', $commune_id = 'NULL', $user_id, $description, $ville_libelle){
 
-		$sql = $this->offreEmploiDB->prepare('INSERT INTO '.$this->TableOffreEmploi." (intitule, date_de_creation, date_actualisation,
-											appellation_metier, type_contrat, type_contrat_libelle, nature_contrat,
-											experience_libelle, alternance, nb_postes, latitude, longitude, nom_entreprise,
-											salaire, duree_travail, commune_id, user_id, description, ville_libelle,
-											validation, mail_entreprise, numero_entreprise, visibilite)
-											  VALUES ('".$intitule."', NOW(), NOW(),
-											'".$appellation_metier."', '".$type_contrat."', '".$type_contrat_libelle."', '".$nature_contrat."', 
-											'".$experience_libelle."', ".$alternance.", ".$nb_postes.", ".$latitude.", ".$longitude.", '".$nom_entreprise."', 
-											'".$salaire."', '".$duree_travail."', ".$commune_id.", ".$user_id.", '".$description."', '".$ville_libelle."', 
-											'en attente', '".$mail_entreprise."', '".$numero_entreprise."', 'non visible')");
+		$sql = $this->offreEmploiDB->prepare('INSERT INTO '.$this->TableOffreEmploi." (intitule, date_de_publication,
+											libelle_metier, secteur_activite, nom_entreprise, type_contrat, latitude, longitude, salaire, commune_id,
+											user_id, description, ville_libelle, validation, visibilite, archive)
+											VALUES ('".$intitule."', NOW(),
+											'".$libelle_metier."', '".$secteur_activite."', '".$nom_entreprise."', '".$type_contrat."', ".$latitude.", ".$longitude.", 
+											'".$salaire."',".$commune_id.", ".$user_id.", '".$description."', '".$ville_libelle."', 
+											'en attente', 'non visible', 'non')");
 		
 		$this->offreEmploiDB->query($sql);
 
@@ -361,18 +358,14 @@ class Offre_Emploi_Model {
 	/**
 	 * modifie une offre d'emploi utilisateur
 	 */
-	public function modifierOffre($id_offre, $intitule, $appellation_metier, $type_contrat, $type_contrat_libelle, $nature_contrat, $experience_libelle, $alternance = 'NULL', $nb_postes, $latitude = 'NULL', $longitude ='NULL',  $nom_entreprise = 'NULL', $salaire ='NULL', $duree_travail='NULL', $commune_id = 'NULL', $user_id, $description, $ville_libelle, $mail_entreprise = 'NULL', $numero_entreprise ='NULL'){
+	public function modifierOffre($id_offre, $intitule, $libelle_metier, $secteur_activite, $nom_entreprise, $type_contrat, $latitude = 'NULL', $longitude ='NULL', $salaire ='NULL', $commune_id = 'NULL', $user_id, $description, $ville_libelle){
 
 		$sql = $this->offreEmploiDB->prepare('UPDATE '.$this->TableOffreEmploi." 
-											SET intitule = '".$intitule."', date_actualisation = NOW(),
-											appellation_metier = '".$appellation_metier."', type_contrat = '".$type_contrat."',
-											type_contrat_libelle = '".$type_contrat_libelle."', nature_contrat = '".$nature_contrat."',
-											experience_libelle = '".$experience_libelle."', alternance = ".$alternance.",
-											nb_postes = ".$nb_postes.", latitude = ".$latitude.", longitude = ".$latitude.", 
-											nom_entreprise = '".$nom_entreprise."', salaire = '".$salaire."', duree_travail = '".$duree_travail."',
+											SET intitule = '".$intitule."', libelle_metier = '".$libelle_metier."', type_contrat = '".$type_contrat."',
+											latitude = ".$latitude.", longitude = ".$longitude.", secteur_activite = '".$secteur_activite."',
+											nom_entreprise = '".$nom_entreprise."', salaire = '".$salaire."',
 											commune_id = ".$commune_id.", description = '".$description."', ville_libelle = '".$ville_libelle."',
-											validation = 'en attente', mail_entreprise = '".$mail_entreprise."',
-											numero_entreprise = '".$numero_entreprise."', visibilite = 'non visible', archive = 'non'
+											validation = 'en attente', visibilite = 'non visible', archive = 'non'
 											WHERE id = ".$id_offre);
 		
 		$this->offreEmploiDB->query($sql);
@@ -469,8 +462,8 @@ class Offre_Emploi_Model {
 	}
 
 	public function createCandidature($id_offre, $mail, $id_user=NULL){
-		$sql = $this->offreEmploiDB->prepare('INSERT INTO '.$this->TableCandidature." (id_offre_id, id_user, mail)
-											values (".$id_offre.", ".$id_user.", '".$mail."')");
+		$sql = $this->offreEmploiDB->prepare('INSERT INTO '.$this->TableCandidature." (id_offre_id, id_user, mail, date_envoi)
+											values (".$id_offre.", ".$id_user.", '".$mail."', NOW())");
 
 		$this->offreEmploiDB->query($sql);
 
@@ -489,6 +482,21 @@ class Offre_Emploi_Model {
 			$sql = $this->offreEmploiDB->prepare('SELECT * FROM '.$this->TableCandidature."
 												WHERE id_offre_id = ".$id_offre);
 		}
+		$this->offreEmploiDB->query($sql);
+
+		if($this->offreEmploiDB->last_error){
+			return 'Erreur sql : '.$this->offreEmploiDB->last_error;
+		}else{
+			if($this->offreEmploiDB->num_rows > 0){
+				$return = $this->offreEmploiDB->get_results($sql, ARRAY_A);
+			}
+			return $return;
+		}
+	}
+
+	public function findMesCandidatures($id_user){
+		$sql = $this->offreEmploiDB->prepare('SELECT c.*, o.* FROM '.$this->TableCandidature." c, ".$this->TableOffreEmploi." o
+												WHERE c.id_user = ".$id_user." AND c.id_offre_id = o.id");
 		$this->offreEmploiDB->query($sql);
 
 		if($this->offreEmploiDB->last_error){

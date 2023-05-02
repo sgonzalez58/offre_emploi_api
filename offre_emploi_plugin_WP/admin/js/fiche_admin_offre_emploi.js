@@ -65,7 +65,7 @@ function accepter(){
         url:confirmation_ajax.ajax_url,
         data:{_ajax_nonce:confirmation_ajax.nonce, action:'get_reponse_positive_offre', id_offre:offre_id, commentaire:document.getElementById('raison_personnalisee').value},
         success:function(){
-            document.getElementsByClassName('modal-body')[0].innerHTML = '<p>L\'offre a été acceptée avec succès. Elle est désormais visible dans la liste des offres.</p><p>Vous pouvez retourner dans la liste des offres utilisateurs via <a href=\'https://new.koikispass.com/wp-admin/admin.php?page=gestion_offre_emploi\'>ce lien</a></p>';
+            document.getElementsByClassName('modal-body')[0].innerHTML = '<p>L\'offre a été acceptée avec succès. Elle est désormais visible dans la liste des offres.</p><p>Vous pouvez retourner dans la liste des offres utilisateurs via <a href=\'/wp-admin/admin.php?page=gestion_offre_emploi\'>ce lien</a></p>';
             document.getElementsByClassName('modal-footer')[0].innerHTML = '';
         },
         error:function(data){
@@ -93,7 +93,7 @@ function refuser(){
         url:confirmation_ajax.ajax_url,
         data:{_ajax_nonce:confirmation_ajax.nonce, action:'get_reponse_negative_offre', id_offre:offre_id, raison:$raison},
         success:function(){
-            document.getElementsByClassName('modal-body')[0].innerHTML = '<p>L\'offre a été refusée avec succès.</p><p>Vous pouvez retourner dans la liste des offres utilisateurs via <a href=\'https://new.koikispass.com/wp-admin/admin.php?page=gestion_offre_emploi\'>ce lien</a></p>';
+            document.getElementsByClassName('modal-body')[0].innerHTML = '<p>L\'offre a été refusée avec succès.</p><p>Vous pouvez retourner dans la liste des offres utilisateurs via <a href=\'/wp-admin/admin.php?page=gestion_offre_emploi\'>ce lien</a></p>';
             document.getElementsByClassName('modal-footer')[0].innerHTML = '';
         },
         error:function(data){

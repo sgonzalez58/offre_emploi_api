@@ -1,70 +1,112 @@
-.fiche{
-    padding : 20px;
-    position:relative;
+h2{
+    margin-top: 0;
 }
+
+#fiche_head{
+    display: flex;
+    justify-content: space-between;
+    background-color: white;
+    border : none;
+    box-shadow: 0 2px 3px 0 gray;
+    padding: 2rem;
+    width: 100%;
+    align-items: center;
+    box-sizing: border-box;
+}
+
+#informations_principales{
+    display: flex;
+    flex-direction: column;
+}
+
+#intitule{
+    font-weight: bold;
+    font-size: 25px;
+}
+
+#adresse, #ville, #date_de_creation{
+    display: flex;
+    margin-bottom: 0.7rem;
+}
+
+#adresse p, #ville p, #date_de_creation p{
+    color: grey;
+    margin: 0;
+    font-size: 13px;
+}
+
+#adresse i, #ville i, #date_de_creation i{
+    margin-right: 0.5rem;
+    color: red;
+    width: 2rem;
+    display: flex;
+    justify-content: center;
+}
+
+#bouton_postuler{
+    font-size: 13px;
+    border-radius: 5px;
+    padding: 0.7rem 3rem;
+    margin: 0 1rem;
+    letter-spacing: 1px;
+    font-weight: bold;
+}
+
+#fiche_content{
+    display: flex;
+    width: 100%;
+    margin: 1rem 0;
+}
+
+#description{
+    padding: 2rem;
+    width: 50%;
+    box-sizing: border-box;
+    font-size: 13px;
+}
+
 .carte{
-    float: right;
-    margin : 20px;
+    width: 50%;
+    border: 4px solid white;
+    max-height: 400px;
+    box-sizing: border-box;
+    margin-bottom: 3rem;
 }
 
 .carte > iframe{
-    width: 425px;
-    height: 350px;
+    width: 100%;
+    height: 100%;
 }
 
 .liste_boites{
     display: grid;
-    margin-top: 20px;
-    margin-bottom:20px;
-}
-
-#intitule{
-    font-size: 25px;
-    font-weight: bold;
-}
-
-#ville{
-    color: darkred;
-    font-weight: 600;
-}
-
-.date{
-    color: grey;
-}
-
-#postes{
-    text-decoration: underline;
-}
-
-.separation2{
-    display: flex;
-    justify-content: center;
-    color:darkred;
-    margin: 10px;
+    grid-template-columns: repeat(4, 1fr);
+    grid-gap: 1rem;
+    margin-top: 1rem;
 }
 
 .boite{
-    border-radius: 15px;
-    border: 1px solid lightgrey;
-    overflow: hidden;
-    width: calc(50% - 10px);
-    height: fit-content;
+    border: none;
+    box-shadow: 0 0 2px 0 gray;
+    padding: 1rem;
+    background-color: white;
+    box-sizing: border-box;
+    color: gray;
+    font-size: 13px;
+}
+
+.boite > *{
+    margin: 0;
 }
 
 .titre_boite{
-    text-align: center;
-    margin: 0;
-    padding : 0.5em 0;
-    color:white;
-    background-color: rgb(221, 11, 11);
-}
-
-.corps_boite{
-    padding : 0 20px;
-    margin-top: 20px;
+    font-weight: bold;
+    color: black;
+    font-size: 15px;
 }
 
 .choix{
+    margin-top: 3rem;
     display: flex;
     justify-content: space-around;
 }
@@ -107,26 +149,39 @@
 }
 
 @media screen and (max-width:1024px){
-    .boite{
-        width: calc(100% - 10px);
+    #fiche_content{
+        flex-direction: column-reverse;
+    }
+    #description{
+        width: 100%;
+        margin-top: 2rem;
     }
     .carte{
-        width: 300px;
+        width: 70%;
+        height: calc(100vw / 100 * 30);
+        margin: auto;
     }
-    .carte > iframe{
-        width: 300px;
+    .liste_boites{
+        grid-template-columns: repeat(3, 1fr);
     }
 }
 
 @media screen and (max-width:768px){
-    .boite{
-        margin-bottom: 15px;
+    .liste_boites{
+        grid-template-columns: repeat(2,1fr);
     }
-    .carte{
-        float: none;
-        width: calc(100% - 40px);
+
+    #fiche_head{
+        flex-direction: column-reverse;
     }
-    .carte > iframe{
-        width: 100%;
+
+    #informations_principales{
+        margin-top: 2rem;
+    }
+}
+
+@media screen and (max-width:520px){
+    .liste_boites{
+        grid-template-columns: repeat(1,1fr);
     }
 }

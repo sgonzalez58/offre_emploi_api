@@ -164,7 +164,8 @@ class Offre_emploi_Admin {
 			wp_send_json_error($response);
 		}
 
-		$this->envoi_email_utilisateur($this->model->findOneOffre($args['id_offre'])['mail_entreprise'], $args['commentaire'], 'valide');
+		$this->envoi_email_utilisateur(get_userdata($this->model->findOneOffre($args['id_offre'])['user_id'])->user_email, $args['commentaire'], 'valide');
+		wp_send_json_success('mail envoyé');
 	}
 
 	/**
@@ -192,8 +193,8 @@ class Offre_emploi_Admin {
 		if( $response != 'Sql succès'){
 			wp_send_json_error($response);
 		}
-
-		$this->envoi_email_utilisateur($this->model->findOneOffre($args['id_offre'])['mail_entreprise'], $args['raison'], 'refus');
+		$this->envoi_email_utilisateur(get_userdata($this->model->findOneOffre($args['id_offre'])['user_id'])->user_email, $args['raison'], 'refus');
+		wp_send_json_success('mail envoyé');
 	}
 
 	/**
@@ -217,7 +218,9 @@ class Offre_emploi_Admin {
 		$reponse = $this->model->setOffreArchive($args['id_offre']);
 
 		if($reponse != 'archivé'){
-			wp_send_json_error('Erreure lors de la supression : '.$reponse);
+			wp_send_json_error('Erreure lors d\'archivage : '.$reponse);
+		}else{
+			wp_send_json_success($reponse);
 		}
 	}
 
@@ -242,14 +245,15 @@ class Offre_emploi_Admin {
 		//Affiche ici la fiche d'offre d'emploi
 		if(isset($_GET['id_offre'])){
 			if(file_exists(plugin_dir_path( __FILE__ ) .'partials/offre_emploi_admin_display.php')) {
+				wp_enqueue_style( $this->plugin_name.'.font-awesome', plugin_dir_url( __FILE__ ) . 'css/all.css', array(), $this->version, 'all' );
 				wp_enqueue_style( $this->plugin_name.'datatable', 'https://cdn.datatables.net/v/bs5/dt-1.12.1/date-1.1.2/r-2.3.0/sb-1.3.4/sp-2.0.2/sl-1.4.0/datatables.min.css', array(), $this->version, 'all' );
 				wp_enqueue_style( $this->plugin_name.'gestion_offre', plugin_dir_url( __FILE__ ) . 'css/gestion_offre_emploi.css', array(), $this->version, 'all' );
 				wp_enqueue_style( $this->plugin_name.'offre', plugin_dir_url( __FILE__ ) . 'css/offre.css', array(), $this->version, 'all' );
+				wp_enqueue_style( $this->plugin_name.'bootstrap', 'https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css', array(), $this->version, 'all' );
 				wp_enqueue_script( $this->plugin_name.'bootstrap', 'https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js', array( 'jquery' ), $this->version, false );
 				wp_enqueue_script( $this->plugin_name.'luxon', 'https://cdn.jsdelivr.net/npm/luxon@3.0.4/build/global/luxon.min.js', array( 'jquery' ), $this->version, false );
 				wp_enqueue_script( $this->plugin_name.'datatable', 'https://cdn.datatables.net/v/bs5/dt-1.12.1/date-1.1.2/r-2.3.0/sb-1.3.4/sp-2.0.2/sl-1.4.0/datatables.min.js', array( 'jquery' ), $this->version, false );
 				wp_enqueue_script( $this->plugin_name.'datatable_luxon', 'https://cdn.datatables.net/plug-ins/1.10.24/sorting/datetime-luxon.js', array( 'jquery' ), $this->version, false );
-				wp_enqueue_script( $this->plugin_name.'masonry', "https://unpkg.com/masonry-layout@4/dist/masonry.pkgd.js", array( 'jquery' ), $this->version, false);
 				wp_enqueue_script( $this->plugin_name.'fiche_admin_offre_emploi', plugin_dir_url( __FILE__ ) . 'js/fiche_admin_offre_emploi.js', array( 'jquery' ), $this->version, true );
 				$reponse_offre = wp_create_nonce( 'reponse_offre' );
 				wp_localize_script(
@@ -268,6 +272,7 @@ class Offre_emploi_Admin {
 			wp_enqueue_style( $this->plugin_name.'datatable', 'https://cdn.datatables.net/v/bs5/dt-1.12.1/date-1.1.2/r-2.3.0/sb-1.3.4/sp-2.0.2/sl-1.4.0/datatables.min.css', array(), $this->version, 'all' );
 			wp_enqueue_style( $this->plugin_name.'gestion_offre', plugin_dir_url( __FILE__ ) . 'css/gestion_offre_emploi.css', array(), $this->version, 'all' );
 			wp_enqueue_style( $this->plugin_name.'all', plugin_dir_url( __FILE__ ) . 'css/all.css', array(), $this->version, 'all' );
+			wp_enqueue_style( $this->plugin_name.'bootstrap', 'https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css', array(), $this->version, 'all' );
 			wp_enqueue_script( $this->plugin_name.'bootstrap', 'https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js', array( 'jquery' ), $this->version, false );
 			wp_enqueue_script( $this->plugin_name.'luxon', 'https://cdn.jsdelivr.net/npm/luxon@3.0.4/build/global/luxon.min.js', array( 'jquery' ), $this->version, false );
 			wp_enqueue_script( $this->plugin_name.'datatable', 'https://cdn.datatables.net/v/bs5/dt-1.12.1/date-1.1.2/r-2.3.0/sb-1.3.4/sp-2.0.2/sl-1.4.0/datatables.min.js', array( 'jquery' ), $this->version, false );
