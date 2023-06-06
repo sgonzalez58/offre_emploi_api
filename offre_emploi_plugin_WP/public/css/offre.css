@@ -63,7 +63,7 @@ h2{
     padding: 2rem;
     width: 50%;
     box-sizing: border-box;
-    font-size: 13px;
+    font-size: 15px;
 }
 
 .carte{
@@ -203,6 +203,12 @@ h2{
     transform: scale(1.2);
 }
 
+.postuler_copie{
+    width:100%;
+    text-align:center;
+    display: none;
+}
+
 @media screen and (max-width:1080px){
     #fiche_content{
         flex-direction: column-reverse;
@@ -218,6 +224,10 @@ h2{
     }
     .liste_boites{
         grid-template-columns: repeat(3, 1fr);
+    }
+    .postuler_copie{
+        display: flex;
+        justify-content: center;
     }
 }
 

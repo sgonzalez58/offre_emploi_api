@@ -13,18 +13,29 @@ main{
 
 .head_liste_offre{
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
 }
 
 .head_liste_offre h1{
-    margin-bottom: 0;
-    font-weight: bold;
+    margin-bottom: 20px;
+    font-weight: 400;
 }
 
 .sous_titre_h1{
     font-size: 12px;
     color : grey;
+    margin-right: 3em;
+}
+
+.supp_tri{
+    font-size: 12px;
+    color: grey;
+    cursor:pointer
+}
+.supp_tri:hover{
+    border-bottom: solid;
+    border-width: 1px;
 }
 
 .ajout{
@@ -55,7 +66,6 @@ main{
 
 #recherche_icon {
     position : absolute;
-    width: 100%;
     padding : 1rem;
     box-sizing: border-box;
     font-size: 20px;
@@ -65,32 +75,28 @@ main{
     align-items: center;
 }
 
-#recherche_input{
-    width: 100%;
-    padding : 1rem;
-    font-size: 16px;
-}
-
 #filtre_label{
     font-weight: bold;
     margin-bottom: 0.5rem;
     margin-top: 3rem;
 }
 
-#liste_filtres{
+/*#liste_filtres{
     display: flex;
     justify-content: space-between;
-}
+}*/
 
 #filtre_recherche{
     display: flex;
+    justify-content: center;
+    align-items: stretch;
+    justify-content: space-between;
 }
 
 #type_contrat, #commune, #distance{
     margin-right: 1rem;
     position:relative;
     height: 100%;
-    min-width: 200px;
 }
 
 .select2-selection__arrow{
@@ -125,11 +131,11 @@ main{
     border: none;
     border-radius: 5px;
     box-shadow: 0 0 3px 0px rgb(200, 200, 200);
-    min-width: 220px;
     font-size: 14px;
+    height: 100%;
 }
 
-#distance_icon, #ville_icon, #type_metier_icon{
+#distance_icon, #ville_icon, #type_metier_icon, #recherche_secteur_icon{
     position:absolute;
     height: 100%;
     top: 0;
@@ -138,6 +144,7 @@ main{
     padding-left : 0.8rem;
     box-sizing: border-box;
     z-index: 1;
+    font-size: 1.1em;
 }
 
 .sort_icon{
@@ -157,18 +164,38 @@ main{
     border: none;
     border-radius: 5px;
     box-shadow: 0 0 3px 0px rgb(188, 188, 188);
-    min-width: 220px;
     font-size: 14px;
+    height: 37px;
+    background-color: white;
+    width: 100%;
+}
+
+#recherche_input{
+    padding: 0.5rem;
+    padding-left: 2.6rem;
+    box-sizing: border-box;
+    border: none;
+    border-radius: 5px;
+    box-shadow: 0 0 3px 0px rgb(188, 188, 188);
+    font-size: 14px;
+    height: 37px;
+    background-color: white;
 }
 
 #recherche{
-    padding : 0.5rem 2rem;
+    padding : 0.5rem 1rem;
     border-radius: 5px;
     font-size: 12px;
     display: flex;
     align-items: center;
-    font-weight: bold;
+    font-weight: 600;
     background-color: red;
+    margin-left: 1.2em;
+    text-transform: capitalize;
+}
+#recherche span{
+    margin-right: 0.3em;
+    font-size:1.5em;
 }
 
 #liste_offres{
@@ -186,6 +213,7 @@ main{
     padding:2rem;
     justify-content: space-between;
     position: relative;
+    box-shadow: 1px 3px #DEDEDE;
 }
 
 .corps_offre{
@@ -214,11 +242,17 @@ main{
     word-break: break-word;
     hyphens: auto;
 	margin-top:0 !important;
+    color: black;
+}
+
+.corps_offre h3{
+    color: black !important;
 }
 
 .details{
     display: flex;
     margin-bottom: 1rem;
+    color: black;
 }
 
 .ville, .contrat{
@@ -239,6 +273,7 @@ main{
     font-size: 12px;
     text-transform: uppercase;
     font-weight: bold;
+    letter-spacing: 1px;
 }
 
 .nom_entreprise{
@@ -264,7 +299,7 @@ main{
     font-size: 12px;
     display: flex;
     align-items: center;
-    background-color: red!important;
+    background-color: black!important;
     letter-spacing: 1px;
 }
 
@@ -285,19 +320,64 @@ main{
     border-radius: 5px;
 }
 
-@media screen and (max-width:1080px) {
-    #liste_offres{
-        grid-template-columns: repeat(2, 1fr);
-    }
+.legende_tri{
+    display:flex;
+    justify-content:center;
+    margin-bottom:60px;
+}
 
+.paginationjs{
+    justify-content: center;
+    margin-top: 34px;
+}
+
+.paginationjs-page.active > a{
+    background-color: #D90017!important;
+}
+
+@media screen and (max-width:1219px) {
     #filtre_recherche{
         display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        grid-gap: 1rem;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        justify-content: center;
+        align-items: center;
+    }
+    #recherche{
+        margin-left: 0;
+        max-width: 130px;
+        position: relative;
+        left: 100%;
+        transform: translateX(-50%);
+    }
+    #recherche_input{
+        width: 100%;
+        max-width: 260px;
+    }
+    #type_contrat, #commune, #distance{
+        width: 100%;
+        max-width: 260px;
+    }
+    .select2-container{
+        width: 100% !important;
+        max-width: 260px;
+    }
+
+    #type_contrat, #distance{
+        position: relative;
+        left: 100%;
+        transform: translateX(-100%);
     }
 
     #liste_filtres{
         align-items: center;
+    }
+}
+
+@media screen and (max-width:1000px){
+    #liste_offres{
+        grid-template-columns: repeat(2, 1fr);
+        width: 100%;
     }
 }
 
@@ -307,14 +387,14 @@ main{
         width: 100%;
     }
 
-    #liste_filtres{
+    /*#liste_filtres{
         display: grid;
         grid-template-columns: repeat(1, 1fr);
         grid-gap: 1rem;
         justify-items: center;
-    }
+    }*/
 
-    #filtre_recherche{
+/*    #filtre_recherche{
         grid-template-columns: repeat(1, 1fr);
         justify-items: center;
     }
@@ -329,11 +409,99 @@ main{
         grid-gap: 1rem;
         text-align: center;
         justify-items: center;
-    }
+    }*/
 
-    .recherche{
+   /* .recherche{
         display: flex;
         width: clamp(250px, 70%, 500px);
         margin:auto;
+    }*/
+}
+
+@media screen and (max-width:550px){
+    #filtre_recherche{
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+        justify-content: center;
+        align-items: center;
+    }
+    #type_contrat, #distance{
+        position: relative;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+    #recherche{
+        left: 50%;
+        transform: translateX(-50%);
+        /*max-width: 260px;*/
+    }
+    #commune{
+        left: 50%;
+        transform: translateX(-50%);
+    }
+    .recherche{
+        left: 50%;
+        transform: translateX(-50%);
+        width: 260px;
+    }
+    .legende_tri{
+        display: flex;
+        justify-content: center;
+        margin-bottom: 60px;
+        flex-direction: column;
+        align-items: center;
+    }
+    .supp_tri {
+        margin-top: 20px;
+    }
+    .sous_titre_h1 {
+        margin-right: 0;
+        text-align: center;
     }
 }
+
+@media (max-width:980px) {
+    .ajout_agenda_text{display: none;}
+    .ajout_agenda_bouton{bottom: 2% !important;}
+}
+
+@media screen and (min-width: 980px){
+    .ajout_agenda_bouton{
+      padding: 15px !important;
+    }
+    .ajout_agenda_bouton span{
+      font-size:2.3em !important;
+    }
+}
+
+.ajout_agenda_text{
+    position: fixed;
+    right: 4%;
+    bottom: calc(3% - 20px);
+    color: black;
+    font-size: 12px;
+    font-weight: bold;
+    z-index: 100;
+    cursor: pointer;
+    text-align: center;
+    /*color: white;*/
+  }
+  .ajout_agenda_text:hover{
+    text-decoration: underline;
+  }
+  .ajout_agenda_bouton{
+    position: fixed;
+    right: 4%;
+    bottom: 8%;
+    border-radius: 50px;
+    background-color: #D90017;
+    box-shadow: 0px 1px 5px grey;
+    padding: 10px;
+    z-index: 100;
+    cursor: pointer;
+  }
+  .ajout_agenda_bouton span{
+    color: white;
+    font-size:2em;
+  }

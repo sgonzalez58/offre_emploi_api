@@ -87,7 +87,7 @@ get_header(); ?>
 </div>
 
 <div id='liste_offres'></div>
-<div id='pagination_container' class='paginationjs-theme-red paginationjs-big'></div>
+<div class='paginationjs-theme-red paginationjs-big pagination_container'></div>
 
 <?php
 }else{

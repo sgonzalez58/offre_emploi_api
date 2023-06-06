@@ -107,6 +107,7 @@ class Offre_Emploi_Model {
 		if(count($communes) > 0){
 			$baseSql .= " AND (commune_id IS NULL OR commune_id IN (".implode(', ', $communes)."))";
 		}
+		$baseSql .= " ORDER BY date_de_publication DESC";
 		if(count($mots_clef) > 0){
 			$sql = $this->offreEmploiDB->prepare($baseSql, $prepare_mots_clef);
 		}else{
