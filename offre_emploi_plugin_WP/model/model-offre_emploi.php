@@ -50,6 +50,22 @@ class Offre_Emploi_Model {
 	}
 	
 	/**
+	 * Récupère les "libelle_metier" et les "secteurèactivité"
+	 */
+	public function getMetier(){
+
+		$sql = $this->offreEmploiDB->prepare('SELECT DISTINCT libelle_metier as libelle, secteur_activite as secteur FROM '.$this->TableOffreEmploi."
+			WHERE libelle_metier IS NOT NULL OR secteur_activite IS NOT NULL");
+
+		$this->offreEmploiDB->query( $sql );
+	
+		if( $this->offreEmploiDB->num_rows > 0 )
+			$return = $this->offreEmploiDB->get_results($sql, ARRAY_A);
+		
+		return $return;
+	}
+	
+	/**
 	 * Récupère toutes les offres utilisateurs non archivées
 	 */
 	public function findAllOffresUser(){
@@ -120,6 +136,50 @@ class Offre_Emploi_Model {
 		}
 	}
 
+	public function getNbCommunes(){
+		$baseSql = 'SELECT c.id as id_commune, c.nom_commune as nom_commune, COUNT(o.id) as NbEvent FROM '.$this->TableOffreEmploi." o, ".$this->TableCommune." c WHERE o.visibilite = 'visible' AND o.nom_entreprise IS NOT NULL AND o.commune_id = c.id GROUP BY o.commune_id";
+		$this->offreEmploiDB->query( $baseSql );
+		
+		if($this->offreEmploiDB->last_error){
+			return 'Erreur sql : ' . $this->offreEmploiDB->last_error;
+		}else{
+			return $this->offreEmploiDB->get_results($baseSql, ARRAY_A);
+		}
+	}
+
+	public function getNbTypesContrat(){
+		$baseSql = 'SELECT type_contrat as nom, COUNT(*) as NbEvent FROM '.$this->TableOffreEmploi." o WHERE o.visibilite = 'visible' AND o.nom_entreprise IS NOT NULL GROUP BY o.type_contrat";
+		$this->offreEmploiDB->query( $baseSql );
+		
+		if($this->offreEmploiDB->last_error){
+			return 'Erreur sql : ' . $this->offreEmploiDB->last_error;
+		}else{
+			return $this->offreEmploiDB->get_results($baseSql, ARRAY_A);
+		}
+	}
+
+	public function getNbCommunes1($type){
+		$baseSql = 'SELECT c.id as id_commune, c.nom_commune as nom_commune, COUNT(o.id) as NbEvent FROM '.$this->TableOffreEmploi." o, ".$this->TableCommune." c WHERE o.visibilite = 'visible' AND o.nom_entreprise IS NOT NULL AND o.commune_id = c.id AND o.type_contrat = '".$type."' GROUP BY o.commune_id";
+		$this->offreEmploiDB->query( $baseSql );
+		
+		if($this->offreEmploiDB->last_error){
+			return 'Erreur sql : ' . $this->offreEmploiDB->last_error;
+		}else{
+			return $this->offreEmploiDB->get_results($baseSql, ARRAY_A);
+		}
+	}
+
+	public function getNbTypesContrat1($com){
+		$baseSql = 'SELECT type_contrat as nom, COUNT(*) as NbEvent FROM '.$this->TableOffreEmploi." o WHERE o.visibilite = 'visible' AND o.nom_entreprise IS NOT NULL AND o.id_commune = ".$com." GROUP BY o.type_contrat";
+		$this->offreEmploiDB->query( $baseSql );
+		
+		if($this->offreEmploiDB->last_error){
+			return 'Erreur sql : ' . $this->offreEmploiDB->last_error;
+		}else{
+			return $this->offreEmploiDB->get_results($baseSql, ARRAY_A);
+		}
+	}
+
 	/**
 	 * Récupère les offres d'emploi d'un utilisateur
 	 */
@@ -158,8 +218,8 @@ class Offre_Emploi_Model {
 	 */
 	public function findAllCommunes(){
 		
-		$sql = $this -> offreEmploiDB ->prepare('SELECT C.id, C.code_postal, C.nom_departement, C.nom_commune, C.slug, C.latitude, C.longitude FROM
-				'.$this->TableCommune.' C ORDER BY C.nom_commune ASC');
+		$sql = $this -> offreEmploiDB ->prepare('SELECT * FROM
+				'.$this->TableCommune.' ORDER BY nom_commune ASC');
 
 		$this->offreEmploiDB->query( $sql );
 		

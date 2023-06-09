@@ -44,6 +44,8 @@ class Offre_emploi_Public {
 	 */
 	private $version;
 
+	private $model;
+
 	/**
 	 * Initialize the class and set its properties.
 	 *
@@ -170,6 +172,52 @@ class Offre_emploi_Public {
 		}
 		return $title;
 	}
+
+	public function getOffresValides() {
+		
+		return $dates = $this->model->findByMotsClef();	
+	}	
+
+	public function getAllCommunes() {
+		
+		return $villes = $this->model->findAllCommunes();	
+	}	
+
+	public function getAllTypeContrat() {
+		
+		return $categories = $this->model->getAllTypeContrat();	
+	}	
+
+	public function get_commune_by_slug($slug) {
+		
+		return $commune = $this->model->findOneCommuneBySlug($slug);
+		
+	}
+
+	public function get_nb_communes() {
+		
+		return $nb_communes = $this->model->getNbCommunes();
+		
+	}
+
+	public function get_nb_types_contrat() {
+		
+		return $nb_types_contrat = $this->model->getNbTypesContrat();
+		
+	}
+
+	public function get_nb_communes_1($them) {
+		
+		return $nb_communes1 = $this->model->getNbCommunes1($them);
+		
+	}
+
+	public function get_nb_types_contrat_1($comm) {
+		
+		return $nb_types_contrat1 = $this->model->getNbTypesContrat1($comm);
+		
+	}
+	
 
 	/**
 	 * Récupères les offres par mot clef
@@ -552,11 +600,14 @@ class Offre_emploi_Public {
 	 */
 	function offre_emploi_rewrite_rules() {	
 
-		add_rewrite_rule("^offres-emploi/ville/([a-z-]+)/?", 'index.php?ville=$matches[1]', 'top');
-
 		add_rewrite_rule('^offres-emploi/([0-9]+)/candidature/?', 'index.php?idOffreEmploi=$matches[1]&candidature=1', 'top');
 
 		add_rewrite_rule('^offres-emploi/([0-9]+)/?', 'index.php?idOffreEmploi=$matches[1]', 'top');
+
+		add_rewrite_rule('^offres-emploi/categorie/([^/]+)$','index.php?offreEmploi=1&thematique=$matches[1]','top');
+
+		add_rewrite_rule('^offres-emploi/lieu/([^/]+)$','index.php?offreEmploi=1&commune=$matches[1]','top');
+		add_rewrite_rule('^offres-emploi/lieu/([^/]+)/categorie/([^/]+)$','index.php?offreEmploi=1&commune=$matches[1]&thematique=$matches[2]','top');
 
 		add_rewrite_rule('^offres-emploi/creer/verification/?', 'index.php?verificationNouvelleOffre=1', 'top');
 
@@ -579,6 +630,8 @@ class Offre_emploi_Public {
 		
 		$vars[] = 'offreEmploi';
 		$vars[] = 'idOffreEmploi';
+		$vars[] = 'commune';
+		$vars[] = 'thematique';
 		$vars[] = 'nouvelleOffre';
 		$vars[] = 'mesOffres';
 		$vars[] = 'idMonOffreEmploi';
@@ -599,6 +652,40 @@ class Offre_emploi_Public {
 
 		//affichage de la liste des offres
 		if(array_key_exists('offreEmploi',$wp_query->query_vars) && $wp_query->query_vars['offreEmploi'] ==1){
+			
+			if( ( ( array_key_exists('thematique',$wp_query->query_vars) && $wp_query->query_vars['thematique']!='toutes') || ( array_key_exists('commune',$wp_query->query_vars) && $wp_query->query_vars['commune'] != 'toutes' )) ){
+				return plugin_dir_path( __FILE__ ) .'partials/liste_offres_sans_filtres.php';
+			}
+
+			wp_enqueue_style( $this->plugin_name.'.liste_offres_sans_filtres_css', plugin_dir_url( __FILE__ ) . 'css/liste_offres_sans_filtres.css', array(), $this->version, 'all' );
+			wp_enqueue_style( $this->plugin_name.'.pagination', plugin_dir_url( __FILE__ ) . 'css/pagination.css', array(), $this->version, 'all' );
+			wp_enqueue_style( $this->plugin_name.'.ui_css', '//code.jquery.com/ui/1.13.0/themes/base/jquery-ui.css', array(), $this->version, 'all' );
+			wp_enqueue_style( $this->plugin_name.'.google_apis', 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200', array(), $this->version, 'all' );
+			wp_enqueue_style( $this->plugin_name.'.google_icon', 'https://fonts.googleapis.com/icon?family=Material+Icons', array(), $this->version, 'all' );
+
+			wp_enqueue_script( $this->plugin_name.'.pagination', plugin_dir_url( __FILE__ ) . 'js/pagination.js', array( 'jquery' ), $this->version, false );
+			wp_enqueue_script( $this->plugin_name.'.ui_js', 'https://code.jquery.com/ui/1.13.0/jquery-ui.min.js', array( 'jquery' ), $this->version, false );
+			wp_enqueue_script( $this->plugin_name.'.liste_offres_sans_filtres_js', plugin_dir_url( __FILE__ ) . 'js/liste_offres_sans_filtres.js', array( 'jquery' ), $this->version, true );
+
+			
+			$nb_communes = $this->get_nb_communes();
+			$nb_types_contrat = $this->get_nb_types_contrat();
+
+
+			$liste_offres = wp_create_nonce( 'liste_offres' );
+			wp_localize_script(
+				$this->plugin_name.'.liste_offres_sans_filtres_js',
+				'my_ajax_obj',
+				array(
+					'ajax_url'		=> admin_url( 'admin-ajax.php' ),
+					'nonce'			=> $liste_offres,
+					'ville'	   		=> "",
+					"type_contrat"	=> "",
+					'nb_communes'	=> json_encode($nb_communes),
+					'nb_types_contrat'	=> json_encode($nb_types_contrat),
+				)
+			);
+			return plugin_dir_path( __FILE__ ) .'partials/liste_offres_sans_filtres.php';
 			if(file_exists(plugin_dir_path( __FILE__ ) .'partials/liste_offres_valides.php')) {
 				wp_enqueue_style( $this->plugin_name.'.liste_offres_valides_css', plugin_dir_url( __FILE__ ) . 'css/liste_offres_valides.css', array(), $this->version, 'all' );
 				wp_enqueue_style( $this->plugin_name.'.pagination', plugin_dir_url( __FILE__ ) . 'css/pagination.css', array(), $this->version, 'all' );
@@ -618,7 +705,7 @@ class Offre_emploi_Public {
 			}
 		}
 		//affichage de la fiche d'une offre
-		if(array_key_exists('idOffreEmploi',$wp_query->query_vars)){	
+		if(array_key_exists('offreEmploi',$wp_query->query_vars)){	
 			if(array_key_exists('candidature', $wp_query->query_vars)){
 				$this->envoie_candidature($wp_query->query_vars['idOffreEmploi']);
 				wp_redirect("^/offres-emploi/".$wp_query->query_vars['idOffreEmploi']."?postule=1");

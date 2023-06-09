@@ -75,16 +75,6 @@ main{
     align-items: center;
 }
 
-#filtre_label{
-    font-weight: bold;
-    margin-bottom: 0.5rem;
-    margin-top: 3rem;
-}
-
-/*#liste_filtres{
-    display: flex;
-    justify-content: space-between;
-}*/
 
 #filtre_recherche{
     display: flex;
