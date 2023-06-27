@@ -109,8 +109,28 @@ class Offre_Emploi_Model {
 		return $return[0];
 	}
 
+	/**
+	 * Récupère jusqu'à 12 offres, nouvelles ou d'un secteur d'activité spécifique
+	 */
+	public function getMoreOffre($secteur_activite){
+		if($secteur_activite == ''){
+			$sql = $this->offreEmploiDB->prepare('SELECT * FROM '.$this->TableOffreEmploi.' A
+				ORDER BY A.id DESC LIMIT 12');
+		}else{
+			$sql = $this->offreEmploiDB->prepare('SELECT * FROM '.$this->TableOffreEmploi.' A WHERE A.secteur_activite = "'.$secteur_activite.'"
+				ORDER BY A.id DESC LIMIT 12');
+		}
+
+		$this->offreEmploiDB->query( $sql );
+
+		if( $this->offreEmploiDB->num_rows > 0 )
+			$return = $this->offreEmploiDB->get_results($sql, ARRAY_A);
+		
+		return $return;
+	}
+
 	public function findByMotsClef(array $mots_clef = [], $type_de_contrat = null, array $communes = []){
-		$baseSql = 'SELECT * FROM '.$this->TableOffreEmploi." WHERE visibilite = 'visible' AND nom_entreprise IS NOT NULL";
+		$baseSql = 'SELECT * FROM '.$this->TableOffreEmploi." WHERE visibilite = 'visible'";
 		foreach($mots_clef as $key=>$mot_clef){
 			$baseSql .= " AND ( LOWER(intitule) LIKE %s OR LOWER(libelle_metier) LIKE %s)";
 			$prepare_mots_clef[$key*3] = "%".$mot_clef."%";
@@ -136,9 +156,23 @@ class Offre_Emploi_Model {
 		}
 	}
 
-	public function getNbCommunes(){
-		$baseSql = 'SELECT c.id as id_commune, c.nom_commune as nom_commune, COUNT(o.id) as NbEvent FROM '.$this->TableOffreEmploi." o, ".$this->TableCommune." c WHERE o.visibilite = 'visible' AND o.nom_entreprise IS NOT NULL AND o.commune_id = c.id GROUP BY o.commune_id";
-		$this->offreEmploiDB->query( $baseSql );
+	public function getNbCommunes(array $mots_clef = []){
+		$baseSql = 'SELECT c.id as id_commune, c.nom_commune as nom_commune, COUNT(o.id) as NbEvent FROM '.$this->TableOffreEmploi." o, ".$this->TableCommune." c WHERE o.visibilite = 'visible' AND o.commune_id = c.id";
+
+		foreach($mots_clef as $key=>$mot_clef){
+			$baseSql .= " AND ( LOWER(o.intitule) LIKE %s OR LOWER(o.libelle_metier) LIKE %s)";
+			$prepare_mots_clef[$key*3] = "%".$mot_clef."%";
+			$prepare_mots_clef[$key*3 + 1] = "%".$mot_clef."%";
+			$prepare_mots_clef[$key*3 + 2] = "%".$mot_clef."%";
+		}
+
+		$baseSql .= " GROUP BY o.commune_id";
+
+		if(count($mots_clef) > 0){
+			$baseSql = $this->offreEmploiDB->prepare($baseSql, $prepare_mots_clef);
+		}else{
+			$baseSql = $this->offreEmploiDB->prepare($baseSql);
+		}
 		
 		if($this->offreEmploiDB->last_error){
 			return 'Erreur sql : ' . $this->offreEmploiDB->last_error;
@@ -147,9 +181,23 @@ class Offre_Emploi_Model {
 		}
 	}
 
-	public function getNbTypesContrat(){
-		$baseSql = 'SELECT type_contrat as nom, COUNT(*) as NbEvent FROM '.$this->TableOffreEmploi." o WHERE o.visibilite = 'visible' AND o.nom_entreprise IS NOT NULL GROUP BY o.type_contrat";
-		$this->offreEmploiDB->query( $baseSql );
+	public function getNbTypesContrat(array $mots_clef = []){
+		$baseSql = 'SELECT o.type_contrat as nom, COUNT(*) as NbEvent FROM '.$this->TableOffreEmploi." o WHERE o.visibilite = 'visible' AND o.type_contrat != '' AND o.type_contrat IS NOT NULL";
+
+		foreach($mots_clef as $key=>$mot_clef){
+			$baseSql .= " AND ( LOWER(o.intitule) LIKE %s OR LOWER(o.libelle_metier) LIKE %s)";
+			$prepare_mots_clef[$key*3] = "%".$mot_clef."%";
+			$prepare_mots_clef[$key*3 + 1] = "%".$mot_clef."%";
+			$prepare_mots_clef[$key*3 + 2] = "%".$mot_clef."%";
+		}
+
+		$baseSql .= " GROUP BY o.type_contrat";
+
+		if(count($mots_clef) > 0){
+			$baseSql = $this->offreEmploiDB->prepare($baseSql, $prepare_mots_clef);
+		}else{
+			$baseSql = $this->offreEmploiDB->prepare($baseSql);
+		}
 		
 		if($this->offreEmploiDB->last_error){
 			return 'Erreur sql : ' . $this->offreEmploiDB->last_error;
@@ -158,9 +206,23 @@ class Offre_Emploi_Model {
 		}
 	}
 
-	public function getNbCommunes1($type){
-		$baseSql = 'SELECT c.id as id_commune, c.nom_commune as nom_commune, COUNT(o.id) as NbEvent FROM '.$this->TableOffreEmploi." o, ".$this->TableCommune." c WHERE o.visibilite = 'visible' AND o.nom_entreprise IS NOT NULL AND o.commune_id = c.id AND o.type_contrat = '".$type."' GROUP BY o.commune_id";
-		$this->offreEmploiDB->query( $baseSql );
+	public function getNbCommunes1($type, array $mots_clef = []){
+		$baseSql = 'SELECT c.id as id_commune, c.nom_commune as nom_commune, COUNT(o.id) as NbEvent FROM '.$this->TableOffreEmploi." o, ".$this->TableCommune." c WHERE o.visibilite = 'visible' AND o.commune_id = c.id AND o.type_contrat = '".$type."'";
+		
+		foreach($mots_clef as $key=>$mot_clef){
+			$baseSql .= " AND ( LOWER(o.intitule) LIKE %s OR LOWER(o.libelle_metier) LIKE %s)";
+			$prepare_mots_clef[$key*3] = "%".$mot_clef."%";
+			$prepare_mots_clef[$key*3 + 1] = "%".$mot_clef."%";
+			$prepare_mots_clef[$key*3 + 2] = "%".$mot_clef."%";
+		}
+
+		$baseSql .= " GROUP BY o.commune_id";
+
+		if(count($mots_clef) > 0){
+			$baseSql = $this->offreEmploiDB->prepare($baseSql, $prepare_mots_clef);
+		}else{
+			$baseSql = $this->offreEmploiDB->prepare($baseSql);
+		}
 		
 		if($this->offreEmploiDB->last_error){
 			return 'Erreur sql : ' . $this->offreEmploiDB->last_error;
@@ -169,9 +231,23 @@ class Offre_Emploi_Model {
 		}
 	}
 
-	public function getNbTypesContrat1($com){
-		$baseSql = 'SELECT type_contrat as nom, COUNT(*) as NbEvent FROM '.$this->TableOffreEmploi." o WHERE o.visibilite = 'visible' AND o.nom_entreprise IS NOT NULL AND o.id_commune = ".$com." GROUP BY o.type_contrat";
-		$this->offreEmploiDB->query( $baseSql );
+	public function getNbTypesContrat1($com, array $mots_clef = []){
+		$baseSql = 'SELECT o.type_contrat as nom, COUNT(*) as NbEvent FROM '.$this->TableOffreEmploi." o WHERE o.visibilite = 'visible' AND o.type_contrat != '' AND o.type_contrat IS NOT NULL AND o.commune_id = '".$com."'";
+
+		foreach($mots_clef as $key=>$mot_clef){
+			$baseSql .= " AND ( LOWER(o.intitule) LIKE %s OR LOWER(o.libelle_metier) LIKE %s)";
+			$prepare_mots_clef[$key*3] = "%".$mot_clef."%";
+			$prepare_mots_clef[$key*3 + 1] = "%".$mot_clef."%";
+			$prepare_mots_clef[$key*3 + 2] = "%".$mot_clef."%";
+		}
+
+		$baseSql .= " GROUP BY o.type_contrat";
+
+		if(count($mots_clef) > 0){
+			$baseSql = $this->offreEmploiDB->prepare($baseSql, $prepare_mots_clef);
+		}else{
+			$baseSql = $this->offreEmploiDB->prepare($baseSql);
+		}
 		
 		if($this->offreEmploiDB->last_error){
 			return 'Erreur sql : ' . $this->offreEmploiDB->last_error;

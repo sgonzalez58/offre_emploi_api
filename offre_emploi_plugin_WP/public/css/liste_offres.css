@@ -75,6 +75,16 @@
   position: relative; 
 }
 
+#recherche_icon {
+  position : absolute;
+  padding : 1rem;
+  box-sizing: border-box;
+  font-size: 20px;
+  height: 100%;
+  display: flex;
+  justify-content: end;
+  align-items: center;
+}
 
 #distance_icon, #recherche_secteur_icon {
   position: absolute;
@@ -256,7 +266,9 @@ margin-top:0 !important;
 }
 
 
+
 @media screen and (min-width: 980px){
+
   .emploi-filters .ui-group{
     left: 0% !important;
     transform: translateX(0%) !important;
@@ -265,6 +277,7 @@ margin-top:0 !important;
     max-height: 100%;
     height: 100%;
   }
+
 }
 
 .emploi-filters{
@@ -273,7 +286,9 @@ margin-top:0 !important;
   font-size: 0.7em;
   margin-top: 40px;
 }
-
+.emploi-filters .ui-group{
+  width: 100%;
+}
 .emploi-filters .button_tri_emploi{
   display: grid;
   width: 100%;
@@ -323,18 +338,19 @@ margin-top:0 !important;
   position: absolute;
   right: 0;
 }
-
+.center {
+  display: flex;
+  justify-content: center;
+}
 .emploi-filters .ui-group{
   position: relative;
   left: 50%;
   transform: translateX(-50%);
   width: 100%;
 }
-
 .ui-group select{
   width: 100%;
 }
-
 .emploi-filters .button_tri_emploi button:active{
   box-shadow: none;
 }
@@ -351,7 +367,6 @@ margin-top:0 !important;
   left: 50%;
   transform: translate(-50%, -50%);
 }
-
 .modal_filtre_offre_emploi .close button{
   background-color: transparent;
   border-radius: 50px;
@@ -361,12 +376,10 @@ margin-top:0 !important;
   font-size: 1em;
   padding: 0;
 }
-
 .modal_filtre_offre_emploi .close button:active{
   background-color: transparent;
   box-shadow: none;
 }
-
 .modal_filtre_offre_emploi .close span{
   background-color: black;
   color: white;
@@ -374,7 +387,6 @@ margin-top:0 !important;
   font-size: 1em;
   border-radius: 50px;
 }
-
 .modal_filtre_offre_emploi .search span{
   color: #78797E;
   position: absolute;
@@ -384,7 +396,6 @@ margin-top:0 !important;
   padding:2px;
   cursor: pointer;
 }
-
 .modal_filtre_offre_emploi .search input{
   width: 100%;
   height: 3em;
@@ -392,7 +403,6 @@ margin-top:0 !important;
   border-style: none;
   text-indent: 50px;
 }
-
 .modal_filtre_offre_emploi .intertitre{
   margin-top: 3em;
   text-align: center;
@@ -400,13 +410,11 @@ margin-top:0 !important;
   font-weight: 600;
   color: black;
 }
-
 .modal_filtre_offre_emploi .intertitre2{
   font-size: 0.8em;
   font-weight: 700;
   color: black;
 }
-
 .overlay_filtre_offre_emploi{
   width: 100vw;
   height: 100vh;
@@ -570,6 +578,11 @@ input[type=checkbox]{
 .ui-menu-item {
   display: none; /* Masquer les éléments de la liste des suggestions */
 }
+
+.autocomplete-special .ui-menu-item {
+  display: block !important;
+}
+
 
 .autocomplete-hidden.ui-state-focus {
   background-color: transparent !important; /* Désactiver le soulignement en bleu */

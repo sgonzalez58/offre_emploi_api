@@ -12,18 +12,72 @@
  * @subpackage Offre_emploi/public/partials
  */
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit; // Exit if accessed directly.
+}
+global $wp_query;
 
 $class = new Offre_emploi_Public('Offre_emploi','1.0.0');
-$offre = $class->model->findOneOffre($wp_query->query_vars['idOffreEmploi']);
+$offre = $class->findOneOffre($wp_query->query_vars['idOffreEmploi']);
 date_default_timezone_set('Europe/Paris');
 setlocale (LC_TIME, 'fr_FR');
-get_header(); ?>
+
+$nom_offre = $offre['intitule'];
+$entreprise_offre = $offre['nom_entreprise'];
+$ville_offre = $offre['ville_libelle'];
+$description_offre = nl2br($offre['description']);
+
+
+add_action('wp_head', 'fc_opengraph');
+function fc_opengraph() {
+
+    global $nom_offre;
+    global $entreprise_offre;
+    global $ville_offre;
+
+    //$image = 'https://agenda.koikispass.com/public/'.$dateSEO[0]['image'];
+    $titre =  $nom_offre . ' chez ' . $entreprise_offre;
+    if($ville_offre!='Non renseigné'){$titre .=  ' à ' . $ville_offre;}
+
+    echo '<meta property="og:title" content="' . esc_attr($titre).'" />';		
+
+
+    //if($image) echo '<meta property="og:image" content="' . esc_url($image) . '" />';
+
+}
+
+add_filter('wpseo_title','date_title');
+function date_title( $title ) {
+    
+    global $nom_offre;
+    global $entreprise_offre;
+    global $ville_offre;
+
+    //$image = 'https://agenda.koikispass.com/public/'.$dateSEO[0]['image'];
+    $titre =  $nom_offre . ' chez ' . $entreprise_offre;
+    if($ville_offre!='Non renseigné'){$titre .=  ' à ' . $ville_offre;}
+    
+    return $titre;
+}
+
+add_filter( 'wpseo_metadesc', 'date_metadesc', 10, 1 );
+function date_metadesc( $wpseo_replace_vars ) { 
+
+    global $description_offre;
+
+    return strlen($description_offre) > 160 ? substr($description_offre, 0, 156) . '...' : $description_offre;
+}; 
+
+
+get_header();
+
+?>
 
 		<div id="primary" <?php generate_do_element_classes( 'content' ); ?>>
 			<main id="main" <?php generate_do_element_classes( 'main' ); ?>>
             <?php
 					if($_GET['postule'] == 1){
-						echo "<h4 class='text-success'>Votre candidature a bien été envoyée.</h4>";
+						echo "<p class='text-success'>Votre candidature a bien été envoyée.</p>";
 					}
                     ?>
 <?php
@@ -32,7 +86,7 @@ get_header(); ?>
 
 <div id='fiche_head'>
     <div id='informations_principales'>
-        <h2 id='intitule'><?=$offre['intitule']?></h2>
+        <h1 id='intitule'><?=$offre['intitule']?></h1>
         <div id='adresse'>
             <i class="fa-solid fa-shop"></i>
             <p><?=$offre['nom_entreprise']?></p>
@@ -87,7 +141,7 @@ get_header(); ?>
     if($offre['libelle_metier']){
     ?>
     <div class='boite'>
-        <h4 class='titre_boite'>Information métier</h4>
+        <p class='titre_boite'>Information métier</p>
         <p><?=$offre['libelle_metier']?></p>
     </div>
     <?php
@@ -95,7 +149,7 @@ get_header(); ?>
     if($offre['type_contrat']){
     ?>
     <div class='boite'>
-        <h4 class='titre_boite'>Contrat</h4>
+        <p class='titre_boite'>Contrat</p>
         <p><?=$offre['type_contrat']?></p>
     </div>
     <?php
@@ -106,7 +160,7 @@ get_header(); ?>
     ?>
 
     <div class='boite'>
-        <h4 class='titre_boite'>Entreprise</h4>
+        <p class='titre_boite'>Entreprise</p>
             
             <?php
             if($offre['nom_entreprise']){
@@ -139,7 +193,7 @@ get_header(); ?>
     ?>
     
     <div class='boite'>
-        <h4 class='titre_boite'>Salaire</h4>
+        <p class='titre_boite'>Salaire</p>
         <p><?=$offre['salaire']?></p>
     </div>
 
@@ -149,7 +203,7 @@ get_header(); ?>
     if($offre['secteur_activite'] ){
     ?>
     <div class='boite'>
-        <h4 class='titre_boite'>Secteur d'activité</h4>
+        <p class='titre_boite'>Secteur d'activité</p>
         <p><?=$offre['secteur_activite']?></p>
     </div>
     <?php
@@ -193,6 +247,63 @@ get_header(); ?>
 }
 ?>
             </main><!-- #main -->
+
+            <section id='autre_offres'>
+                <h2>Autres offres d’emploi à découvrir</h2>
+                <div id='liste_offres'>
+                <?php
+                    $secteur_offre = '';
+                    if(!empty($offre)){
+                        if($offre['secteur_activite']){
+                            $secteur_offre = $offre['secteur_activite'];
+                        }
+                    }
+                    if($secteur_offre == ''){
+                        $autre_offres = $class->getMoreOffre();
+                    }else{
+                        $autre_offres = $class->getMoreOffre($secteur_offre);
+                    }
+                    foreach($autre_offres as $autre_offre){  
+                ?>
+                    <div class='offre'>
+                        <div class='corps_offre'>
+                            <h2><?=$autre_offre['intitule']?></h2>
+                            <div class='details'>
+                                <?php
+                                if($autre_offre['ville_libelle']){
+                                ?>
+                                <div class='ville'>
+                                    <i class='fa-solid fa-location-pin'></i>
+                                    <h4><?=$autre_offre['ville_libelle']?></h4>
+                                </div>
+                                <?php
+                                }
+                                ?>
+                                <div class='contrat'>
+                                    <i class='fa-solid fa-tag'></i>
+                                    <h4><?=$autre_offre['type_contrat']?></h4>
+                                </div>
+                            </div>
+                            <?php
+                            if($autre_offre['nom_entreprise'] != ''){
+                            ?>
+                            <h3 class='nom_entreprise'>Entreprise : <?=$autre_offre['nom_entreprise']?></h3>
+                            <?php
+                            }
+                            ?>
+                            <p class='description'><?=strlen(nl2br($autre_offre['description'])) > 160 ? substr(nl2br($autre_offre['description']), 0, 156) . '...' : nl2br($autre_offre['description']);?></p>
+                        </div>
+                        <a class='lien_fiche' href='/offres-emploi/<?=$autre_offre["id"]?>'>
+                            <button class='bouton_lien_fiche'>Voir l'offre</button>
+                        </a>
+                        <a class='lien_fiche_big' href='/offres-emploi/<?=$autre_offre["id"]?>'></a>
+                    </div>
+                <?php
+                    }
+                ?>
+                </div>
+            </section>
+
         </div><!-- #primary -->
 
 		<?php

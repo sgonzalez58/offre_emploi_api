@@ -64,6 +64,18 @@ class Offre_emploi_Public {
 		add_action('wp_ajax_recherche_mot_clef', array($this,'recherche_mot_clef'));
 		add_action('wp_ajax_nopriv_recherche_mot_clef', array($this,'recherche_mot_clef'));
 
+		add_action('wp_ajax_nb_communes', array($this,'nb_communes'));
+		add_action('wp_ajax_nopriv_nb_communes', array($this,'nb_communes'));
+
+		add_action('wp_ajax_nb_communes_filtres', array($this,'nb_communes_filtres'));
+		add_action('wp_ajax_nopriv_nb_communes_filtres', array($this,'nb_communes_filtres'));
+
+		add_action('wp_ajax_nb_types_contrat', array($this,'nb_types_contrat'));
+		add_action('wp_ajax_nopriv_nb_types_contrat', array($this,'nb_types_contrat'));
+
+		add_action('wp_ajax_nb_types_contrat_filtres', array($this,'nb_types_contrat_filtres'));
+		add_action('wp_ajax_nopriv_nb_types_contrat_filtres', array($this,'nb_types_contrat_filtres'));
+
 		add_action('wp_ajax_get_one_offre', array($this,'get_one_offre'));
 		add_action('wp_ajax_nopriv_get_one_offre', array($this,'get_one_offre'));
 
@@ -87,8 +99,6 @@ class Offre_emploi_Public {
 		add_filter('template_include', array($this,'offre_emploi_front_end'));
 
 		add_shortcode('offre_emploi', array($this, 'liste_villes_offre'));
-
-		add_filter('wpseo_title', array($this, 'prefix_filter_title'));
 	}
 
 	/**
@@ -153,29 +163,15 @@ class Offre_emploi_Public {
 		return $retour;
 	}
 	
-	/**
-	 * SEO des titres
-	 */
-	function prefix_filter_title( $title ){
-		global $wp_query; //Load $wp_query object
-		if(array_key_exists('ville',$wp_query->query_vars)){
-			$commune = $this->model->findOneCommuneBySlug($wp_query->query_vars['ville']);
-			$title = "Offres d'emploi à ".$commune['nom_commune']." - Nièvre 58 - Koikispass";
-		}
-		if(array_key_exists('idOffreEmploi',$wp_query->query_vars)){	
-			$offre = $this->model->findOneOffre($wp_query->query_vars['idOffreEmploi']);
-			$commune = $this->model->findOneCommune($offre['commune_id']);
-			$title = $offre['libelle_metier'].' à '.$commune['nom_commune'].' - Nièvre 58 - Koikispass';
-		}
-		if(array_key_exists('offreEmploi',$wp_query->query_vars)){	
-			$title = "Offres d'emploi - Nièvre 58 - Koikispass";
-		}
-		return $title;
-	}
 
 	public function getOffresValides() {
 		
 		return $dates = $this->model->findByMotsClef();	
+	}	
+
+	public function getMetier() {
+		
+		return $metier = $this->model->getMetier();	
 	}	
 
 	public function getAllCommunes() {
@@ -215,6 +211,18 @@ class Offre_emploi_Public {
 	public function get_nb_types_contrat_1($comm) {
 		
 		return $nb_types_contrat1 = $this->model->getNbTypesContrat1($comm);
+		
+	}
+
+	public function findOneOffre($id) {
+		
+		return $nb_types_contrat1 = $this->model->findOneOffre($id);
+		
+	}
+
+	public function getMoreOffre($secteur_activite = '') {
+		
+		return $other_offres = $this->model->getMoreOffre($secteur_activite);
 		
 	}
 	
@@ -307,11 +315,9 @@ class Offre_emploi_Public {
 				if($offres[$offset]['ville_libelle'] && $offres[$offset]['ville_libelle'] != 'Non renseigné' && !$offres[$offset]['id_pole_emploi']){
 					$nomVille = $offres[$offset]['ville_libelle'];
 				}
-			}
-			if($offres[$offset]['latitude']){
-				$lienMap = 'https://www.openstreetmap.org/?mlat=' . $offres[$offset]['latitude'] . '&mlon=' . $offres[$offset]['longitude'] . '#map=17/' . $offres[$offset][$offset]['latitude'] . '/' . $offres[$offset]['longitude'] . '&layers=N';
-			}else{
-				$lienMap = 'aucun';
+				else{
+					$nomVille = 'Non renseigné';
+				}
 			}
 			if(strlen($offres[$offset]['description']) > 150){
 				$description = substr($offres[$offset]['description'], 0, 149) . '...';
@@ -327,10 +333,95 @@ class Offre_emploi_Public {
 			}else{
 				$nomEntreprise = 'Aucun';
 			}
-			$jsonData['offres'][$idx++] = ['id' => $offres[$offset]['id'], 'intitule' => $offres[$offset]['intitule'], 'nomVille' => $nomVille, 'lienMap' => $lienMap, 'description' => $description, 'nomEntreprise' => $nomEntreprise, 'lienOrigineOffre' => $offres[$offset]['origine_offre'], 'distance' => $offres[$offset]['distance'], 'type_contrat' => $offres[$offset]['type_contrat'] ];
+			$jsonData['offres'][$idx++] = ['id' => $offres[$offset]['id'], 'intitule' => $offres[$offset]['intitule'], 'nomVille' => $nomVille, 'description' => $description, 'nomEntreprise' => $nomEntreprise, 'lienOrigineOffre' => $offres[$offset]['origine_offre'], 'distance' => $offres[$offset]['distance'], 'type_contrat' => $offres[$offset]['type_contrat'] ];
 			$offset++;
         }
         wp_send_json_success($jsonData);
+	}
+
+	function nb_communes(){
+		check_ajax_referer('liste_offres');
+		$args = array(
+			'mots_clef' => strtolower($_GET['mots_clef']),
+		);
+
+		if($args['mots_clef'] == ""){
+			$args['mots_clef'] = [];
+		}else{
+			$args['mots_clef'] = explode(' ', $args['mots_clef']);
+		}
+
+		$array_nb_communes = $this->model->getNbCommunes($args['mots_clef']);
+
+		wp_send_json_success(json_encode($array_nb_communes));
+	}
+
+	function nb_communes_filtres(){
+		check_ajax_referer('liste_offres');
+		$args = array(
+			'mots_clef' => strtolower($_GET['mots_clef']),
+			'idCommune' => $_GET['ville'],
+			'type_de_contrat' => urldecode($_GET['type_de_contrat']),
+		);
+
+		if($args['mots_clef'] == ""){
+			$args['mots_clef'] = [];
+		}else{
+			$args['mots_clef'] = explode(' ', $args['mots_clef']);
+		}
+
+		if(!$args['idCommune']){
+			$array_nb_communes = $this->model->getNbCommunes1($args['type_de_contrat'], $args['mots_clef']);
+		}else{
+			if($args['type_de_contrat']){
+				$array_nb_communes = $this->model->getNbCommunes1($args['type_de_contrat'], $args['mots_clef']);
+			}
+			else{
+				$array_nb_communes = $this->model->getNbCommunes($args['mots_clef']);
+			}
+		}
+		wp_send_json_success(json_encode($array_nb_communes));
+	}
+
+	function nb_types_contrat(){
+		check_ajax_referer('liste_offres');
+		$args = array(
+			'mots_clef' => strtolower($_GET['mots_clef']),
+		);
+
+		if($args['mots_clef'] == ""){
+			$args['mots_clef'] = [];
+		}else{
+			$args['mots_clef'] = explode(' ', $args['mots_clef']);
+		}
+
+		$array_nb_types_contrat = $this->model->getNbTypesContrat($args['mots_clef']);
+
+		wp_send_json_success(json_encode($array_nb_types_contrat));
+	}
+
+	function nb_types_contrat_filtres(){
+		check_ajax_referer('liste_offres');
+		$args = array(
+			'mots_clef' => strtolower($_GET['mots_clef']),
+			'idCommune' => $_GET['ville'],
+			'distance' => $_GET['distance'],
+			'type_de_contrat' => $_GET['type_de_contrat'],
+		);
+
+		if($args['mots_clef'] == ""){
+			$args['mots_clef'] = [];
+		}else{
+			$args['mots_clef'] = explode(' ', $args['mots_clef']);
+		}
+
+		if(!$args['idCommune']){
+			$array_nb_types_contrat = $this->model->getNbTypesContrat($args['mots_clef']);
+		}else{
+			$array_nb_types_contrat = $this->model->getNbTypesContrat1($args['idCommune'], $args['mots_clef']);
+		}
+
+		wp_send_json_success(json_encode($array_nb_types_contrat));
 	}
 
 	/**
@@ -653,11 +744,6 @@ class Offre_emploi_Public {
 		//affichage de la liste des offres
 		if(array_key_exists('offreEmploi',$wp_query->query_vars) && $wp_query->query_vars['offreEmploi'] ==1){
 			
-			if( ( ( array_key_exists('thematique',$wp_query->query_vars) && $wp_query->query_vars['thematique']!='toutes') || ( array_key_exists('commune',$wp_query->query_vars) && $wp_query->query_vars['commune'] != 'toutes' )) ){
-				return plugin_dir_path( __FILE__ ) .'partials/liste_offres_sans_filtres.php';
-			}
-
-			wp_enqueue_style( $this->plugin_name.'.liste_offres_sans_filtres_css', plugin_dir_url( __FILE__ ) . 'css/liste_offres_sans_filtres.css', array(), $this->version, 'all' );
 			wp_enqueue_style( $this->plugin_name.'.pagination', plugin_dir_url( __FILE__ ) . 'css/pagination.css', array(), $this->version, 'all' );
 			wp_enqueue_style( $this->plugin_name.'.ui_css', '//code.jquery.com/ui/1.13.0/themes/base/jquery-ui.css', array(), $this->version, 'all' );
 			wp_enqueue_style( $this->plugin_name.'.google_apis', 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200', array(), $this->version, 'all' );
@@ -665,6 +751,48 @@ class Offre_emploi_Public {
 
 			wp_enqueue_script( $this->plugin_name.'.pagination', plugin_dir_url( __FILE__ ) . 'js/pagination.js', array( 'jquery' ), $this->version, false );
 			wp_enqueue_script( $this->plugin_name.'.ui_js', 'https://code.jquery.com/ui/1.13.0/jquery-ui.min.js', array( 'jquery' ), $this->version, false );
+
+			if( array_key_exists('thematique',$wp_query->query_vars) || array_key_exists('commune',$wp_query->query_vars) ){
+
+				wp_enqueue_style( $this->plugin_name.'.liste_offres_css', plugin_dir_url( __FILE__ ) . 'css/liste_offres.css', array(), $this->version, 'all' );
+			
+				wp_enqueue_script( $this->plugin_name.'.liste_offres_js', plugin_dir_url( __FILE__ ) . 'js/liste_offres.js', array( 'jquery' ), $this->version, true );
+
+				$thematique = "";
+				if($wp_query->query_vars['thematique']){
+					$thematique = $wp_query->query_vars['thematique'];
+					$nb_communes = $this->get_nb_communes_1($wp_query->query_vars['thematique']);
+				}else{
+					$nb_communes = $this->get_nb_communes();
+				}
+				$commune = "";
+				if($wp_query->query_vars['commune']){
+					$commune = $this->get_commune_by_slug($wp_query->query_vars['commune']);
+					$nb_types_contrat = $this->get_nb_types_contrat_1($commune['id']);
+				}else{
+					$nb_types_contrat = $this->get_nb_types_contrat();
+				}
+
+
+				$liste_offres = wp_create_nonce( 'liste_offres' );
+				wp_localize_script(
+					$this->plugin_name.'.liste_offres_js',
+					'my_ajax_obj',
+					array(
+						'ajax_url'		=> admin_url( 'admin-ajax.php' ),
+						'nonce'			=> $liste_offres,
+						'ville'	   		=> $commune != "" ? $commune['id'] : "",
+						"type_contrat"	=> $thematique,
+						'nb_communes'	=> json_encode($nb_communes),
+						'nb_types_contrat'	=> json_encode($nb_types_contrat),
+					)
+				);
+				
+				return plugin_dir_path( __FILE__ ) .'partials/liste_offres.php';
+			}
+
+			wp_enqueue_style( $this->plugin_name.'.liste_offres_sans_filtres_css', plugin_dir_url( __FILE__ ) . 'css/liste_offres_sans_filtres.css', array(), $this->version, 'all' );
+			
 			wp_enqueue_script( $this->plugin_name.'.liste_offres_sans_filtres_js', plugin_dir_url( __FILE__ ) . 'js/liste_offres_sans_filtres.js', array( 'jquery' ), $this->version, true );
 
 			
@@ -686,26 +814,10 @@ class Offre_emploi_Public {
 				)
 			);
 			return plugin_dir_path( __FILE__ ) .'partials/liste_offres_sans_filtres.php';
-			if(file_exists(plugin_dir_path( __FILE__ ) .'partials/liste_offres_valides.php')) {
-				wp_enqueue_style( $this->plugin_name.'.liste_offres_valides_css', plugin_dir_url( __FILE__ ) . 'css/liste_offres_valides.css', array(), $this->version, 'all' );
-				wp_enqueue_style( $this->plugin_name.'.pagination', plugin_dir_url( __FILE__ ) . 'css/pagination.css', array(), $this->version, 'all' );
-				wp_enqueue_script( $this->plugin_name.'.pagination', plugin_dir_url( __FILE__ ) . 'js/pagination.js', array( 'jquery' ), $this->version, false );
-				wp_enqueue_script( $this->plugin_name.'.liste_offres_valides_js', plugin_dir_url( __FILE__ ) . 'js/liste_offres_valides.js', array( 'jquery' ), $this->version, true );
-				$liste_offres = wp_create_nonce( 'liste_offres' );
-				wp_localize_script(
-					$this->plugin_name.'.liste_offres_valides_js',
-					'my_ajax_obj',
-					array(
-						'ajax_url' => admin_url( 'admin-ajax.php' ),
-						'nonce'    => $liste_offres,
-					)
-				);
-				include(plugin_dir_path( __FILE__ ) .'partials/liste_offres_valides.php');
-				return;
-			}
 		}
+
 		//affichage de la fiche d'une offre
-		if(array_key_exists('offreEmploi',$wp_query->query_vars)){	
+		if(array_key_exists('idOffreEmploi',$wp_query->query_vars)){	
 			if(array_key_exists('candidature', $wp_query->query_vars)){
 				$this->envoie_candidature($wp_query->query_vars['idOffreEmploi']);
 				wp_redirect("^/offres-emploi/".$wp_query->query_vars['idOffreEmploi']."?postule=1");
@@ -725,8 +837,7 @@ class Offre_emploi_Public {
 						'id_offre_emploi' => $wp_query->query_vars['idOffreEmploi']
 					)
 				);
-				include(plugin_dir_path( __FILE__ ) .'partials/fiche_offre.php');
-				return;
+				return plugin_dir_path( __FILE__ ) .'partials/fiche_offre.php';
 			}
 		}
 		//formulaire de création d'une offre

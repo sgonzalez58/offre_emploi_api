@@ -114,7 +114,7 @@ async function recherche_mot_clef(){
             }
         })
     }else if(window.innerWidth > 780){
-        url = my_ajax_obj.ajax_url+'?_ajax_nonce='+my_ajax_obj.nonce+"&action=recherche_mot_clef&mots_clef="+mots_clef+"&ville="+my_ajax_obj.ville+"&distance="+distance+"&type_de_contrat="+my_ajax_obj.type_contrat;
+        url = my_ajax_obj.ajax_url+'?_ajax_nonce='+my_ajax_obj.nonce+"&action=recherche_mot_clef&mots_clef="+mots_clef+"&ville="+my_ajax_obj.ville+"&distance="+document.getElementById('liste_distance').value+"&type_de_contrat="+my_ajax_obj.type_contrat;
         jQuery('#pagination_container').pagination({
             dataSource : url,
             locator: 'data.offres',
@@ -155,7 +155,7 @@ async function recherche_mot_clef(){
             }
         })
     }else{
-        url = my_ajax_obj.ajax_url+'?_ajax_nonce='+my_ajax_obj.nonce+"&action=recherche_mot_clef&mots_clef="+mots_clef+"&ville="+my_ajax_obj.ville+"&distance="+distance+"&type_de_contrat="+my_ajax_obj.type_contrat;
+        url = my_ajax_obj.ajax_url+'?_ajax_nonce='+my_ajax_obj.nonce+"&action=recherche_mot_clef&mots_clef="+mots_clef+"&ville="+my_ajax_obj.ville+"&distance="+document.getElementById('liste_distance').value+"&type_de_contrat="+my_ajax_obj.type_contrat;
         jQuery('#pagination_container').pagination({
             dataSource : url,
             locator: 'data.offres',
@@ -205,7 +205,7 @@ async function recherche_mot_clef(){
         nb_communes = await new Promise((resolve, error)=>{
             jQuery.ajax({
                 'method' : 'GET',
-                'url' : my_ajax_obj.ajax_url+'?_ajax_nonce='+my_ajax_obj.nonce+"&action=nb_communes&mots_clef="+mots_clef,
+                'url' : my_ajax_obj.ajax_url+'?_ajax_nonce='+my_ajax_obj.nonce+"&action=nb_communes_filtres&mots_clef="+mots_clef+"&ville="+my_ajax_obj.ville+"&type_de_contrat="+encodeURIComponent(my_ajax_obj.type_contrat),
                 'success' : function(data){
                     data = data['data'];
                     resolve(JSON.parse(data));
@@ -220,7 +220,7 @@ async function recherche_mot_clef(){
         nb_types_contrat = await new Promise((resolve, error)=>{
             jQuery.ajax({
                 'method' : 'GET',
-                'url' : my_ajax_obj.ajax_url+'?_ajax_nonce='+my_ajax_obj.nonce+"&action=nb_types_contrat&mots_clef="+mots_clef,
+                'url' : my_ajax_obj.ajax_url+'?_ajax_nonce='+my_ajax_obj.nonce+"&action=nb_types_contrat_filtres&mots_clef="+mots_clef+"&ville"+my_ajax_obj.ville+"&type_de_contrat="+encodeURIComponent(my_ajax_obj.type_contrat),
                 'success' : function(data){
                     data = data['data'];
                     resolve(JSON.parse(data));
@@ -244,7 +244,6 @@ async function recherche_mot_clef(){
     for(let a = 0; a<comm.length; a++){
 
         let array_url = comm[a].parentElement.getAttribute('href').split('?');
-
         if(distance){
             comm[a].parentElement.setAttribute('href', array_url[0] + '?distance=' + distance);
             if(mots_clef){

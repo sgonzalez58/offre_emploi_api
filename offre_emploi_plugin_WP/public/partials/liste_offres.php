@@ -26,8 +26,18 @@ $metier = $class->getMetier();
 $le_type_contrat='';
 $la_commune='';
 
-$nom_type_contrat = '';
-$nom_commune = 'dans la Nièvre';
+if( array_key_exists('thematique',$wp_query->query_vars) ){
+    $nom_type_contrat = urldecode($wp_query->query_vars['thematique']);
+}else{
+    $nom_type_contrat = '';
+}
+
+if( array_key_exists('commune',$wp_query->query_vars) ){
+    $la_commune = $class->get_commune_by_slug($wp_query->query_vars['commune']);
+    $nom_commune = 'à '.$la_commune['nom_commune'];
+}else{
+    $nom_commune = 'dans la Nièvre';
+}
 
 add_action('wp_head', 'fc_opengraph');
 function fc_opengraph() {
@@ -75,6 +85,10 @@ function date_metadesc( $wpseo_replace_vars ) {
 
 
 get_header();
+
+$path = $_SERVER['REQUEST_URI'];
+$segments = explode('/', $path);
+
 
 ?>
 
@@ -153,8 +167,13 @@ get_header();
                 $i = 0;
                     foreach( $communes as $commune ){
                         if($commune['nom_commune'] == 'Nevers' || $commune['nom_commune'] == 'Coulanges-lès-Nevers' || $commune['nom_commune'] == 'Cosne-Cours-sur-Loire' || $commune['nom_commune'] == 'La Charité-sur-Loire'){
-                            echo '<div class="liste_commune_filtre com_filtre_liste_emploi'.$i.'" value-group="commune"><a href="https://www.koikispass.com/offres-emploi/lieu/'.$commune['slug'].'/">'.$commune['nom_commune'].'<input style="display:none" class="commune_filtre_tri_emploi com_filtre_tri'.$i.'" type="checkbox" name="commune[]" value="'. $commune['id'] .'" id="commune-'. $commune['id'] .'"><label style="width:100%;" for="commune-'. $commune['id'] .'">  </label></a></div>';
-                            $i++;                            
+                            if($segments[2] == 'categorie' || $segments[4] == "categorie"){
+                                echo '<div class="liste_commune_filtre com_filtre_liste_emploi'.$i.' '.($segments[3] == $commune['slug'] ? "couleur_filtre" : "").'" value-group="commune"><a href="https://www.koikispass.com/offres-emploi/lieu/'.$commune['slug'].'/categorie/'.$segments[5].'">'.$commune['nom_commune'].'<input style="display:none" class="commune_filtre_tri_emploi com_filtre_tri'.$i.'" type="checkbox" name="commune[]" value="'. $commune['id'] .'" id="commune-'. $commune['id'] .'"><label style="width:100%;" for="commune-'. $commune['id'] .'">  </label></a></div>';
+                                $i++;     
+                            }else{
+                                echo '<div class="liste_commune_filtre com_filtre_liste_emploi'.$i.' '.($segments[3] == $commune['slug'] ? "couleur_filtre" : "").'" value-group="commune"><a href="https://www.koikispass.com/offres-emploi/lieu/'.$commune['slug'].'/">'.$commune['nom_commune'].'<input style="display:none" class="commune_filtre_tri_emploi com_filtre_tri'.$i.'" type="checkbox" name="commune[]" value="'. $commune['id'] .'" id="commune-'. $commune['id'] .'"><label style="width:100%;" for="commune-'. $commune['id'] .'">  </label></a></div>';
+                                $i++;  
+                            }                     
                         }
                     }
                 ?>
@@ -166,8 +185,13 @@ get_header();
                 foreach( $communes as $commune ){
                     if($commune['nom_commune'] == 'Nevers' || $commune['nom_commune'] == 'Coulanges-lès-Nevers' || $commune['nom_commune'] == 'Cosne-Cours-sur-Loire' || $commune['nom_commune'] == 'La Charité-sur-Loire'){
                     }else{
-                        echo '<div class="liste_commune_filtre com_filtre_liste_emploi'.$o.'" value-group="commune"><a href="https://www.koikispass.com/offres-emploi/lieu/'.$commune['slug'].'/">'.$commune['nom_commune'].'<input style="display:none" class="commune_filtre_tri_emploi com_filtre_tri'.$o.'" type="checkbox" name="commune[]" value="'. $commune['id'] .'" id="commune-'. $commune['id'] .'"><label style="width:100%;" for="commune-'. $commune['id'] .'">  </label></a></div>';
-                        $o++;
+                        if($segments[2] == 'categorie' || $segments[4] == "categorie"){
+                            echo '<div class="liste_commune_filtre com_filtre_liste_emploi'.$i.' '.($segments[3] == $commune['slug'] ? "couleur_filtre" : "").'" value-group="commune"><a href="https://www.koikispass.com/offres-emploi/lieu/'.$commune['slug'].'/categorie/'.$segments[5].'">'.$commune['nom_commune'].'<input style="display:none" class="commune_filtre_tri_emploi com_filtre_tri'.$i.'" type="checkbox" name="commune[]" value="'. $commune['id'] .'" id="commune-'. $commune['id'] .'"><label style="width:100%;" for="commune-'. $commune['id'] .'">  </label></a></div>';
+                            $i++;     
+                        }else{
+                            echo '<div class="liste_commune_filtre com_filtre_liste_emploi'.$i.' '.($segments[3] == $commune['slug'] ? "couleur_filtre" : "").'" value-group="commune"><a href="https://www.koikispass.com/offres-emploi/lieu/'.$commune['slug'].'/">'.$commune['nom_commune'].'<input style="display:none" class="commune_filtre_tri_emploi com_filtre_tri'.$i.'" type="checkbox" name="commune[]" value="'. $commune['id'] .'" id="commune-'. $commune['id'] .'"><label style="width:100%;" for="commune-'. $commune['id'] .'">  </label></a></div>';
+                            $i++;  
+                        }   
                     }
                 }
             ?>
@@ -183,7 +207,7 @@ get_header();
     </div>
     <script>
         jQuery(document).ready(function() {
-            let thematiques = [<?php foreach($types_contrat as $thematique) {echo '"' . $thematique['type_contrat'] . '",'; } ?>];
+            let thematiques = [<?php foreach($types_contrat as $thematique) { echo '"' . $thematique['nom'] . '",'; } ?>];
 
             jQuery('#thematique-autocomplete').autocomplete({
                 source: thematiques,
@@ -217,15 +241,15 @@ get_header();
         
 
         function filtrerThematiques(motCle) {
-            jQuery('.liste_type_contrat_filtre').hide();
-            jQuery('.liste_type_contrat_filtre').each(function() {
+            jQuery('.liste_thematique_filtre').hide();
+            jQuery('.liste_thematique_filtre').each(function() {
                 if (jQuery(this).text().toLowerCase().indexOf(motCle.toLowerCase()) !== -1) {
                     jQuery(this).show();
                 }
             });
 
             // Sélectionner toutes les div avec la classe ".liste_thematique_filtre"
-            let divsTheme = document.querySelectorAll('.liste_type_contrat_filtre');
+            let divsTheme = document.querySelectorAll('.liste_thematique_filtre');
 
             // Parcourir chaque div
             divsTheme.forEach(function(div) {
@@ -246,8 +270,18 @@ get_header();
             <?php
                 $ii = 0;
                 foreach( $types_contrat as $thematique ){
-                    echo '<div class="liste_type_contrat_filtre type_filtre_tri_emploi'.$ii.'" value-group="type_contrat"><a href="https://www.koikispass.com/offres-emploi/categorie/'.urlencode($thematique['type_contrat']).'">'.$thematique['type_contrat'].'<input style="display:none" class="type_contrat_filtre_tri_emploi" id="type_contrat-'.$thematique['type_contrat'].'" type="checkbox" name="theme[]" value="'. $thematique['type_contrat'] .'"><label style="width:100%;" for="type_contrat-'. $thematique['type_contrat'] .'">'. (0) .'</label></a></div>';
-                    $ii++;	
+                    if($segments[2] == 'lieu'){
+                        if($segments[4] == 'categorie'){
+                            echo '<div class="liste_type_contrat_filtre type_filtre_tri_emploi'.$ii.' '.($segments[5] == $thematique['type_contrat'] ? "couleur_filtre" : "").'" value-group="type_contrat"><a href="https://www.koikispass.com/offres-emploi/lieu/'.$segments[3].'/categorie/'.urlencode($thematique['type_contrat']).'">'.$thematique['type_contrat'].'<input style="display:none" class="type_contrat_filtre_tri_emploi" id="type_contrat-'.$thematique['type_contrat'].'" type="checkbox" name="theme[]" value="'. $thematique['type_contrat'] .'"><label style="width:100%;" for="type_contrat-'. $thematique['type_contrat'] .'">'. (0) .'</label></a></div>';
+                            $ii++;   
+                        }else{
+                            echo '<div class="liste_type_contrat_filtre type_filtre_tri_emploi'.$ii.'" value-group="type_contrat"><a href="https://www.koikispass.com/offres-emploi/lieu/'.$segments[3].'/categorie/'.urlencode($thematique['type_contrat']).'">'.$thematique['type_contrat'].'<input style="display:none" class="type_contrat_filtre_tri_emploi" id="type_contrat-'.$thematique['type_contrat'].'" type="checkbox" name="theme[]" value="'. $thematique['type_contrat'] .'"><label style="width:100%;" for="type_contrat-'. $thematique['type_contrat'] .'">'. (0) .'</label></a></div>';
+                            $ii++;  
+                        }
+                    }else{
+                        echo '<div class="liste_type_contrat_filtre type_filtre_tri_emploi'.$ii.' '.($segments[3] == $thematique['type_contrat'] ? "couleur_filtre" : "").'" value-group="type_contrat"><a href="https://www.koikispass.com/offres-emploi/categorie/'.urlencode($thematique['type_contrat']).'">'.$thematique['type_contrat'].'<input style="display:none" class="type_contrat_filtre_tri_emploi" id="type_contrat-'.$thematique['type_contrat'].'" type="checkbox" name="theme[]" value="'. $thematique['type_contrat'] .'"><label style="width:100%;" for="type_contrat-'. $thematique['type_contrat'] .'">'. (0) .'</label></a></div>';
+                        $ii++;	
+                    }
                 }
             ?>
         </div>
@@ -293,8 +327,8 @@ get_header();
                                 </div>
 
                                 <div class='recherche'>
-                                    <label for='recherche_input'><span class='material-symbols-outlined' id='recherche_secteur_icon'>location_searching</span></label>
-                                    <input id='recherche_input' type='text' minlength='1' maxlength='50' placeholder='Rechercher par poste'>
+                                    <label for="recherche_input"><span class="material-symbols-outlined" id='recherche_secteur_icon'>location_searching</span></label>
+                                    <input id='recherche_input' type="text" minlength="1" maxlength="50" placeholder="Rechercher par poste">
                                 </div>
                                 <script>
                                     window.addEventListener('load', function(){
@@ -309,7 +343,6 @@ get_header();
                                         });
                                     });
                                 </script>
-
 
                                 <button id='recherche'><span class="material-symbols-outlined">search</span>Rechercher</button>
 
