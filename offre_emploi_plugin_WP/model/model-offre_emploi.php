@@ -129,13 +129,11 @@ class Offre_Emploi_Model {
 		return $return;
 	}
 
-	public function findByMotsClef(array $mots_clef = [], $type_de_contrat = null, array $communes = []){
+	public function findByMotsClef($mots_clef = '', $type_de_contrat = null, array $communes = [], $page = 1, $limit = ''){
 		$baseSql = 'SELECT * FROM '.$this->TableOffreEmploi." WHERE visibilite = 'visible'";
-		foreach($mots_clef as $key=>$mot_clef){
-			$baseSql .= " AND ( LOWER(intitule) LIKE %s OR LOWER(libelle_metier) LIKE %s)";
-			$prepare_mots_clef[$key*3] = "%".$mot_clef."%";
-			$prepare_mots_clef[$key*3 + 1] = "%".$mot_clef."%";
-			$prepare_mots_clef[$key*3 + 2] = "%".$mot_clef."%";
+		if($mots_clef != ""){
+			$baseSql .= " AND LOWER(libelle_metier) LIKE %s";
+			$prepare_mots_clef[0] = "%".urldecode($mots_clef)."%";
 		}
 		if($type_de_contrat){
 			$baseSql .= " AND type_contrat = '".$type_de_contrat."'";
@@ -144,7 +142,15 @@ class Offre_Emploi_Model {
 			$baseSql .= " AND (commune_id IS NULL OR commune_id IN (".implode(', ', $communes)."))";
 		}
 		$baseSql .= " ORDER BY date_de_publication DESC";
-		if(count($mots_clef) > 0){
+
+		if($limit){
+			$baseSql .= " LIMIT ".$limit;
+			if($page != 1){
+				$baseSql .= " OFFSET ".$page * $limit;
+			}
+		}
+
+		if($mots_clef != ""){
 			$sql = $this->offreEmploiDB->prepare($baseSql, $prepare_mots_clef);
 		}else{
 			$sql = $this->offreEmploiDB->prepare($baseSql);
@@ -156,19 +162,17 @@ class Offre_Emploi_Model {
 		}
 	}
 
-	public function getNbCommunes(array $mots_clef = []){
+	public function getNbCommunes($mots_clef = ''){
 		$baseSql = 'SELECT c.id as id_commune, c.nom_commune as nom_commune, COUNT(o.id) as NbEvent FROM '.$this->TableOffreEmploi." o, ".$this->TableCommune." c WHERE o.visibilite = 'visible' AND o.commune_id = c.id";
 
-		foreach($mots_clef as $key=>$mot_clef){
-			$baseSql .= " AND ( LOWER(o.intitule) LIKE %s OR LOWER(o.libelle_metier) LIKE %s)";
-			$prepare_mots_clef[$key*3] = "%".$mot_clef."%";
-			$prepare_mots_clef[$key*3 + 1] = "%".$mot_clef."%";
-			$prepare_mots_clef[$key*3 + 2] = "%".$mot_clef."%";
+		if($mots_clef != ""){
+			$baseSql .= " AND LOWER(o.libelle_metier) LIKE %s";
+			$prepare_mots_clef[0] = "%".urldecode($mots_clef)."%";
 		}
 
 		$baseSql .= " GROUP BY o.commune_id";
 
-		if(count($mots_clef) > 0){
+		if($mots_clef != ""){
 			$baseSql = $this->offreEmploiDB->prepare($baseSql, $prepare_mots_clef);
 		}else{
 			$baseSql = $this->offreEmploiDB->prepare($baseSql);
@@ -181,19 +185,17 @@ class Offre_Emploi_Model {
 		}
 	}
 
-	public function getNbTypesContrat(array $mots_clef = []){
+	public function getNbTypesContrat($mots_clef = ''){
 		$baseSql = 'SELECT o.type_contrat as nom, COUNT(*) as NbEvent FROM '.$this->TableOffreEmploi." o WHERE o.visibilite = 'visible' AND o.type_contrat != '' AND o.type_contrat IS NOT NULL";
 
-		foreach($mots_clef as $key=>$mot_clef){
-			$baseSql .= " AND ( LOWER(o.intitule) LIKE %s OR LOWER(o.libelle_metier) LIKE %s)";
-			$prepare_mots_clef[$key*3] = "%".$mot_clef."%";
-			$prepare_mots_clef[$key*3 + 1] = "%".$mot_clef."%";
-			$prepare_mots_clef[$key*3 + 2] = "%".$mot_clef."%";
+		if($mots_clef != ""){
+			$baseSql .= " AND LOWER(o.libelle_metier) LIKE %s";
+			$prepare_mots_clef[0] = "%".urldecode($mots_clef)."%";
 		}
 
 		$baseSql .= " GROUP BY o.type_contrat";
 
-		if(count($mots_clef) > 0){
+		if($mots_clef != ""){
 			$baseSql = $this->offreEmploiDB->prepare($baseSql, $prepare_mots_clef);
 		}else{
 			$baseSql = $this->offreEmploiDB->prepare($baseSql);
@@ -206,19 +208,17 @@ class Offre_Emploi_Model {
 		}
 	}
 
-	public function getNbCommunes1($type, array $mots_clef = []){
+	public function getNbCommunes1($type, $mots_clef = ''){
 		$baseSql = 'SELECT c.id as id_commune, c.nom_commune as nom_commune, COUNT(o.id) as NbEvent FROM '.$this->TableOffreEmploi." o, ".$this->TableCommune." c WHERE o.visibilite = 'visible' AND o.commune_id = c.id AND o.type_contrat = '".$type."'";
 		
-		foreach($mots_clef as $key=>$mot_clef){
-			$baseSql .= " AND ( LOWER(o.intitule) LIKE %s OR LOWER(o.libelle_metier) LIKE %s)";
-			$prepare_mots_clef[$key*3] = "%".$mot_clef."%";
-			$prepare_mots_clef[$key*3 + 1] = "%".$mot_clef."%";
-			$prepare_mots_clef[$key*3 + 2] = "%".$mot_clef."%";
+		if($mots_clef != ""){
+			$baseSql .= " AND LOWER(o.libelle_metier) LIKE %s";
+			$prepare_mots_clef[0] = "%".urldecode($mots_clef)."%";
 		}
 
 		$baseSql .= " GROUP BY o.commune_id";
 
-		if(count($mots_clef) > 0){
+		if($mots_clef != ""){
 			$baseSql = $this->offreEmploiDB->prepare($baseSql, $prepare_mots_clef);
 		}else{
 			$baseSql = $this->offreEmploiDB->prepare($baseSql);
@@ -231,19 +231,28 @@ class Offre_Emploi_Model {
 		}
 	}
 
-	public function getNbTypesContrat1($com, array $mots_clef = []){
-		$baseSql = 'SELECT o.type_contrat as nom, COUNT(*) as NbEvent FROM '.$this->TableOffreEmploi." o WHERE o.visibilite = 'visible' AND o.type_contrat != '' AND o.type_contrat IS NOT NULL AND o.commune_id = '".$com."'";
+	public function getNbTypesContrat1(array $com, $mots_clef = ''){
+		$baseSql = 'SELECT o.type_contrat as nom, COUNT(*) as NbEvent FROM '.$this->TableOffreEmploi." o WHERE o.visibilite = 'visible' AND o.type_contrat != '' AND o.type_contrat IS NOT NULL";
 
-		foreach($mots_clef as $key=>$mot_clef){
-			$baseSql .= " AND ( LOWER(o.intitule) LIKE %s OR LOWER(o.libelle_metier) LIKE %s)";
-			$prepare_mots_clef[$key*3] = "%".$mot_clef."%";
-			$prepare_mots_clef[$key*3 + 1] = "%".$mot_clef."%";
-			$prepare_mots_clef[$key*3 + 2] = "%".$mot_clef."%";
+		$baseSql .= " AND o.commune_id in (";
+
+		foreach($com as $key=>$commune_id){
+			if($key == 0){
+				$baseSql .= $commune_id;
+			}else{
+				$baseSql .= ','.$commune_id;
+			}
+		}
+		$baseSql .= ")";
+
+		if($mots_clef != ""){
+			$baseSql .= " AND LOWER(o.libelle_metier) LIKE %s";
+			$prepare_mots_clef[0] = "%".urldecode($mots_clef)."%";
 		}
 
 		$baseSql .= " GROUP BY o.type_contrat";
 
-		if(count($mots_clef) > 0){
+		if($mots_clef != ""){
 			$baseSql = $this->offreEmploiDB->prepare($baseSql, $prepare_mots_clef);
 		}else{
 			$baseSql = $this->offreEmploiDB->prepare($baseSql);

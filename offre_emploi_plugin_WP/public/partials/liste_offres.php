@@ -17,8 +17,29 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 global $wp_query;
 
+$pageActuelle = $_GET['page'];
+if(!$pageActuelle){
+    $pageActuelle = 1;
+}
+
+$recherche_input = $_GET['motClef'];
+if(!$recherche_input){
+    $recherche_input = '';
+}
+
+$distance_max = $_GET['distance'];
+if(!$distance_max){
+    $distance_max = 0;
+}
+
+$limit = $_SESSION['limit_offres_liste'];
+if(!$limit){
+    $limit = 30;
+    $_SESSION['limit_offres_liste'] = $limit;
+}
+
 $class = new Offre_emploi_Public('Offre_emploi','1.0.0');
-$offres_valides = $class->getOffresValides();
+
 $communes = $class->getAllCommunes();
 $types_contrat = $class->getAllTypeContrat();
 $metier = $class->getMetier();
@@ -26,17 +47,71 @@ $metier = $class->getMetier();
 $le_type_contrat='';
 $la_commune='';
 
+$ville_cible = [];
+
 if( array_key_exists('thematique',$wp_query->query_vars) ){
     $nom_type_contrat = urldecode($wp_query->query_vars['thematique']);
+    $nb_communes = $class->get_nb_communes_1($wp_query->query_vars['thematique'], $recherche_input);
 }else{
     $nom_type_contrat = '';
+    $nb_communes = $class->get_nb_communes($recherche_input);
 }
+
 
 if( array_key_exists('commune',$wp_query->query_vars) ){
     $la_commune = $class->get_commune_by_slug($wp_query->query_vars['commune']);
+
+    //récupération des villes en fonction de la distance
+    array_push($ville_cible, $la_commune['id']);
+    if($distance_max > 0){
+
+        foreach($communes as $commune){
+            if($commune['id'] != $wp_query->query_vars['commune']){
+                $villeFrom = $la_commune;
+                $villeTo = $commune;
+                $latFrom = deg2rad($villeFrom['latitude']);
+                $lonFrom = deg2rad($villeFrom['longitude']);
+                $latTo = deg2rad($villeTo['latitude']);
+                $lonTo = deg2rad($villeTo['longitude']);
+                $lonDelta = $lonTo - $lonFrom;
+                $a = pow(cos($latTo) * sin($lonDelta), 2) +
+                    pow(cos($latFrom) * sin($latTo) - sin($latFrom) * cos($latTo) * cos($lonDelta), 2);
+                $b = sin($latFrom) * sin($latTo) + cos($latFrom) * cos($latTo) * cos($lonDelta);
+                $angle = atan2(sqrt($a), $b);
+                $distanceVilles = $angle * 6371;
+                if($distanceVilles < $distance_max){
+                    array_push($ville_cible, $commune['id']);
+                    $liste_distances[$commune['id']] = $distanceVilles;
+                }
+            }
+        }
+    }
+    $nb_types_contrat = $class->get_nb_types_contrat_1($ville_cible, $recherche_input);
     $nom_commune = 'à '.$la_commune['nom_commune'];
 }else{
     $nom_commune = 'dans la Nièvre';
+    $nb_types_contrat = $class->get_nb_types_contrat($recherche_input);
+}
+
+$offres_valides = $class->getOffresValides($recherche_input, $nom_type_contrat != '' ? $nom_type_contrat : null, $ville_cible, $pageActuelle, $limit);
+
+$nb_total_offre = count($class->getOffresValides($recherche_input, $nom_type_contrat != '' ? $nom_type_contrat : null, $ville_cible, 1, ''));
+$totalPages = ceil($nb_total_offre / $limit);
+
+$new_nb_commune = [];
+
+$nb_communes = array_values($nb_communes);
+
+foreach($nb_communes as $info_com){
+    $new_nb_commune[$info_com['id_commune']] = $info_com['NbEvent'];
+}
+
+$new_nb_type_contrat = [];
+
+$nb_types_contrat = array_values($nb_types_contrat);
+
+foreach($nb_types_contrat as $info_cont){
+    $new_nb_type_contrat[$info_cont['nom']] = $info_cont['NbEvent'];
 }
 
 add_action('wp_head', 'fc_opengraph');
@@ -168,10 +243,10 @@ $segments = explode('/', $path);
                     foreach( $communes as $commune ){
                         if($commune['nom_commune'] == 'Nevers' || $commune['nom_commune'] == 'Coulanges-lès-Nevers' || $commune['nom_commune'] == 'Cosne-Cours-sur-Loire' || $commune['nom_commune'] == 'La Charité-sur-Loire'){
                             if($segments[2] == 'categorie' || $segments[4] == "categorie"){
-                                echo '<div class="liste_commune_filtre com_filtre_liste_emploi'.$i.' '.($segments[3] == $commune['slug'] ? "couleur_filtre" : "").'" value-group="commune"><a href="https://www.koikispass.com/offres-emploi/lieu/'.$commune['slug'].'/categorie/'.$segments[5].'">'.$commune['nom_commune'].'<input style="display:none" class="commune_filtre_tri_emploi com_filtre_tri'.$i.'" type="checkbox" name="commune[]" value="'. $commune['id'] .'" id="commune-'. $commune['id'] .'"><label style="width:100%;" for="commune-'. $commune['id'] .'">  </label></a></div>';
+                                echo '<div class="liste_commune_filtre com_filtre_liste_emploi'.$i.' '.($segments[3] == $commune['slug'] ? "couleur_filtre" : "").'" value-group="commune" '. (key_exists($commune['id'], $new_nb_commune) ? '' : 'style="display:none"').'><a href="https://www.koikispass.com/offres-emploi/lieu/'.$commune['slug'].'/categorie/'.($segments[2] == 'categorie' ? $segments[3] : $segments[5]).'">'.$commune['nom_commune'].'<input style="display:none" class="commune_filtre_tri_emploi com_filtre_tri'.$i.'" type="checkbox" name="commune[]" value="'. $commune['id'] .'" id="commune-'. $commune['id'] .'"></a></div>';
                                 $i++;     
                             }else{
-                                echo '<div class="liste_commune_filtre com_filtre_liste_emploi'.$i.' '.($segments[3] == $commune['slug'] ? "couleur_filtre" : "").'" value-group="commune"><a href="https://www.koikispass.com/offres-emploi/lieu/'.$commune['slug'].'/">'.$commune['nom_commune'].'<input style="display:none" class="commune_filtre_tri_emploi com_filtre_tri'.$i.'" type="checkbox" name="commune[]" value="'. $commune['id'] .'" id="commune-'. $commune['id'] .'"><label style="width:100%;" for="commune-'. $commune['id'] .'">  </label></a></div>';
+                                echo '<div class="liste_commune_filtre com_filtre_liste_emploi'.$i.' '.($segments[3] == $commune['slug'] ? "couleur_filtre" : "").'" value-group="commune" '. (key_exists($commune['id'], $new_nb_commune) ? '' : 'style="display:none"').'><a href="https://www.koikispass.com/offres-emploi/lieu/'.$commune['slug'].'/">'.$commune['nom_commune'].'<input style="display:none" class="commune_filtre_tri_emploi com_filtre_tri'.$i.'" type="checkbox" name="commune[]" value="'. $commune['id'] .'" id="commune-'. $commune['id'] .'"></a></div>';
                                 $i++;  
                             }                     
                         }
@@ -186,10 +261,10 @@ $segments = explode('/', $path);
                     if($commune['nom_commune'] == 'Nevers' || $commune['nom_commune'] == 'Coulanges-lès-Nevers' || $commune['nom_commune'] == 'Cosne-Cours-sur-Loire' || $commune['nom_commune'] == 'La Charité-sur-Loire'){
                     }else{
                         if($segments[2] == 'categorie' || $segments[4] == "categorie"){
-                            echo '<div class="liste_commune_filtre com_filtre_liste_emploi'.$i.' '.($segments[3] == $commune['slug'] ? "couleur_filtre" : "").'" value-group="commune"><a href="https://www.koikispass.com/offres-emploi/lieu/'.$commune['slug'].'/categorie/'.$segments[5].'">'.$commune['nom_commune'].'<input style="display:none" class="commune_filtre_tri_emploi com_filtre_tri'.$i.'" type="checkbox" name="commune[]" value="'. $commune['id'] .'" id="commune-'. $commune['id'] .'"><label style="width:100%;" for="commune-'. $commune['id'] .'">  </label></a></div>';
+                            echo '<div class="liste_commune_filtre com_filtre_liste_emploi'.$i.' '.($segments[3] == $commune['slug'] ? "couleur_filtre" : "").'" value-group="commune" '. (key_exists($commune['id'], $new_nb_commune) ? '' : 'style="display:none"').'><a href="https://www.koikispass.com/offres-emploi/lieu/'.$commune['slug'].'/categorie/'.($segments[2] == 'categorie' ? $segments[3] : $segments[5]).'">'.$commune['nom_commune'].'<input style="display:none" class="commune_filtre_tri_emploi com_filtre_tri'.$i.'" type="checkbox" name="commune[]" value="'. $commune['id'] .'" id="commune-'. $commune['id'] .'"></a></div>';
                             $i++;     
                         }else{
-                            echo '<div class="liste_commune_filtre com_filtre_liste_emploi'.$i.' '.($segments[3] == $commune['slug'] ? "couleur_filtre" : "").'" value-group="commune"><a href="https://www.koikispass.com/offres-emploi/lieu/'.$commune['slug'].'/">'.$commune['nom_commune'].'<input style="display:none" class="commune_filtre_tri_emploi com_filtre_tri'.$i.'" type="checkbox" name="commune[]" value="'. $commune['id'] .'" id="commune-'. $commune['id'] .'"><label style="width:100%;" for="commune-'. $commune['id'] .'">  </label></a></div>';
+                            echo '<div class="liste_commune_filtre com_filtre_liste_emploi'.$i.' '.($segments[3] == $commune['slug'] ? "couleur_filtre" : "").'" value-group="commune" '. (key_exists($commune['id'], $new_nb_commune) ? '' : 'style="display:none"').'><a href="https://www.koikispass.com/offres-emploi/lieu/'.$commune['slug'].'/">'.$commune['nom_commune'].'<input style="display:none" class="commune_filtre_tri_emploi com_filtre_tri'.$i.'" type="checkbox" name="commune[]" value="'. $commune['id'] .'" id="commune-'. $commune['id'] .'"></a></div>';
                             $i++;  
                         }   
                     }
@@ -272,14 +347,14 @@ $segments = explode('/', $path);
                 foreach( $types_contrat as $thematique ){
                     if($segments[2] == 'lieu'){
                         if($segments[4] == 'categorie'){
-                            echo '<div class="liste_type_contrat_filtre type_filtre_tri_emploi'.$ii.' '.($segments[5] == $thematique['type_contrat'] ? "couleur_filtre" : "").'" value-group="type_contrat"><a href="https://www.koikispass.com/offres-emploi/lieu/'.$segments[3].'/categorie/'.urlencode($thematique['type_contrat']).'">'.$thematique['type_contrat'].'<input style="display:none" class="type_contrat_filtre_tri_emploi" id="type_contrat-'.$thematique['type_contrat'].'" type="checkbox" name="theme[]" value="'. $thematique['type_contrat'] .'"><label style="width:100%;" for="type_contrat-'. $thematique['type_contrat'] .'">'. (0) .'</label></a></div>';
+                            echo '<div class="liste_type_contrat_filtre type_filtre_tri_emploi'.$ii.' '.($segments[5] == $thematique['type_contrat'] ? "couleur_filtre" : "").'" value-group="type_contrat" '. (key_exists($thematique['type_contrat'], $new_nb_type_contrat) ? '' : 'style="display:none"').'><a href="https://www.koikispass.com/offres-emploi/lieu/'.$segments[3].'/categorie/'.urlencode($thematique['type_contrat']).'">'.$thematique['type_contrat'].'<input style="display:none" class="type_contrat_filtre_tri_emploi" id="type_contrat-'.$thematique['type_contrat'].'" type="checkbox" name="theme[]" value="'. $thematique['type_contrat'] .'"></a></div>';
                             $ii++;   
                         }else{
-                            echo '<div class="liste_type_contrat_filtre type_filtre_tri_emploi'.$ii.'" value-group="type_contrat"><a href="https://www.koikispass.com/offres-emploi/lieu/'.$segments[3].'/categorie/'.urlencode($thematique['type_contrat']).'">'.$thematique['type_contrat'].'<input style="display:none" class="type_contrat_filtre_tri_emploi" id="type_contrat-'.$thematique['type_contrat'].'" type="checkbox" name="theme[]" value="'. $thematique['type_contrat'] .'"><label style="width:100%;" for="type_contrat-'. $thematique['type_contrat'] .'">'. (0) .'</label></a></div>';
+                            echo '<div class="liste_type_contrat_filtre type_filtre_tri_emploi'.$ii.'" value-group="type_contrat" '. (key_exists($thematique['type_contrat'], $new_nb_type_contrat) ? '' : 'style="display:none"').'><a href="https://www.koikispass.com/offres-emploi/lieu/'.$segments[3].'/categorie/'.urlencode($thematique['type_contrat']).'">'.$thematique['type_contrat'].'<input style="display:none" class="type_contrat_filtre_tri_emploi" id="type_contrat-'.$thematique['type_contrat'].'" type="checkbox" name="theme[]" value="'. $thematique['type_contrat'] .'"></a></div>';
                             $ii++;  
                         }
                     }else{
-                        echo '<div class="liste_type_contrat_filtre type_filtre_tri_emploi'.$ii.' '.($segments[3] == $thematique['type_contrat'] ? "couleur_filtre" : "").'" value-group="type_contrat"><a href="https://www.koikispass.com/offres-emploi/categorie/'.urlencode($thematique['type_contrat']).'">'.$thematique['type_contrat'].'<input style="display:none" class="type_contrat_filtre_tri_emploi" id="type_contrat-'.$thematique['type_contrat'].'" type="checkbox" name="theme[]" value="'. $thematique['type_contrat'] .'"><label style="width:100%;" for="type_contrat-'. $thematique['type_contrat'] .'">'. (0) .'</label></a></div>';
+                        echo '<div class="liste_type_contrat_filtre type_filtre_tri_emploi'.$ii.' '.($segments[3] == $thematique['type_contrat'] ? "couleur_filtre" : "").'" value-group="type_contrat" '. (key_exists($thematique['type_contrat'], $new_nb_type_contrat) ? '' : 'style="display:none"').'><a href="https://www.koikispass.com/offres-emploi/categorie/'.urlencode($thematique['type_contrat']).'">'.$thematique['type_contrat'].'<input style="display:none" class="type_contrat_filtre_tri_emploi" id="type_contrat-'.$thematique['type_contrat'].'" type="checkbox" name="theme[]" value="'. $thematique['type_contrat'] .'"></a></div>';
                         $ii++;	
                     }
                 }
@@ -344,18 +419,169 @@ $segments = explode('/', $path);
                                     });
                                 </script>
 
-                                <button id='recherche'><span class="material-symbols-outlined">search</span>Rechercher</button>
-
+                                <a href='' id='recherche'>
+                                    <span class="material-symbols-outlined">search</span>
+                                    <span>Rechercher</span>
+                                    <div class='loading'>
+                                        <div class="load">
+                                            <div class="line"></div>
+                                            <div class="line"></div>
+                                            <div class="line"></div>
+                                        </div>
+                                    </div>
+                                </a>
 							</div>
 						</div>
 						<div class="legende_tri">
-                            <span class='sous_titre_h1'>Nous trouvons plus de <?= floor(count($offres_valides) / 100) * 100 ?> offres d'emploi disponibles</span>
+                        <span class='sous_titre_h1'>Nous trouvons <?= $nb_total_offre . ($nb_total_offre > 1 ? " offres d'emploi disponibles" : " offre d'emploi disponible")?> </span>
                             <a href='https://www.koikispass.com/offres-emploi/' id="reset_filter" class="supp_tri"><i style="font-size: 12px;color:#3D3D3D;margin-right:12px;" class="fa-solid fa-trash"></i>Supprimer les filtres</a>
                         </div>
 
-						<div id='liste_offres'></div>
-                        <div id='pagination_container' class='paginationjs-theme-red paginationjs-big'></div>
+						<div id='liste_offres'>
+                            <?php
+                            foreach($offres_valides as $offre){
+                                if($offre['ville_libelle'] && $offre['ville_libelle'] != 'Non renseigné' && $offre['id_pole_emploi']){
+                                    $nomVille = explode('- ', $offre['ville_libelle'])[1];
+                                }else{
+                                    if($offre['ville_libelle'] && $offre['ville_libelle'] != 'Non renseigné' && !$offre['id_pole_emploi']){
+                                        $nomVille = $offre['ville_libelle'];
+                                    }
+                                    else{
+                                        $nomVille = 'Non renseigné';
+                                    }
+                                }
+                                if(strlen($offre['description']) > 150){
+                                    $description = substr($offre['description'], 0, 149) . '...';
+                                }else{
+                                    $description = $offre['description'];
+                                }
+                                if($offre['nom_entreprise']){
+                                    if(strlen($offre['nom_entreprise']) > 23){
+                                        $nomEntreprise = substr($offre['nom_entreprise'], 0, 22);
+                                    }else{
+                                        $nomEntreprise = $offre['nom_entreprise'];
+                                    }
+                                }else{
+                                    $nomEntreprise = 'Aucun';
+                                }
+                                ?>
 
+                            <div class='offre'>
+                                <div class='corps_offre'>
+                                    <h2><?=$offre['intitule']?></h2>
+                                    <div class='details'>
+                                        <div class='ville'>
+                                            <i class='fa-solid fa-location-pin'></i>
+                                            <h4><?=$nomVille?></h4>
+                                        </div>
+                                        <div class='contrat'>
+                                            <i class='fa-solid fa-tag'></i>
+                                            <h4><?=$offre['type_contrat']?></h4>
+                                        </div>
+                                    </div>
+                                    <?php if($nomEntreprise != 'Aucun'){ ?>
+                                    <h3 class='nom_entreprise'>Entreprise : <?$nomEntreprise?></h3>
+                                    <?php } ?>
+                                    <p class='description'><?=$description?></p>
+                                </div>
+                                <a class='lien_fiche' href='/offres-emploi/<?=$offre['id']?>'>
+                                    <button class='bouton_lien_fiche'>Voir l'offre</button>
+                                </a>
+                                <a class='lien_fiche_big' href='/offres-emploi/<?=$offre['id']?>'></a>
+                            </div>
+
+                                <?php
+                            }
+                            ?>
+                        </div>
+                        <div class="pagination">
+                        <?php
+                        $startPage = max($pageActuelle - 3, 1);
+                        $endPage = min($startPage + 6, $totalPages);
+
+                        if ($startPage > 1) {
+                            $complement_lien = '?';
+                            if($recherche_input != ''){
+                                 $complement_lien == "?" ? $complement_lien .= 'motClef='. urlencode(strtolower($recherche_input)) : $complement_lien .= '&motClef[]='. urlencode(strtolower($recherche_input));
+                            }
+                            if($distance_max > 0){
+                                $complement_lien == "?" ? $complement_lien .= 'distance='.$distance_max : $complement_lien .= '&distance='.$distance_max;
+                            }
+                            $complement_lien == "?" ? $complement_lien .= 'page=1' : $complement_lien .= '&page=1';
+                            
+                            echo '<a href="'.$complement_lien.'"><<</a>'; // Bouton pour la première page
+                        }
+
+                        if ($pageActuelle > 1) {
+                            $complement_lien = '?';
+                            if($recherche_input != ''){
+                                $complement_lien == "?" ? $complement_lien .= 'motClef='. urlencode(strtolower($recherche_input)) : $complement_lien .= '&motClef[]='. urlencode(strtolower($recherche_input));
+                            }
+                            if($distance_max > 0){
+                                $complement_lien == "?" ? $complement_lien .= 'distance='.$distance_max : $complement_lien .= '&distance='.$distance_max;
+                            }
+                            $complement_lien == "?" ? $complement_lien .= 'page='. ($pageActuelle - 1) : $complement_lien .= '&page='. ($pageActuelle - 1);
+                            
+                            echo '<a href="'.$complement_lien.'">&lt;</a>'; // Flèche pour la page précédente
+                        }
+
+                        for ($i = $startPage; $i <= $endPage; $i++) {
+                            if ($i == $pageActuelle) {
+                                echo '<strong>' . $i . '</strong>';
+                            } else {
+                                $complement_lien = '?';
+                                if($recherche_input != ''){
+                                    $complement_lien == "?" ? $complement_lien .= 'motClef='. urlencode(strtolower($recherche_input)) : $complement_lien .= '&motClef[]='. urlencode(strtolower($recherche_input));
+                                }
+                                if($distance_max > 0){
+                                    $complement_lien == "?" ? $complement_lien .= 'distance='.$distance_max : $complement_lien .= '&distance='.$distance_max;
+                                }
+                                $complement_lien == "?" ? $complement_lien .= 'page='. $i : $complement_lien .= '&page='. $i;
+                                
+                                echo '<a href="'.$complement_lien.'">' . $i . '</a>'; 
+                            }
+                        }
+
+                        if ($pageActuelle < $totalPages) {
+                            $complement_lien = '?';
+                            if($recherche_input != ''){
+                                $complement_lien == "?" ? $complement_lien .= 'motClef='. urlencode(strtolower($recherche_input)) : $complement_lien .= '&motClef[]='. urlencode(strtolower($recherche_input));
+                            }
+                            if($distance_max > 0){
+                                $complement_lien == "?" ? $complement_lien .= 'distance='.$distance_max : $complement_lien .= '&distance='.$distance_max;
+                            }
+                            $complement_lien == "?" ? $complement_lien .= 'page=' . ($pageActuelle + 1) : $complement_lien .= '&page=' . ($pageActuelle + 1);
+                            
+                            echo '<a href="'.$complement_lien.'">&gt;</a>'; // Flèche pour la page suivante
+                        }
+
+                        if ($endPage < $totalPages) {
+                            $complement_lien = '?';
+                            if($recherche_input != ''){
+                                $complement_lien == "?" ? $complement_lien .= 'motClef='. urlencode(strtolower($recherche_input)) : $complement_lien .= '&motClef[]='. urlencode(strtolower($recherche_input));
+                            }
+                            if($distance_max > 0){
+                                $complement_lien == "?" ? $complement_lien .= 'distance='.$distance_max : $complement_lien .= '&distance='.$distance_max;
+                            }
+                            $complement_lien == "?" ? $complement_lien .= 'page=' . $totalPages : $complement_lien .= '&page=' . $totalPages;
+                            
+                            echo '<a href="'.$complement_lien.'">>></a>'; // Bouton pour la dernière page
+                        }
+
+                        ?>
+
+                            <div class='pagination_nb_offre'>
+                                <select class='pagination_nb_offre_select'>
+                                    <option value='6' <?=$limit == 6 ? 'selected' : ''?>>6 / page</option>
+                                    <option value='12' <?=$limit == 12 ? 'selected' : ''?>>12 / page</option>
+                                    <option value='30' <?=$limit == 30 ? 'selected' : ''?>>30 / page</option>
+                                    <option value='60' <?=$limit == 60 ? 'selected' : ''?>>60 / page</option>
+                                    <option value='90' <?=$limit == 90 ? 'selected' : ''?>>90 / page</option>
+                                    <option value='120' <?=$limit == 120 ? 'selected' : ''?>>120 / page</option>
+                                </select>
+                            </div>
+
+                        </div>
                         <?php
                         }else{
                             ?>

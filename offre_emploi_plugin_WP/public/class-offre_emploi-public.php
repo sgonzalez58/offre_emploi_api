@@ -60,21 +60,15 @@ class Offre_emploi_Public {
 
 		require_once plugin_dir_path( __FILE__ ) . '../model/model-offre_emploi.php';
 		$this->model = new Offre_Emploi_Model();
+
+		add_action('wp_ajax_info_nb_com_cont', array($this,'info_nb_com_cont'));
+		add_action('wp_ajax_nopriv_info_nb_com_cont', array($this,'info_nb_com_cont'));
 		
-		add_action('wp_ajax_recherche_mot_clef', array($this,'recherche_mot_clef'));
-		add_action('wp_ajax_nopriv_recherche_mot_clef', array($this,'recherche_mot_clef'));
+		add_action('wp_ajax_info_nb_com_cont_filtres', array($this,'info_nb_com_cont_filtres'));
+		add_action('wp_ajax_nopriv_info_nb_com_cont_filtres', array($this,'info_nb_com_cont_filtres'));
 
-		add_action('wp_ajax_nb_communes', array($this,'nb_communes'));
-		add_action('wp_ajax_nopriv_nb_communes', array($this,'nb_communes'));
-
-		add_action('wp_ajax_nb_communes_filtres', array($this,'nb_communes_filtres'));
-		add_action('wp_ajax_nopriv_nb_communes_filtres', array($this,'nb_communes_filtres'));
-
-		add_action('wp_ajax_nb_types_contrat', array($this,'nb_types_contrat'));
-		add_action('wp_ajax_nopriv_nb_types_contrat', array($this,'nb_types_contrat'));
-
-		add_action('wp_ajax_nb_types_contrat_filtres', array($this,'nb_types_contrat_filtres'));
-		add_action('wp_ajax_nopriv_nb_types_contrat_filtres', array($this,'nb_types_contrat_filtres'));
+		add_action('wp_ajax_change_limit_offre', array($this, 'change_limit_offre'));
+		add_action('wp_ajax_nopriv_change_limit_offre', array($this, 'change_limit_offre'));
 
 		add_action('wp_ajax_get_one_offre', array($this,'get_one_offre'));
 		add_action('wp_ajax_nopriv_get_one_offre', array($this,'get_one_offre'));
@@ -95,6 +89,7 @@ class Offre_emploi_Public {
 		add_action('wp_ajax_nopriv_get_mes_candidatures', array($this,'get_mes_candidatures'));
 
 		add_action('init', array($this,'offre_emploi_rewrite_rules'));
+		add_action('init', array($this,'monprefixe_session_start'), 1);
 		add_filter('query_vars', array($this,'offre_emploi_register_query_var' ));
 		add_filter('template_include', array($this,'offre_emploi_front_end'));
 
@@ -162,11 +157,20 @@ class Offre_emploi_Public {
 		$retour .= '</ul>';
 		return $retour;
 	}
-	
 
-	public function getOffresValides() {
+	function monprefixe_session_start() {
+
+		if ( ! session_id() ) {
+	 
+		   @session_start();
+	 
+		}
+	 
+	}
+	
+	public function getOffresValides($mots_clef = '', $type_de_contrat = null, array $communes = [], $page = 1, $limit = '') {
 		
-		return $dates = $this->model->findByMotsClef();	
+		return $offres = $this->model->findByMotsClef($mots_clef, $type_de_contrat, $communes, $page, $limit);	
 	}	
 
 	public function getMetier() {
@@ -190,27 +194,33 @@ class Offre_emploi_Public {
 		
 	}
 
-	public function get_nb_communes() {
+	public function get_commune_by_id($id) {
 		
-		return $nb_communes = $this->model->getNbCommunes();
-		
-	}
-
-	public function get_nb_types_contrat() {
-		
-		return $nb_types_contrat = $this->model->getNbTypesContrat();
+		return $commune = $this->model->findOneCommune($id);
 		
 	}
 
-	public function get_nb_communes_1($them) {
+	public function get_nb_communes($recherche_input = '') {
 		
-		return $nb_communes1 = $this->model->getNbCommunes1($them);
+		return $nb_communes = $this->model->getNbCommunes($recherche_input);
 		
 	}
 
-	public function get_nb_types_contrat_1($comm) {
+	public function get_nb_types_contrat($recherche_input = '') {
 		
-		return $nb_types_contrat1 = $this->model->getNbTypesContrat1($comm);
+		return $nb_types_contrat = $this->model->getNbTypesContrat($recherche_input);
+		
+	}
+
+	public function get_nb_communes_1($them, $recherche_input = '') {
+		
+		return $nb_communes1 = $this->model->getNbCommunes1($them, $recherche_input);
+		
+	}
+
+	public function get_nb_types_contrat_1($comm, $recherche_input = '') {
+		
+		return $nb_types_contrat1 = $this->model->getNbTypesContrat1($comm, $recherche_input);
 		
 	}
 
@@ -225,153 +235,42 @@ class Offre_emploi_Public {
 		return $other_offres = $this->model->getMoreOffre($secteur_activite);
 		
 	}
-	
 
-	/**
-	 * Récupères les offres par mot clef
-	 */
-	function recherche_mot_clef(){
-		check_ajax_referer('liste_offres');
+	function change_limit_offre(){
 		$args = array(
-			'mots_clef' => strtolower($_GET['mots_clef']),
-			'idCommune' => $_GET['ville'],
-			'distance' => $_GET['distance'],
-			'type_de_contrat' => $_GET['type_de_contrat'],
-			'page' => $_GET['pageNumber'],
-			'nombre_offres' => $_GET['pageSize']
+			'limit' => $_GET['limit']
 		);
-		if(!$args['page']){
-			$page = 1;
-		}else{
-			$page = $args['page'];
-		}
 
-		if(!$args['nombre_offres']){
-			$nombre_offres = 50;
-		}else{
-			$nombre_offres = $args['nombre_offres'];
-		}
+		$_SESSION['limit_offres_liste'] = $args['limit'];
 
-		if($args['mots_clef'] == ""){
-			$args['mots_clef'] = [];
-		}else{
-			$args['mots_clef'] = explode(' ', $args['mots_clef']);
-		}
-        
-		if(!$args['idCommune']){
-			$offres = $this->model->findByMotsClef($args['mots_clef'], $args['type_de_contrat']);
-		}else{
-			$liste_distances = array();
-			$liste_distances[$args['idCommune']] = 0;
-			if($args['distance'] == 'aucune'){
-				$offres = $this->model->findByMotsClef($args['mots_clef'], $args['type_de_contrat'], array($args['idCommune']));
-			}else{
-				$offres = array();
-				$ville_cible = array();
-				$ville_a_trier = $this->model->findAllCommunes();
-
-				foreach($ville_a_trier as $commune){
-					if($commune['id'] == $args['idCommune']){
-						array_push($ville_cible, $commune['id']); 
-					}else{
-						$villeFrom = $this->model->findOneCommune($args['idCommune']);
-						$villeTo = $commune;
-						$latFrom = deg2rad($villeFrom['latitude']);
-						$lonFrom = deg2rad($villeFrom['longitude']);
-						$latTo = deg2rad($villeTo['latitude']);
-						$lonTo = deg2rad($villeTo['longitude']);
-						$lonDelta = $lonTo - $lonFrom;
-						$a = pow(cos($latTo) * sin($lonDelta), 2) +
-							pow(cos($latFrom) * sin($latTo) - sin($latFrom) * cos($latTo) * cos($lonDelta), 2);
-						$b = sin($latFrom) * sin($latTo) + cos($latFrom) * cos($latTo) * cos($lonDelta);
-						$angle = atan2(sqrt($a), $b);
-						$distanceVilles = $angle * 6371;
-						if($distanceVilles < $args['distance']){
-							array_push($ville_cible, $commune['id']);
-							$liste_distances[$commune['id']] = $distanceVilles;
-						}
-					}
-				}
-				$offres = $this->model->findByMotsClef($args['mots_clef'], $args['type_de_contrat'], $ville_cible);
-			}
-			foreach($offres as &$offre){
-				$offre['distance'] = $liste_distances[$offre['commune_id']];
-				if(!$offre['commune_id']){
-					$offre['distance'] = 101;
-				}
-			}
-			
-			array_multisort(array_column($offres, 'distance'), SORT_ASC,array_column($offres, 'id_pole_emploi'), SORT_ASC, $offres);
-		}
-		$jsonData = [];
-        $idx = 0;
-		$offset = ($page-1)*$nombre_offres;
-        $jsonData['info'] = ['nbOffres' => count($offres), 'nbOffresPage' => $nombre_offres, 'pageActuelle' => (int)$page, 'pageMax' => ceil(count($offres) / $nombre_offres)];
-		$jsonData['offres'] = [];
-        while($offset < $page*$nombre_offres && isset($offres[$offset])){
-			if($offres[$offset]['ville_libelle'] && $offres[$offset]['ville_libelle'] != 'Non renseigné' && $offres[$offset]['id_pole_emploi']){
-				$nomVille = explode('- ', $offres[$offset]['ville_libelle'])[1];
-			}else{
-				if($offres[$offset]['ville_libelle'] && $offres[$offset]['ville_libelle'] != 'Non renseigné' && !$offres[$offset]['id_pole_emploi']){
-					$nomVille = $offres[$offset]['ville_libelle'];
-				}
-				else{
-					$nomVille = 'Non renseigné';
-				}
-			}
-			if(strlen($offres[$offset]['description']) > 150){
-				$description = substr($offres[$offset]['description'], 0, 149) . '...';
-			}else{
-				$description = $offres[$offset]['description'];
-			}
-			if($offres[$offset]['nom_entreprise']){
-				if(strlen($offres[$offset]['nom_entreprise']) > 23){
-					$nomEntreprise = substr($offres[$offset]['nom_entreprise'], 0, 22);
-				}else{
-					$nomEntreprise = $offres[$offset]['nom_entreprise'];
-				}
-			}else{
-				$nomEntreprise = 'Aucun';
-			}
-			$jsonData['offres'][$idx++] = ['id' => $offres[$offset]['id'], 'intitule' => $offres[$offset]['intitule'], 'nomVille' => $nomVille, 'description' => $description, 'nomEntreprise' => $nomEntreprise, 'lienOrigineOffre' => $offres[$offset]['origine_offre'], 'distance' => $offres[$offset]['distance'], 'type_contrat' => $offres[$offset]['type_contrat'] ];
-			$offset++;
-        }
-        wp_send_json_success($jsonData);
+		wp_send_json_success('Success');
 	}
 
-	function nb_communes(){
+	function info_nb_com_cont(){
 		check_ajax_referer('liste_offres');
 		$args = array(
-			'mots_clef' => strtolower($_GET['mots_clef']),
+			'mots_clef' => $_GET['mots_clef'],
 		);
-
-		if($args['mots_clef'] == ""){
-			$args['mots_clef'] = [];
-		}else{
-			$args['mots_clef'] = explode(' ', $args['mots_clef']);
-		}
 
 		$array_nb_communes = $this->model->getNbCommunes($args['mots_clef']);
 
-		wp_send_json_success(json_encode($array_nb_communes));
+		$array_nb_types_contrat = $this->model->getNbTypesContrat($args['mots_clef']);
+
+		wp_send_json_success(json_encode(['com' => $array_nb_communes, 'cont' => $array_nb_types_contrat]));
 	}
 
-	function nb_communes_filtres(){
+	function info_nb_com_cont_filtres(){
 		check_ajax_referer('liste_offres');
 		$args = array(
-			'mots_clef' => strtolower($_GET['mots_clef']),
+			'mots_clef' => $_GET['mots_clef'],
 			'idCommune' => $_GET['ville'],
+			'distance' => $_GET['distance'],
 			'type_de_contrat' => urldecode($_GET['type_de_contrat']),
 		);
 
-		if($args['mots_clef'] == ""){
-			$args['mots_clef'] = [];
-		}else{
-			$args['mots_clef'] = explode(' ', $args['mots_clef']);
-		}
-
 		if(!$args['idCommune']){
 			$array_nb_communes = $this->model->getNbCommunes1($args['type_de_contrat'], $args['mots_clef']);
+			$array_nb_types_contrat = $this->model->getNbTypesContrat($args['mots_clef']);
 		}else{
 			if($args['type_de_contrat']){
 				$array_nb_communes = $this->model->getNbCommunes1($args['type_de_contrat'], $args['mots_clef']);
@@ -379,49 +278,31 @@ class Offre_emploi_Public {
 			else{
 				$array_nb_communes = $this->model->getNbCommunes($args['mots_clef']);
 			}
+			$ville_cible = [];
+			array_push($ville_cible, $args['idCommune']);
+				
+			$ville_a_trier = $this->model->findAllCommunes();
+
+			foreach($ville_a_trier as $commune){
+				$villeFrom = $this->model->findOneCommune($args['idCommune']);
+				$villeTo = $commune;
+				$latFrom = deg2rad($villeFrom['latitude']);
+				$lonFrom = deg2rad($villeFrom['longitude']);
+				$latTo = deg2rad($villeTo['latitude']);
+				$lonTo = deg2rad($villeTo['longitude']);
+				$lonDelta = $lonTo - $lonFrom;
+				$a = pow(cos($latTo) * sin($lonDelta), 2) +
+					pow(cos($latFrom) * sin($latTo) - sin($latFrom) * cos($latTo) * cos($lonDelta), 2);
+				$b = sin($latFrom) * sin($latTo) + cos($latFrom) * cos($latTo) * cos($lonDelta);
+				$angle = atan2(sqrt($a), $b);
+				$distanceVilles = $angle * 6371;
+				if($distanceVilles < $args['distance']){
+					array_push($ville_cible, $commune['id']);
+				}
+			}
+			$array_nb_types_contrat = $this->model->getNbTypesContrat1($ville_cible, $args['mots_clef']);
 		}
-		wp_send_json_success(json_encode($array_nb_communes));
-	}
-
-	function nb_types_contrat(){
-		check_ajax_referer('liste_offres');
-		$args = array(
-			'mots_clef' => strtolower($_GET['mots_clef']),
-		);
-
-		if($args['mots_clef'] == ""){
-			$args['mots_clef'] = [];
-		}else{
-			$args['mots_clef'] = explode(' ', $args['mots_clef']);
-		}
-
-		$array_nb_types_contrat = $this->model->getNbTypesContrat($args['mots_clef']);
-
-		wp_send_json_success(json_encode($array_nb_types_contrat));
-	}
-
-	function nb_types_contrat_filtres(){
-		check_ajax_referer('liste_offres');
-		$args = array(
-			'mots_clef' => strtolower($_GET['mots_clef']),
-			'idCommune' => $_GET['ville'],
-			'distance' => $_GET['distance'],
-			'type_de_contrat' => $_GET['type_de_contrat'],
-		);
-
-		if($args['mots_clef'] == ""){
-			$args['mots_clef'] = [];
-		}else{
-			$args['mots_clef'] = explode(' ', $args['mots_clef']);
-		}
-
-		if(!$args['idCommune']){
-			$array_nb_types_contrat = $this->model->getNbTypesContrat($args['mots_clef']);
-		}else{
-			$array_nb_types_contrat = $this->model->getNbTypesContrat1($args['idCommune'], $args['mots_clef']);
-		}
-
-		wp_send_json_success(json_encode($array_nb_types_contrat));
+		wp_send_json_success(json_encode(['com' => $array_nb_communes, 'cont' => $array_nb_types_contrat]));
 	}
 
 	/**
@@ -768,7 +649,7 @@ class Offre_emploi_Public {
 				$commune = "";
 				if($wp_query->query_vars['commune']){
 					$commune = $this->get_commune_by_slug($wp_query->query_vars['commune']);
-					$nb_types_contrat = $this->get_nb_types_contrat_1($commune['id']);
+					$nb_types_contrat = $this->get_nb_types_contrat_1([$commune['id']]);
 				}else{
 					$nb_types_contrat = $this->get_nb_types_contrat();
 				}

@@ -48,8 +48,9 @@ function close_filtre(){
 
 const url_query = window.location.search;
 const params = new URLSearchParams(url_query);
-let mots_clef = params.get('mots_clef');
+let mots_clef = params.get('motClef');
 let distance = params.get('distance');
+
 
 if(mots_clef){
     document.getElementById('recherche_input').value = decodeURIComponent(mots_clef);
@@ -59,153 +60,37 @@ if(distance){
     document.getElementById('liste_distance').value = distance;
 }
 
-recherche_mot_clef();
-
 jQuery('#recherche_input').on('keyup', (e)=>{
     if(e.keyCode === 13){
         jQuery('#recherche').click();
     }
 })
 
-document.getElementById('recherche').addEventListener('click', recherche_mot_clef);
+document.getElementById('recherche_input').addEventListener('keyup', (e)=>{if(e.code === 'Enter'){modifier_liens();}});
+document.getElementById('recherche_input').addEventListener('blur', modifier_liens);
 
-async function recherche_mot_clef(){
-    mots_clef = document.getElementById('recherche_input').value;
+document.getElementById('recherche_input').addEventListener('focus', ()=>{
+    document.getElementById('recherche').removeAttribute('href');
+});
+
+document.getElementById('liste_distance').addEventListener('keyup', (e)=>{if(e.code === 'Enter'){modifier_liens();}});
+document.getElementById('liste_distance').addEventListener('blur', modifier_liens);
+
+document.getElementById('liste_distance').addEventListener('focus', ()=>{
+    document.getElementById('recherche').removeAttribute('href');
+});
+
+async function modifier_liens(){
+    
+	let nb_communes = [];
+    let nb_types_contrat = [];
+    mots_clef = encodeURIComponent(document.getElementById('recherche_input').value.toLowerCase());
     distance = document.getElementById('liste_distance').value;
-    if(window.innerWidth > 1080){
-        url = my_ajax_obj.ajax_url+'?_ajax_nonce='+my_ajax_obj.nonce+"&action=recherche_mot_clef&mots_clef="+mots_clef+"&ville="+my_ajax_obj.ville+"&distance="+distance+"&type_de_contrat="+my_ajax_obj.type_contrat
-        jQuery('#pagination_container').pagination({
-            dataSource : url,
-            locator: 'data.offres',
-            pageSize:30,
-            showSizeChanger: true,
-            showGoInput: false,
-            showGoButton: false,
-            showNavigator: true,
-            formatNavigator: '<%= rangeStart %>-<%= rangeEnd %> sur <%= totalNumber %> offres disponibles',
-            totalNumberLocator: function(response){
-                return response['data']['info']['nbOffres'];
-            },
-            ajax:{
-                beforeSend: function(){
-                    jQuery('#liste_offres').html('Chargement des offres en cours...');
-                }
-            },
-            callback:function(data){
-                let template_html = "";
-                let offre_html = '';
-                data.forEach(offre => {
-                    offre_html = "<div class='offre'><div class='corps_offre'>";
-                    offre_html +=       "<h2>"+offre['intitule']+"</h2>";
-                    offre_html +=       "<div class='details'>"
-                    offre_html +=           "<div class='ville'>";
-                    offre_html +=              "<i class='fa-solid fa-location-pin'></i><h4>"+offre['nomVille']+"</h4></div>";
-                    offre_html +=           "<div class='contrat'><i class='fa-solid fa-tag'></i><h4>"+offre['type_contrat']+"</h4></div></div>";
-                    if(offre['nomEntreprise'] != 'Aucun'){
-                        offre_html +=       "<h3 class='nom_entreprise'>Entreprise : "+offre['nomEntreprise']+"</h3>";
-                    }
-                    offre_html +=       "<p class='description'>"+offre['description']+"</p></div>";
-                    offre_html +=   "<a class='lien_fiche' href='/offres-emploi/"+offre['id']+"'><button class='bouton_lien_fiche'>Voir l'offre</button></a>";
-                    offre_html +=   "<a class='lien_fiche_big' href='/offres-emploi/"+offre['id']+"'></a>";
-                    offre_html += "</div>";
-                    template_html += offre_html;
-                });
-                jQuery('#liste_offres').html(template_html);
-            }
-        })
-    }else if(window.innerWidth > 780){
-        url = my_ajax_obj.ajax_url+'?_ajax_nonce='+my_ajax_obj.nonce+"&action=recherche_mot_clef&mots_clef="+mots_clef+"&ville="+my_ajax_obj.ville+"&distance="+distance+"&type_de_contrat="+my_ajax_obj.type_contrat;
-        jQuery('#pagination_container').pagination({
-            dataSource : url,
-            locator: 'data.offres',
-            pageSize:20,
-            showSizeChanger: true,
-            showGoInput: false,
-            showGoButton: false,
-            showNavigator: true,
-            formatNavigator: '<%= rangeStart %>-<%= rangeEnd %> sur <%= totalNumber %> offres disponibles',
-            totalNumberLocator: function(response){
-                return response['data']['info']['nbOffres'];
-            },
-            ajax:{
-                beforeSend: function(){
-                    jQuery('#liste_offres').html('Chargement des offres en cours...');
-                }
-            },
-            callback:function(data){
-                let template_html = "";
-                let offre_html = '';
-                data.forEach(offre => {
-                    offre_html = "<div class='offre'><div class='corps_offre'>";
-                    offre_html +=       "<h2>"+offre['intitule']+"</h2>";
-                    offre_html +=       "<div class='details'>"
-                    offre_html +=           "<div class='ville'>";
-                    offre_html +=              "<i class='fa-solid fa-location-pin'></i><h4>"+offre['nomVille']+"</h4></div>";
-                    offre_html +=           "<div class='contrat'><i class='fa-solid fa-tag'></i><h4>"+offre['type_contrat']+"</h4></div></div>";
-                    if(offre['nomEntreprise'] != 'Aucun'){
-                        offre_html +=       "<h3 class='nom_entreprise'>Entreprise : "+offre['nomEntreprise']+"</h3>";
-                    }
-                    offre_html +=       "<p class='description'>"+offre['description']+"</p></div>";
-                    offre_html +=   "<a class='lien_fiche' href='/offres-emploi/"+offre['id']+"'><button class='bouton_lien_fiche'>Voir l'offre</button></h2></a>";
-                    offre_html +=   "<a class='lien_fiche_big' href='/offres-emploi/"+offre['id']+"'></a>";
-                    offre_html += "</div>";
-                    template_html += offre_html;
-                });
-                jQuery('#liste_offres').html(template_html);
-            }
-        })
-    }else{
-        url = my_ajax_obj.ajax_url+'?_ajax_nonce='+my_ajax_obj.nonce+"&action=recherche_mot_clef&mots_clef="+mots_clef+"&ville="+my_ajax_obj.ville+"&distance="+distance+"&type_de_contrat="+my_ajax_obj.type_contrat;
-        jQuery('#pagination_container').pagination({
-            dataSource : url,
-            locator: 'data.offres',
-            pageSize:10,
-            showSizeChanger: true,
-            showGoInput: false,
-            showGoButton: false,
-            showNavigator: true,
-            showPageNumbers: false,
-            formatNavigator: '<%= rangeStart %>-<%= rangeEnd %> sur <%= totalNumber %> offres disponibles',
-            totalNumberLocator: function(response){
-                return response['data']['info']['nbOffres'];
-            },
-            ajax:{
-                beforeSend: function(){
-                    jQuery('#liste_offres').html('Chargement des offres en cours...');
-                }
-            },
-            callback:function(data){
-                let template_html = "";
-                let offre_html = '';
-                data.forEach(offre => {
-                    offre_html = "<div class='offre'><div class='corps_offre'>";
-                    offre_html +=       "<h2>"+offre['intitule']+"</h2>";
-                    offre_html +=       "<div class='details'>"
-                    offre_html +=           "<div class='ville'>";
-                    offre_html +=              "<i class='fa-solid fa-location-pin'></i><h4>"+offre['nomVille']+"</h4></div>";
-                    offre_html +=           "<div class='contrat'><i class='fa-solid fa-tag'></i><h4>"+offre['type_contrat']+"</h4></div></div>";
-                    if(offre['nomEntreprise'] != 'Aucun'){
-                        offre_html +=       "<h3 class='nom_entreprise'>Entreprise : "+offre['nomEntreprise']+"</h3>";
-                    }
-                    offre_html +=       "<p class='description'>"+offre['description']+"</p></div>";
-                    offre_html +=   "<a class='lien_fiche' href='/offres-emploi/"+offre['id']+"'><button class='bouton_lien_fiche'>Voir l'offre</button></h2></a>";
-                    offre_html +=   "<a class='lien_fiche_big' href='/offres-emploi/"+offre['id']+"'></a>";
-                    offre_html += "</div>";
-                    template_html += offre_html;
-                });
-                jQuery('#liste_offres').html(template_html);
-            }
-        })
-    }
-
-	let comm = document.querySelectorAll('.commune_filtre_tri_emploi');
-	let nb_communes = JSON.parse(my_ajax_obj.nb_communes);
-    let nb_types_contrat = JSON.parse(my_ajax_obj.nb_types_contrat);
     if(mots_clef != ''){
-        nb_communes = await new Promise((resolve, error)=>{
+        let info_nb_communes = await new Promise((resolve, error)=>{
             jQuery.ajax({
                 'method' : 'GET',
-                'url' : my_ajax_obj.ajax_url+'?_ajax_nonce='+my_ajax_obj.nonce+"&action=nb_communes&mots_clef="+mots_clef,
+                'url' : my_ajax_obj.ajax_url+'?_ajax_nonce='+my_ajax_obj.nonce+"&action=info_nb_com_cont&mots_clef="+mots_clef,
                 'success' : function(data){
                     data = data['data'];
                     resolve(JSON.parse(data));
@@ -217,85 +102,96 @@ async function recherche_mot_clef(){
             })
         })
 
-        nb_types_contrat = await new Promise((resolve, error)=>{
-            jQuery.ajax({
-                'method' : 'GET',
-                'url' : my_ajax_obj.ajax_url+'?_ajax_nonce='+my_ajax_obj.nonce+"&action=nb_types_contrat&mots_clef="+mots_clef,
-                'success' : function(data){
-                    data = data['data'];
-                    resolve(JSON.parse(data));
-                },
-                error : function(data){
-                    error(data);
-                    console.log(data);
-                }
-            })
-        })
+        nb_communes = info_nb_communes['com'];
+        nb_types_contrat = info_nb_communes['cont'];
+    }else{
+        nb_communes = JSON.parse(my_ajax_obj.nb_communes);
+        nb_types_contrat = JSON.parse(my_ajax_obj.nb_types_contrat);
+    }
+    let comm = document.querySelectorAll('.commune_filtre_tri_emploi');
+
+    let new_nb_communes = [];
+
+    nb_communes = nb_communes.values();
+
+    for(const $info_cont of nb_communes){
+        new_nb_communes[$info_cont['id_commune']] = $info_cont['NbEvent'];
     }
 
 	for(let a = 0; a<comm.length; a++){
-        comm[a].nextElementSibling.innerText = '(0)';
-    }
-    
-    for(let a = 0; a < nb_communes.length; a++){
-        document.getElementById('commune-'+nb_communes[a]['id_commune']).nextElementSibling.innerText = '('+nb_communes[a]['NbEvent']+')';
-    }
 
-    for(let a = 0; a<comm.length; a++){
+        if(new_nb_communes[comm[a].value] > 0){
+            comm[a].parentElement.parentElement.style.display = "flex";
+        }else{
+            comm[a].parentElement.parentElement.style.display = "none";
+        }
+
 
         let array_url = comm[a].parentElement.getAttribute('href').split('?');
 
         if(distance){
             comm[a].parentElement.setAttribute('href', array_url[0] + '?distance=' + distance);
             if(mots_clef){
-                comm[a].parentElement.setAttribute('href', comm[a].parentElement.getAttribute('href') + '&mots_clef=' + encodeURIComponent(mots_clef));
+                comm[a].parentElement.setAttribute('href', comm[a].parentElement.getAttribute('href') + '&motClef=' + mots_clef);
             }
         }else{
             if(mots_clef){
-                comm[a].parentElement.setAttribute('href', array_url[0] + '?mots_clef=' + encodeURIComponent(mots_clef));
+                comm[a].parentElement.setAttribute('href', array_url[0] + '?motClef=' + mots_clef);
             }
-        }
-
-        let number = comm[a].nextElementSibling.innerText;
-        
-        if(number == '(0)'){
-            document.querySelector('.com_filtre_liste_emploi' + a).style.display = "none";
-        }else{
-            document.querySelector('.com_filtre_liste_emploi' + a).style.display = "flex";
         }
     }
 
     let type_contrat = document.querySelectorAll('.type_contrat_filtre_tri_emploi');
 
-    for(let b = 0; b<type_contrat.length; b++){
-        type_contrat[b].nextElementSibling.innerText = '(0)';
+    let new_nb_type_contrat = [];
+
+    nb_types_contrat = nb_types_contrat.values();
+
+    for(const $info_cont of nb_types_contrat){
+        new_nb_type_contrat[$info_cont['nom']] = $info_cont['NbEvent'];
     }
 
-    for(let b = 0; b < nb_types_contrat.length; b++){
-        document.getElementById('type_contrat-'+nb_types_contrat[b]['nom']).nextElementSibling.innerText = '('+nb_types_contrat[b]['NbEvent']+')';
-    }
-
     for(let b = 0; b<type_contrat.length; b++){
+        if(new_nb_type_contrat[type_contrat[b].value] > 0){
+            type_contrat[b].parentElement.parentElement.style.display = "flex";
+        }else{
+            type_contrat[b].parentElement.parentElement.style.display = "none";
+        }
 
         let array_url = type_contrat[b].parentElement.getAttribute('href').split('?');
 
         if(distance){
             type_contrat[b].parentElement.setAttribute('href', array_url[0] + '?distance=' + distance);
             if(mots_clef){
-                type_contrat[b].parentElement.setAttribute('href', type_contrat[b].parentElement.getAttribute('href') + '&mots_clef=' + encodeURIComponent(mots_clef));
+                type_contrat[b].parentElement.setAttribute('href', type_contrat[b].parentElement.getAttribute('href') + '&motClef=' + mots_clef);
             }
         }else{
             if(mots_clef){
-                type_contrat[b].parentElement.setAttribute('href', array_url[0] + '?mots_clef=' + encodeURIComponent(mots_clef));
+                type_contrat[b].parentElement.setAttribute('href', array_url[0] + '?motClef=' + mots_clef);
             }
         }
-        
-        let number = type_contrat[b].nextElementSibling.innerText;
-
-        if(number == '(0)'){
-            document.querySelector('.type_filtre_tri_emploi' + b).style.display = "none";
-        }else{
-            document.querySelector('.type_filtre_tri_emploi' + b).style.display = "flex";
-        }
     }
+
+    document.getElementById('recherche').setAttribute('href', '' + (distance != '' ? '?distance=' + distance : '') + (mots_clef != '' ? (distance != '' ? '&motClef=' + mots_clef : '?motClef=' + mots_clef) : ''));
 }
+
+Array.from(document.getElementsByClassName('pagination_nb_offre_select')).forEach(select => {
+    select.addEventListener('change', async function(){
+        if(await new Promise((resolve, error)=>{
+            jQuery.ajax({
+                'method' : 'GET',
+                'url' : my_ajax_obj.ajax_url+'?_ajax_nonce='+my_ajax_obj.nonce+"&action=change_limit_offre&limit="+select.value,
+                'success' : function(data){
+                    data = data['data'];
+                    resolve(true);
+                },
+                error : function(data){
+                    error(false);
+                    console.log(data);
+                }
+            })
+        })){
+            window.location.reload();
+        }
+    })
+})

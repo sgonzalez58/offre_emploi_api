@@ -145,8 +145,9 @@
   text-transform: capitalize;
   text-shadow: none;
   color: white;
+  position: relative;
 }
-#recherche span{
+#recherche > span:first-child{
   margin-right: 0.3em;
   font-size:1.5em;
 }
@@ -592,6 +593,7 @@ input[type=checkbox]{
 .legende_tri{
   display:flex;
   justify-content:center;
+  margin-top: 20px;
   margin-bottom:60px;
 }
 
@@ -626,6 +628,108 @@ input[type=checkbox]{
 .invisible-suggestions {
   display: none !important;
 }
+
+.pagination{
+  text-align: center;
+  margin-top: 40px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px;
+  justify-content: center;
+}
+
+.pagination strong{
+  padding: 13px 20px;
+  background: #D90017 0% 0% no-repeat padding-box;
+  border-radius: 2px;
+  text-align: center;
+  font: normal normal bold 14px/19px Montserrat;
+  letter-spacing: 0px;
+  color: white;
+  opacity: 1;
+}
+
+.pagination a{
+  padding: 13px 20px;
+  border: 1px solid #222222;
+  border-radius: 2px;
+  text-align: center;
+  font: normal normal bold 14px/19px Montserrat;
+  letter-spacing: 0px;
+  color: #262626;
+  opacity: 1;
+}
+
+.pagination_nb_offre{
+  margin-left: 10px;
+  float: left;
+  font-size: 14px;
+}
+
+.pagination_nb_offre_select{
+  height: 28px;
+    background: #fff;
+    border-radius: 3px;
+    border: 1px solid #aaa;
+    padding: 0;
+    font-size: 14px;
+    text-align: center;
+    vertical-align: baseline;
+    outline: 0;
+    box-shadow: none;
+    box-sizing: initial;
+}
+
+#recherche:not([href]) > span{
+  visibility: hidden;
+}
+
+#recherche[href] .loading{
+  display: none;
+}
+
+#recherche:not([href]) .loading{
+  display: flex;
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  align-items: start;
+  justify-content: center;
+}
+
+.line {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 15px;
+  background-color: white;
+}
+
+.load .line:nth-last-child(1) {
+  animation: loadingC 0.6s 0.1s linear infinite;
+}
+.load .line:nth-last-child(2) {
+  animation: loadingC 0.6s 0.2s linear infinite;
+}
+.load .line:nth-last-child(3) {
+  animation: loadingC 0.6s 0.3s linear infinite;
+}
+
+
+@keyframes loadingC {
+  0 {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(0, 15px);
+  }
+  100% {
+    transform: translate(0, 0);
+  }
+}
+
 
 @media screen and (max-width:1200px){
   .emploi-filters{
