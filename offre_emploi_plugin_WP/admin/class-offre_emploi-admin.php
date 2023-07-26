@@ -331,6 +331,12 @@ class Offre_emploi_Admin {
 		return;
 	}
 
+	function importer_offres_cron(){
+		require_once plugin_dir_path( __FILE__ ) . '../library/recuperation_offre.php';
+		getAnnonce();
+		return;
+	}
+
 	/**
 	 * Envoi de mail
 	 */

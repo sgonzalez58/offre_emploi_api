@@ -145,8 +145,8 @@ class Offre_Emploi_Model {
 
 		if($limit){
 			$baseSql .= " LIMIT ".$limit;
-			if($page != 1){
-				$baseSql .= " OFFSET ".$page * $limit;
+			if($page > 1){
+				$baseSql .= " OFFSET ".($page - 1) * $limit;
 			}
 		}
 

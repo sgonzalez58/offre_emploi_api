@@ -193,7 +193,18 @@ Array.from(document.getElementsByClassName('pagination_nb_offre_select')).forEac
                 }
             })
         })){
-            window.location.reload();
+            let array_location = window.location.href.split('?');
+            if(array_location.length > 1){
+                let array_get_location = array_location[1].split('&');
+                array_get_location.forEach((property, key) => {
+                    if(property.includes('page')){
+                        array_get_location.splice(key, 1);
+                    }
+                })
+                window.location.href = array_location[0] + '?' + array_get_location.join('&');
+            }else{
+                window.location.href = array_location[0];
+            }
         }
     })
 })

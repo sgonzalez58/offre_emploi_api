@@ -169,25 +169,11 @@ get_header();
             
 
             function filtrerCommunes(motCle) {
+                let nb_offre_com = {<?php foreach($new_nb_commune as $key=>$nb_com) { echo $key . ' : ' .$nb_com . ','; } ?>};
                 jQuery('.liste_commune_filtre').hide();
                 jQuery('.liste_commune_filtre').each(function() {
-                    if (jQuery(this).text().toLowerCase().indexOf(motCle.toLowerCase()) !== -1) {
+                    if (jQuery(this).text().toLowerCase().indexOf(motCle.toLowerCase()) !== -1 && nb_offre_com[this.firstElementChild.firstElementChild.value] > 0) {
                         jQuery(this).show();
-                    }
-                });
-
-                // Sélectionner toutes les div avec la classe ".liste_commune_filtre"
-                let divsCommune = document.querySelectorAll('.liste_commune_filtre');
-
-                // Parcourir chaque div
-                divsCommune.forEach(function(div) {
-                    // Récupérer le contenu affiché à l'écran
-                    let contenu = div.innerText;
-                    
-                    // Vérifier si le contenu contient "(0)"
-                    if (contenu.includes("(0)")) {
-                        // Masquer la div en définissant la propriété CSS "display" sur "none"
-                        div.style.display = "none";
                     }
                 });
             }
@@ -260,28 +246,13 @@ get_header();
             });
         });
 
-        
-
         function filtrerThematiques(motCle) {
+            let nb_offre_type = {<?php foreach($new_nb_type_contrat as $key=>$nb_type) { echo $key . ' : ' .$nb_type . ','; } ?>};
+
             jQuery('.liste_type_contrat_filtre').hide();
             jQuery('.liste_type_contrat_filtre').each(function() {
-                if (jQuery(this).text().toLowerCase().indexOf(motCle.toLowerCase()) !== -1) {
+                if (jQuery(this).text().toLowerCase().indexOf(motCle.toLowerCase()) !== -1 && nb_offre_type[this.firstElementChild.firstElementChild.value] > 0) {
                     jQuery(this).show();
-                }
-            });
-
-            // Sélectionner toutes les div avec la classe ".liste_thematique_filtre"
-            let divsTheme = document.querySelectorAll('.liste_type_contrat_filtre');
-
-            // Parcourir chaque div
-            divsTheme.forEach(function(div) {
-                // Récupérer le contenu affiché à l'écran
-                let contenu = div.innerText;
-                
-                // Vérifier si le contenu contient "(0)"
-                if (contenu.includes("(0)")) {
-                    // Masquer la div en définissant la propriété CSS "display" sur "none"
-                    div.style.display = "none";
                 }
             });
         }
@@ -418,7 +389,7 @@ get_header();
                                         </div>
                                     </div>
                                     <?php if($nomEntreprise != 'Aucun'){ ?>
-                                    <h3 class='nom_entreprise'>Entreprise : <?$nomEntreprise?></h3>
+                                    <h3 class='nom_entreprise'>Entreprise : <?=$nomEntreprise?></h3>
                                     <?php } ?>
                                     <p class='description'><?=$description?></p>
                                 </div>

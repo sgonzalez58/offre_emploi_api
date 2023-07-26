@@ -137,6 +137,7 @@
   color: white;
   position: relative;
 }
+
 #recherche > span:first-child{
   margin-right: 0.3em;
   font-size:1.5em;
