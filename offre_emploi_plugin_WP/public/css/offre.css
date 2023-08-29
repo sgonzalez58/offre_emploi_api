@@ -226,6 +226,16 @@ h2{
     justify-content: space-between;
     position: relative;
     box-shadow: 1px 3px #DEDEDE;
+    transition-duration: 400ms;
+    transition-property: box-shadow;
+  }
+  
+  .offre:hover{
+    box-shadow: 0 0 3px 5px #DEDEDE;
+  }
+  
+  .offre:hover .bouton_lien_fiche{
+    background-color: #D90017!important;
   }
   
   .corps_offre{
@@ -247,7 +257,7 @@ h2{
     display: block;
   }
   
-  .corps_offre h2{
+  .corps_offre .titre_offre{
     font-weight: bold;
     font-size: 30px;
     line-height: 1em;
@@ -257,7 +267,7 @@ h2{
     color: black;
   }
   
-  .corps_offre h3{
+  .nom_entreprise{
     color: black !important;
   }
   
@@ -278,7 +288,7 @@ h2{
     margin-left: 1rem;
   }
   
-  .ville h4, .contrat h4{
+  .ville p, .contrat p{
     margin : 0;
     margin-left: 1rem;
     color: black;
@@ -312,14 +322,17 @@ h2{
     align-items: center;
     background-color: black!important;
     letter-spacing: 1px;
+    transition-duration: 400ms;
+    transition-property: background-color;
   }
 
   #autre_offres{
     margin-top: 40px;
   }
 
-  #autre_offres h2{
+  #autre_offres > p{
     font-weight: 500;
+    font-size: 32px;
   }
 
 

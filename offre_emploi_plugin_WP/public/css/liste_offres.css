@@ -140,12 +140,18 @@
   display: flex;
   align-items: center;
   font-weight: 600;
-  background-color: red!important;
+  background-color: #D90017!important;
   margin-left: 1.2em;
   text-transform: capitalize;
   text-shadow: none;
   color: white;
   position: relative;
+  transition-duration: 400ms;
+  transition-property: transform;
+}
+
+#recherche:hover{
+  transform: scale(1.1);
 }
 
 #recherche > span:first-child{
@@ -170,6 +176,16 @@
   justify-content: space-between;
   position: relative;
   box-shadow: 1px 3px #DEDEDE;
+  transition-duration: 400ms;
+  transition-property: box-shadow;
+}
+
+.offre:hover{
+  box-shadow: 0 0 3px 5px #DEDEDE;
+}
+
+.offre:hover .bouton_lien_fiche{
+  background-color: #D90017!important;
 }
 
 .corps_offre{
@@ -215,14 +231,14 @@ margin-top:0 !important;
   display: flex;
   margin-right: 1rem;
   align-items: center;
-  color: red;
+  color: #D90017;
 }
 
 .contrat{
   margin-left: 1rem;
 }
 
-.ville h4, .contrat h4{
+.ville h3, .contrat h3{
   margin : 0;
   margin-left: 1rem;
   color: black;
@@ -256,6 +272,8 @@ margin-top:0 !important;
   align-items: center;
   background-color: black!important;
   letter-spacing: 1px;
+  transition-duration: 400ms;
+  transition-property: background-color;
 }
 
 .paginationjs{
@@ -311,7 +329,15 @@ margin-top:0 !important;
   position: relative;
   max-height: 100%;
   height: 100%;
+  transition-duration: 400ms;
+  transition-property: background-color, color;
 }
+
+.emploi-filters .button_tri_emploi button:hover{
+  background-color: #D90017 !important;
+  color: #fff;
+}
+
 @media screen and (max-width: 350px){
   .emploi-filters .button_tri_emploi{
     display: flex;
@@ -660,6 +686,13 @@ input[type=checkbox]{
   letter-spacing: 0px;
   color: #262626;
   opacity: 1;
+  transition-duration: 400ms;
+  transition-property: color, border;
+}
+
+.pagination a:hover{
+  color: #D90012;
+  border: 1px solid #D90012;
 }
 
 .pagination_nb_offre{
@@ -681,56 +714,6 @@ input[type=checkbox]{
     box-shadow: none;
     box-sizing: initial;
 }
-
-#recherche:not([href]) > span{
-  visibility: hidden;
-}
-
-#recherche[href] .loading{
-  display: none;
-}
-
-#recherche:not([href]) .loading{
-  display: flex;
-  position: absolute;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  align-items: start;
-  justify-content: center;
-}
-
-.line {
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-  border-radius: 15px;
-  background-color: white;
-}
-
-.load .line:nth-last-child(1) {
-  animation: loadingC 0.6s 0.1s linear infinite;
-}
-.load .line:nth-last-child(2) {
-  animation: loadingC 0.6s 0.2s linear infinite;
-}
-.load .line:nth-last-child(3) {
-  animation: loadingC 0.6s 0.3s linear infinite;
-}
-
-
-@keyframes loadingC {
-  0 {
-    transform: translate(0, 0);
-  }
-  50% {
-    transform: translate(0, 15px);
-  }
-  100% {
-    transform: translate(0, 0);
-  }
-}
-
 
 @media screen and (max-width:1200px){
   .emploi-filters{

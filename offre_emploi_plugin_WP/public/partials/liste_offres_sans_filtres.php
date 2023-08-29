@@ -166,8 +166,6 @@ get_header();
                 });
             });
 
-            
-
             function filtrerCommunes(motCle) {
                 let nb_offre_com = {<?php foreach($new_nb_commune as $key=>$nb_com) { echo $key . ' : ' .$nb_com . ','; } ?>};
                 jQuery('.liste_commune_filtre').hide();
@@ -176,29 +174,72 @@ get_header();
                         jQuery(this).show();
                     }
                 });
+
+                let none = 0;
+						let nonVisible = 0;
+
+						// Sélectionner toutes les div avec la classe ".liste_commune_filtre"
+						let divsCommune = document.querySelectorAll('.liste_commune_filtre');
+
+						// Parcourir chaque div
+						divsCommune.forEach(function(div) {
+							// Récupérer le contenu affiché à l'écran
+							let contenu = div.innerText;
+
+							if(div.innerText == "Cosne-Cours-sur-Loire" || div.innerText == "Coulanges-lès-Nevers" ||div.innerText == "La Charité-sur-Loire" || div.innerText == "Nevers"){
+								if(div.style.display != "none"){
+									nonVisible++;
+								}
+							}else{
+								if(div.style.display != "none"){
+									none++;
+								}
+							}
+							
+							// Vérifier si le contenu contient "(0)"
+							if (contenu.includes("(0)")) {
+								// Masquer la div en définissant la propriété CSS "display" sur "none"
+								div.style.display = "none";
+							}
+						});
+
+						if(nonVisible == 0){
+							document.getElementById('recherche_resultat').innerText = "";
+						}else{
+							document.getElementById('recherche_resultat').innerText = "Les plus recherchées";
+						}
+						if(none == 0){
+							if(document.getElementById('recherche_resultat').innerText == ""){
+								document.getElementById('commune_resultat').innerText = "Pas de résultat";
+							}else{
+								document.getElementById('commune_resultat').innerText = "";
+							}
+						}else{
+							document.getElementById('commune_resultat').innerText = "Communes";
+						}
             }
         </script>
         <div class="filtre">
-            <div class="intertitre2">Les plus recherchées</div>
+            <div id="recherche_resultat" class="intertitre2">Les plus recherchées</div>
             <div class="ui-group" id="filtre_flex_recherche">
                 <?php
                 $i = 0;
                     foreach( $communes as $commune ){
                         if($commune['nom_commune'] == 'Nevers' || $commune['nom_commune'] == 'Coulanges-lès-Nevers' || $commune['nom_commune'] == 'Cosne-Cours-sur-Loire' || $commune['nom_commune'] == 'La Charité-sur-Loire'){
-                            echo '<div class="liste_commune_filtre com_filtre_liste_emploi'.$i.'" value-group="commune" '. (key_exists($commune['id'], $new_nb_commune) ? '' : 'style="display:none"').'><a href="https://www.koikispass.com/offres-emploi/lieu/'.$commune['slug'].'/">'.$commune['nom_commune'].'<input style="display:none" class="commune_filtre_tri_emploi com_filtre_tri'.$i.'" type="checkbox" name="commune[]" value="'. $commune['id'] .'" id="commune-'. $commune['id'] .'"></a></div>';
+                            echo '<div class="liste_commune_filtre com_filtre_liste_emploi'.$i.'" value-group="commune" '. (key_exists($commune['id'], $new_nb_commune) ? '' : 'style="display:none"').'><a href="https://www.koikispass.com/offres-emploi/lieu/'.$commune['slug'].'/'. ($recherche_input ? ( $distance_max > 0 ? '?motClef='.$recherche_input.'&distance='.$distance_max : '?motClef='.$recherche_input ) : ( $distance_max > 0 ? '?distance='.$distance_max : '' ) ) .'">'.$commune['nom_commune'].'<input style="display:none" class="commune_filtre_tri_emploi com_filtre_tri'.$i.'" type="checkbox" name="commune[]" value="'. $commune['id'] .'" id="commune-'. $commune['id'] .'"></a></div>';
                             $i++;                            
                         }
                     }
                 ?>
             </div>
-        <div class="intertitre2">Communes</div>
+        <div id="commune_resultat" class="intertitre2">Communes</div>
         <div class="ui-group" id="filtre_flex">
             <?php
                 $o = 4;
                 foreach( $communes as $commune ){
                     if($commune['nom_commune'] == 'Nevers' || $commune['nom_commune'] == 'Coulanges-lès-Nevers' || $commune['nom_commune'] == 'Cosne-Cours-sur-Loire' || $commune['nom_commune'] == 'La Charité-sur-Loire'){
                     }else{
-                        echo '<div class="liste_commune_filtre com_filtre_liste_emploi'.$o.'" value-group="commune" '. (key_exists($commune['id'], $new_nb_commune) ? '' : 'style="display:none"').'><a href="https://www.koikispass.com/offres-emploi/lieu/'.$commune['slug'].'/">'.$commune['nom_commune'].'<input style="display:none" class="commune_filtre_tri_emploi com_filtre_tri'.$o.'" type="checkbox" name="commune[]" value="'. $commune['id'] .'" id="commune-'. $commune['id'] .'"></a></div>';
+                        echo '<div class="liste_commune_filtre com_filtre_liste_emploi'.$o.'" value-group="commune" '. (key_exists($commune['id'], $new_nb_commune) ? '' : 'style="display:none"').'><a href="https://www.koikispass.com/offres-emploi/lieu/'.$commune['slug'].'/'. ($recherche_input ? ( $distance_max > 0 ? '?motClef='.$recherche_input.'&distance='.$distance_max : '?motClef='.$recherche_input ) : ( $distance_max > 0 ? '?distance='.$distance_max : '' ) ) .'">'.$commune['nom_commune'].'<input style="display:none" class="commune_filtre_tri_emploi com_filtre_tri'.$o.'" type="checkbox" name="commune[]" value="'. $commune['id'] .'" id="commune-'. $commune['id'] .'"></a></div>';
                         $o++;
                     }
                 }
@@ -247,7 +288,7 @@ get_header();
         });
 
         function filtrerThematiques(motCle) {
-            let nb_offre_type = {<?php foreach($new_nb_type_contrat as $key=>$nb_type) { echo $key . ' : ' .$nb_type . ','; } ?>};
+            let nb_offre_type = {<?php foreach($new_nb_type_contrat as $key=>$nb_type) { echo '"' . $key . '": ' . $nb_type . ','; } ?>};
 
             jQuery('.liste_type_contrat_filtre').hide();
             jQuery('.liste_type_contrat_filtre').each(function() {
@@ -255,15 +296,39 @@ get_header();
                     jQuery(this).show();
                 }
             });
+
+            let divsTheme = document.querySelectorAll('.liste_type_contrat_filtre');
+            let none = 0;
+            // Parcourir chaque div
+            divsTheme.forEach(function(div) {
+                // Récupérer le contenu affiché à l'écran
+                let contenu = div.innerText;
+
+                if(div.style.display != "none"){
+                    none++;
+                }
+                
+                // Vérifier si le contenu contient "(0)"
+                if (contenu.includes("(0)")) {
+                    // Masquer la div en définissant la propriété CSS "display" sur "none"
+                    div.style.display = "none";
+                }
+            });
+
+            if(none == 0){
+                document.getElementById('contrat_resultat').innerText = "Pas de résultat";
+            }else{
+                document.getElementById('contrat_resultat').innerText = "Types de contrat";
+            }
         }
     </script>
     <div class="filtre">
-        <div class="intertitre2">Types de contrat</div>
+        <div id="contrat_resultat" class="intertitre2">Types de contrat</div>
         <div class="ui-group" id="filtre_flex">
             <?php
                 $ii = 0;
                 foreach( $types_contrat as $thematique ){
-                    echo '<div class="liste_type_contrat_filtre type_filtre_tri_emploi'.$ii.'" value-group="type_contrat" '. (key_exists($thematique['type_contrat'], $new_nb_type_contrat) ? '' : 'style="display:none"').'><a href="https://www.koikispass.com/offres-emploi/categorie/'.urlencode($thematique['type_contrat']).'">'.$thematique['type_contrat'].'<input style="display:none" class="type_contrat_filtre_tri_emploi" id="type_contrat-'.$thematique['type_contrat'].'" type="checkbox" name="theme[]" value="'. $thematique['type_contrat'] .'"></a></div>';
+                    echo '<div class="liste_type_contrat_filtre type_filtre_tri_emploi'.$ii.'" value-group="type_contrat" '. (key_exists($thematique['type_contrat'], $new_nb_type_contrat) ? '' : 'style="display:none"').'><a href="https://www.koikispass.com/offres-emploi/categorie/'.urlencode($thematique['type_contrat']).'/'. ($recherche_input ? ( $distance_max > 0 ? '?motClef='.$recherche_input.'&distance='.$distance_max : '?motClef='.$recherche_input ) : ( $distance_max > 0 ? '?distance='.$distance_max : '' ) ) .'">'.$thematique['type_contrat'].'<input style="display:none" class="type_contrat_filtre_tri_emploi" id="type_contrat-'.$thematique['type_contrat'].'" type="checkbox" name="theme[]" value="'. $thematique['type_contrat'] .'"></a></div>';
                     $ii++;	
                 }
             ?>
@@ -303,15 +368,15 @@ get_header();
 								</style>
 								<button onclick="modal_localisation()"><span class="material-icons">fmd_good</span>Localisation<span class="material-icons">expand_more</span></button>
 							</div>
-                            <div class="recherche_button">
+                            <form class="recherche_button">
                                 <div id='distance'>
                                     <label for="liste_distance"><span class="material-symbols-outlined" id='distance_icon'>near_me</span></label>
-                                    <input type='number' id='liste_distance' placeholder="Distance max (km)" min="0" oninput="validity.valid||(value='');">
+                                    <input type='number' id='liste_distance' name="distance" placeholder="Distance max (km)" min="0" oninput="validity.valid||(value='');">
                                 </div>
 
                                 <div class='recherche'>
                                     <label for='recherche_input'><span class='material-symbols-outlined' id='recherche_secteur_icon'>location_searching</span></label>
-                                    <input id='recherche_input' type='text' minlength='1' maxlength='50' placeholder='Rechercher par poste'>
+                                    <input id='recherche_input' type='text' name='motClef' maxlength='50' placeholder='Rechercher par poste'>
                                 </div>
                                 <script>
                                     window.addEventListener('load', function(){
@@ -327,19 +392,12 @@ get_header();
                                     });
                                 </script>
 
-                                <a href='' id='recherche'>
+                                <button type='input' id='recherche'>
                                     <span class="material-symbols-outlined">search</span>
                                     <span>Rechercher</span>
-                                    <div class='loading'>
-                                        <div class="load">
-                                            <div class="line"></div>
-                                            <div class="line"></div>
-                                            <div class="line"></div>
-                                        </div>
-                                    </div>
-                                </a>
+                                </button>
 
-							</div>
+							</form>
 						</div>
 						<div class="legende_tri">
                             <span class='sous_titre_h1'>Nous trouvons <?= $nb_total_offre . ($nb_total_offre > 1 ? " offres d'emploi disponibles" : " offre d'emploi disponible")?> </span>
@@ -381,11 +439,11 @@ get_header();
                                     <div class='details'>
                                         <div class='ville'>
                                             <i class='fa-solid fa-location-pin'></i>
-                                            <h4><?=$nomVille?></h4>
+                                            <h3><?=$nomVille?></h3>
                                         </div>
                                         <div class='contrat'>
                                             <i class='fa-solid fa-tag'></i>
-                                            <h4><?=$offre['type_contrat']?></h4>
+                                            <h3><?=$offre['type_contrat']?></h3>
                                         </div>
                                     </div>
                                     <?php if($nomEntreprise != 'Aucun'){ ?>

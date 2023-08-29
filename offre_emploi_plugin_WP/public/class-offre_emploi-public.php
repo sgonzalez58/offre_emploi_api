@@ -230,9 +230,9 @@ class Offre_emploi_Public {
 		
 	}
 
-	public function getMoreOffre($secteur_activite = '') {
+	public function getMoreOffre($secteur_activite = '', $id = '') {
 		
-		return $other_offres = $this->model->getMoreOffre($secteur_activite);
+		return $other_offres = $this->model->getMoreOffre($secteur_activite, $id);
 		
 	}
 

@@ -43,7 +43,7 @@ function close_filtre(){
 	document.getElementById('modal_filtre_localisation').style.opacity = "0";
 	document.getElementById('modal_filtre_localisation').style.transition = "1s";
 
-	document.querySelector("body").style.overflow = "scroll";
+	document.querySelector("body").style.overflow = "auto";
 }
 
 const url_query = window.location.search;
@@ -60,32 +60,16 @@ if(distance){
     document.getElementById('liste_distance').value = distance;
 }
 
-jQuery('#recherche_input').on('keyup', (e)=>{
-    if(e.keyCode === 13){
-        jQuery('#recherche').click();
-    }
-})
-
-document.getElementById('recherche_input').addEventListener('keyup', (e)=>{if(e.code === 'Enter'){modifier_liens();}});
 document.getElementById('recherche_input').addEventListener('blur', modifier_liens);
 
-document.getElementById('recherche_input').addEventListener('focus', ()=>{
-    document.getElementById('recherche').removeAttribute('href');
-});
-
-document.getElementById('liste_distance').addEventListener('keyup', (e)=>{if(e.code === 'Enter'){modifier_liens();}});
 document.getElementById('liste_distance').addEventListener('blur', modifier_liens);
-
-document.getElementById('liste_distance').addEventListener('focus', ()=>{
-    document.getElementById('recherche').removeAttribute('href');
-});
 
 async function modifier_liens(){
     
-	let nb_communes = [];
-    let nb_types_contrat = [];
+	let nb_communes = JSON.parse(my_ajax_obj.nb_communes);
+    let nb_types_contrat = JSON.parse(my_ajax_obj.nb_types_contrat);
     mots_clef = encodeURIComponent(document.getElementById('recherche_input').value.toLowerCase());
-    distance = document.getElementById('liste_distance').value;
+    distance = document.getElementById('liste_distance').value != '' ? document.getElementById('liste_distance').value : 0;
     if(mots_clef != ''){
         let info_nb_communes = await new Promise((resolve, error)=>{
             jQuery.ajax({
@@ -104,9 +88,6 @@ async function modifier_liens(){
 
         nb_communes = info_nb_communes['com'];
         nb_types_contrat = info_nb_communes['cont'];
-    }else{
-        nb_communes = JSON.parse(my_ajax_obj.nb_communes);
-        nb_types_contrat = JSON.parse(my_ajax_obj.nb_types_contrat);
     }
     let comm = document.querySelectorAll('.commune_filtre_tri_emploi');
 
@@ -129,7 +110,7 @@ async function modifier_liens(){
 
         let array_url = comm[a].parentElement.getAttribute('href').split('?');
 
-        if(distance){
+        if(distance > 0){
             comm[a].parentElement.setAttribute('href', array_url[0] + '?distance=' + distance);
             if(mots_clef){
                 comm[a].parentElement.setAttribute('href', comm[a].parentElement.getAttribute('href') + '&motClef=' + mots_clef);
@@ -137,6 +118,8 @@ async function modifier_liens(){
         }else{
             if(mots_clef){
                 comm[a].parentElement.setAttribute('href', array_url[0] + '?motClef=' + mots_clef);
+            }else{
+                comm[a].parentElement.setAttribute('href', array_url[0]);
             }
         }
     }
@@ -160,7 +143,7 @@ async function modifier_liens(){
 
         let array_url = type_contrat[b].parentElement.getAttribute('href').split('?');
 
-        if(distance){
+        if(distance > 0){
             type_contrat[b].parentElement.setAttribute('href', array_url[0] + '?distance=' + distance);
             if(mots_clef){
                 type_contrat[b].parentElement.setAttribute('href', type_contrat[b].parentElement.getAttribute('href') + '&motClef=' + mots_clef);
@@ -168,11 +151,11 @@ async function modifier_liens(){
         }else{
             if(mots_clef){
                 type_contrat[b].parentElement.setAttribute('href', array_url[0] + '?motClef=' + mots_clef);
+            }else{
+                type_contrat[b].parentElement.setAttribute('href', array_url[0]);
             }
         }
     }
-
-    document.getElementById('recherche').setAttribute('href', '' + (distance != '' ? '?distance=' + distance : '') + (mots_clef != '' ? (distance != '' ? '&motClef=' + mots_clef : '?motClef=' + mots_clef) : ''));
 }
 
 Array.from(document.getElementsByClassName('pagination_nb_offre_select')).forEach(select => {

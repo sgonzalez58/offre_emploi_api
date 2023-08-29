@@ -42,7 +42,7 @@ class Offre_Emploi_Model {
 	 */
 	function __construct() {
 		
-		$offreEmploiDB = new wpdb( 'emploikkp', 'qk5ou2cn3tcpj', 'emploikkp_db', 'localhost' );		
+		$offreEmploiDB = new wpdb( 'emploikkp2023', 'dq05qvhvu5ogv', 'emploikkp2023_db', 'localhost' );		
 		$this->offreEmploiDB 	 = $offreEmploiDB;
 		$this->TableOffreEmploi = 'offre_emploi';
 		$this->TableCandidature = 'candidature';
@@ -112,12 +112,12 @@ class Offre_Emploi_Model {
 	/**
 	 * Récupère jusqu'à 12 offres, nouvelles ou d'un secteur d'activité spécifique
 	 */
-	public function getMoreOffre($secteur_activite){
+	public function getMoreOffre($secteur_activite, $id){
 		if($secteur_activite == ''){
-			$sql = $this->offreEmploiDB->prepare('SELECT * FROM '.$this->TableOffreEmploi.' A
+			$sql = $this->offreEmploiDB->prepare('SELECT * FROM '.$this->TableOffreEmploi.' A WHERE id <> '.$id.'
 				ORDER BY A.id DESC LIMIT 12');
 		}else{
-			$sql = $this->offreEmploiDB->prepare('SELECT * FROM '.$this->TableOffreEmploi.' A WHERE A.secteur_activite = "'.$secteur_activite.'"
+			$sql = $this->offreEmploiDB->prepare('SELECT * FROM '.$this->TableOffreEmploi.' A WHERE A.secteur_activite = "'.$secteur_activite.'" AND id <> '.$id.'
 				ORDER BY A.id DESC LIMIT 12');
 		}
 
@@ -139,7 +139,9 @@ class Offre_Emploi_Model {
 			$baseSql .= " AND type_contrat = '".$type_de_contrat."'";
 		}
 		if(count($communes) > 0){
-			$baseSql .= " AND (commune_id IS NULL OR commune_id IN (".implode(', ', $communes)."))";
+			$baseSql .= " AND (commune_id IN (".implode(', ', $communes)."))";
+		}else{
+			$baseSql .= " AND commune_id is not null ";
 		}
 		$baseSql .= " ORDER BY date_de_publication DESC";
 

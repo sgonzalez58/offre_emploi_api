@@ -215,7 +215,7 @@ get_header();
 ?>
     <div id='modal'>
         <div id='overlay'></div>
-        <h3 style='color:white; z-index:11'>Formulaire de candidature</h3>
+        <p style='color:white; z-index:11'>Formulaire de candidature</p>
         <form id="envoie_candidature" method='post' action="candidature" class="centre">
             <button id='fermer_formulaire'>X</button>
             <input type='text' name='prenom' required minlength="3" maxlength="25" placeholder="Prénom">
@@ -249,45 +249,43 @@ get_header();
             </main><!-- #main -->
 
             <section id='autre_offres'>
-                <h2>Autres offres d’emploi à découvrir</h2>
+                <p>Autres offres d’emploi à découvrir</p>
                 <div id='liste_offres'>
                 <?php
                     $secteur_offre = '';
+                    $id_offre = "";
                     if(!empty($offre)){
                         if($offre['secteur_activite']){
                             $secteur_offre = $offre['secteur_activite'];
                         }
+                        $id_offre = $offre['id'];
                     }
-                    if($secteur_offre == ''){
-                        $autre_offres = $class->getMoreOffre();
-                    }else{
-                        $autre_offres = $class->getMoreOffre($secteur_offre);
-                    }
+                    $autre_offres = $class->getMoreOffre($secteur_offre, $id_offre);
                     foreach($autre_offres as $autre_offre){  
                 ?>
                     <div class='offre'>
                         <div class='corps_offre'>
-                            <h2><?=$autre_offre['intitule']?></h2>
+                            <p class='titre_offre'><?=$autre_offre['intitule']?></p>
                             <div class='details'>
                                 <?php
                                 if($autre_offre['ville_libelle']){
                                 ?>
                                 <div class='ville'>
                                     <i class='fa-solid fa-location-pin'></i>
-                                    <h4><?=$autre_offre['ville_libelle']?></h4>
+                                    <p><?=$autre_offre['ville_libelle']?></p>
                                 </div>
                                 <?php
                                 }
                                 ?>
                                 <div class='contrat'>
                                     <i class='fa-solid fa-tag'></i>
-                                    <h4><?=$autre_offre['type_contrat']?></h4>
+                                    <p><?=$autre_offre['type_contrat']?></p>
                                 </div>
                             </div>
                             <?php
                             if($autre_offre['nom_entreprise'] != ''){
                             ?>
-                            <h3 class='nom_entreprise'>Entreprise : <?=$autre_offre['nom_entreprise']?></h3>
+                            <p class='nom_entreprise'>Entreprise : <?=$autre_offre['nom_entreprise']?></p>
                             <?php
                             }
                             ?>
