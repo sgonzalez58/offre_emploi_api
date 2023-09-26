@@ -17,6 +17,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 global $wp_query;
 
+$retour_emploi_filtre = '';
+
 $pageActuelle = $_GET['page'];
 if(!$pageActuelle){
     $pageActuelle = 1;
@@ -25,11 +27,15 @@ if(!$pageActuelle){
 $recherche_input = $_GET['motClef'];
 if(!$recherche_input){
     $recherche_input = '';
+}else{
+    $retour_emploi_filtre = '?motClef='.$recherche_input;
 }
 
 $distance_max = $_GET['distance'];
 if(!$distance_max){
     $distance_max = 0;
+}else{
+    $retour_emploi_filtre .= $retour_emploi_filtre == '' ? '?distance='.$distance_max : '&distance='.$distance_max;
 }
 
 $limit = $_SESSION['limit_offres_liste'];
@@ -50,6 +56,7 @@ $la_commune='';
 $ville_cible = [];
 
 if( array_key_exists('thematique',$wp_query->query_vars) ){
+    $retour_emploi_filtre .= $retour_emploi_filtre == '' ? '?thematique='.$wp_query->query_vars['thematique'] : '&thematique='.$wp_query->query_vars['thematique'];
     $nom_type_contrat = urldecode($wp_query->query_vars['thematique']);
     $nb_communes = $class->get_nb_communes_1($wp_query->query_vars['thematique'], $recherche_input);
 }else{
@@ -59,6 +66,7 @@ if( array_key_exists('thematique',$wp_query->query_vars) ){
 
 
 if( array_key_exists('commune',$wp_query->query_vars) ){
+    $retour_emploi_filtre .= $retour_emploi_filtre == '' ? '?commune='.$wp_query->query_vars['commune'] : '&commune='.$wp_query->query_vars['commune'];
     $la_commune = $class->get_commune_by_slug($wp_query->query_vars['commune']);
 
     //récupération des villes en fonction de la distance
@@ -423,7 +431,7 @@ $segments = explode('/', $path);
 						</div>-->
 						<div class="emploi-filters">
 							<div class="button_tri_emploi filter-select">
-								<button onclick="modal_thematique()"><span class="material-symbols-outlined">ballot</span>Types de contrat<span class="material-icons">expand_more</span></button>
+								<button onclick="modal_thematique()"><span class="material-symbols-outlined">ballot</span><?= $nom_type_contrat ? $nom_type_contrat : 'Types de contrat'?><span class="material-icons">expand_more</span></button>
 								<style>
 									.material-symbols-outlined {
 									font-variation-settings:
@@ -433,9 +441,9 @@ $segments = explode('/', $path);
 									'opsz' 48
 									}
 								</style>
-								<button onclick="modal_localisation()"><span class="material-icons">fmd_good</span>Localisation<span class="material-icons">expand_more</span></button>
+								<button onclick="modal_localisation()"><span class="material-icons">fmd_good</span><?= $nom_commune != 'dans la Nièvre' ? substr($nom_commune, 2) : 'Localisation'?><span class="material-icons">expand_more</span></button>
 							</div>
-                            <div class="recherche_button">
+                            <form class="recherche_button">
                                 <div id='distance'>
                                     <label for="liste_distance"><span class="material-symbols-outlined" id='distance_icon'>near_me</span></label>
                                     <input type='number' id='liste_distance' name="distance" placeholder="Distance max (km)" min="0" oninput="validity.valid||(value='');">
@@ -464,7 +472,7 @@ $segments = explode('/', $path);
                                     <span>Rechercher</span>
                                 </button>
 
-							</div>
+                            </form>
 						</div>
 						<div class="legende_tri">
                         <span class='sous_titre_h1'>Nous trouvons <?= $nb_total_offre . ($nb_total_offre > 1 ? " offres d'emploi disponibles" : " offre d'emploi disponible")?> </span>
@@ -518,10 +526,10 @@ $segments = explode('/', $path);
                                     <?php } ?>
                                     <p class='description'><?=$description?></p>
                                 </div>
-                                <a class='lien_fiche' href='/offres-emploi/<?=$offre['id']?>'>
+                                <a class='lien_fiche' href='/offres-emploi/<?=$offre['id']?>/<?=$retour_emploi_filtre?>'>
                                     <button class='bouton_lien_fiche'>Voir l'offre</button>
                                 </a>
-                                <a class='lien_fiche_big' href='/offres-emploi/<?=$offre['id']?>'></a>
+                                <a class='lien_fiche_big' href='/offres-emploi/<?=$offre['id']?>/<?=$retour_emploi_filtre?>'></a>
                             </div>
 
                                 <?php

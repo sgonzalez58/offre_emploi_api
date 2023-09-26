@@ -17,6 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 global $wp_query;
 
+$retour_emploi_filtre = '';
 
 $pageActuelle = $_GET['page'];
 if(!$pageActuelle){
@@ -26,6 +27,8 @@ if(!$pageActuelle){
 $recherche_input = $_GET['motClef'];
 if(!$recherche_input){
     $recherche_input = '';
+}else{
+    $retour_emploi_filtre = '?motClef='.$recherche_input;
 }
 
 $distance_max = $_GET['distance'];
@@ -451,10 +454,10 @@ get_header();
                                     <?php } ?>
                                     <p class='description'><?=$description?></p>
                                 </div>
-                                <a class='lien_fiche' href='/offres-emploi/<?=$offre['id']?>'>
+                                <a class='lien_fiche' href='/offres-emploi/<?=$offre['id']?>/<?=$retour_emploi_filtre?>'>
                                     <button class='bouton_lien_fiche'>Voir l'offre</button>
                                 </a>
-                                <a class='lien_fiche_big' href='/offres-emploi/<?=$offre['id']?>'></a>
+                                <a class='lien_fiche_big' href='/offres-emploi/<?=$offre['id']?>/<?=$retour_emploi_filtre?>'></a>
                             </div>
 
                                 <?php

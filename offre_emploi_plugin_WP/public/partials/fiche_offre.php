@@ -27,6 +27,25 @@ $entreprise_offre = $offre['nom_entreprise'];
 $ville_offre = $offre['ville_libelle'];
 $description_offre = nl2br($offre['description']);
 
+$lien_retour = '/offres-emploi/';
+
+if($_GET['commune']){
+    $lien_retour .= 'lieu/'.$_GET['commune'].'/';
+}
+if($_GET['thematique']){
+    $lien_retour .= 'categorie/'.$_GET['thematique'].'/';
+}
+if($_GET['distance']){
+    $lien_retour .= '?distance='.$_GET['distance'];
+    if($_GET['motClef']){
+        $lien_retour .= '&motClef='.$_GET['motClef'];
+    }
+}else{
+    if($_GET['motClef']){
+        $lien_retour .= '?motClef='.$_GET['motClef'];
+    }
+}
+
 
 add_action('wp_head', 'fc_opengraph');
 function fc_opengraph() {
@@ -36,7 +55,8 @@ function fc_opengraph() {
     global $ville_offre;
 
     //$image = 'https://agenda.koikispass.com/public/'.$dateSEO[0]['image'];
-    $titre =  $nom_offre . ' chez ' . $entreprise_offre;
+    $titre =  $nom_offre;
+    if($entreprise_offre!=''){$titre .= ' chez ' . $entreprise_offre;}
     if($ville_offre!='Non renseigné'){$titre .=  ' à ' . $ville_offre;}
 
     echo '<meta property="og:title" content="' . esc_attr($titre).'" />';		
@@ -54,7 +74,8 @@ function date_title( $title ) {
     global $ville_offre;
 
     //$image = 'https://agenda.koikispass.com/public/'.$dateSEO[0]['image'];
-    $titre =  $nom_offre . ' chez ' . $entreprise_offre;
+    $titre =  $nom_offre;
+    if($entreprise_offre!=''){$titre .= ' chez ' . $entreprise_offre;}
     if($ville_offre!='Non renseigné'){$titre .=  ' à ' . $ville_offre;}
     
     return $titre;
@@ -74,7 +95,6 @@ get_header();
 ?>
 
 		<div id="primary" <?php generate_do_element_classes( 'content' ); ?>>
-			<main id="main" <?php generate_do_element_classes( 'main' ); ?>>
             <?php
 					if($_GET['postule'] == 1){
 						echo "<p class='text-success'>Votre candidature a bien été envoyée.</p>";
@@ -83,133 +103,148 @@ get_header();
 <?php
     if(!empty($offre)){
 ?>
+            <main id="main" <?php generate_do_element_classes( 'main' ); ?>>
 
-<div id='fiche_head'>
-    <div id='informations_principales'>
-        <h1 id='intitule'><?=$offre['intitule']?></h1>
-        <div id='adresse'>
-            <i class="fa-solid fa-shop"></i>
-            <p><?=$offre['nom_entreprise']?></p>
+<div id='offre'>
+
+    <div id='fiche_offre'>
+        <a id='retour_offre_liste' href='<?=$lien_retour?>'><span class="material-symbols-outlined">turn_left</span>Offres d'emploi</a>
+        <div id='informations_principales'>
+            <h1 id='intitule'><?=$offre['intitule']?></h1>
+            <div class='info_secondaire'>
+                <?php
+                if($entreprise_offre != ''){
+                ?>
+                <div id='adresse'>
+                    <i class="fa-solid fa-shop"></i>
+                    <p><?=$offre['nom_entreprise']?></p>
+                </div>
+                <?php
+                }
+                ?>
+                <?php
+                if($offre['ville_libelle'] != 'Non renseigné'){
+                ?>
+                <div id='ville'>
+                    <i class="fa-solid fa-location-dot"></i>
+                    <p id='ville'><?=array_pop(explode(' - ', $offre['ville_libelle']))?></p>
+                </div>
+                <?php
+                }
+                ?>
+                <div id='date_de_creation'>
+                    <i class="fa-solid fa-calendar-days"></i>
+                    <p class='date'>Offre créée le <?=date_i18n('l d F o, H:i:s', strtotime($offre['date_de_publication']))?></p>
+                </div>
+            </div>
         </div>
         <?php
-        if($offre['ville_libelle'] != 'Non renseigné'){
+        if($offre['id_jobijoba']){
         ?>
-        <div id='ville'>
-            <i class="fa-solid fa-location-dot"></i>
-            <p id='ville'><?=array_pop(explode(' - ', $offre['ville_libelle']))?></p>
+            <a href='<?=$offre['lien_jj']?>'><button id='bouton_postuler'>Postuler</button></a>
+        <?php
+        }else{
+        ?>
+            <button id='bouton_postuler'>Postuler</button>
+        <?php
+        }
+        ?>
+
+        <p id='description'>Description</p>
+        <p><?=nl2br($offre['description'])?></p>
+
+        <div class='carte'>
+            <?php
+            if($offre['latitude']){
+            ?>
+            <iframe frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="https://www.openstreetmap.org/export/embed.html?bbox=<?=($offre['longitude'] - 0.0360)?>%2C<?=($offre['latitude'] - 0.0133)?>%2C<?=($offre['longitude'] + 0.0360)?>%2C<?=($offre['latitude'] + 0.0133)?>&layer=mapnik&marker=<?=$offre['latitude']?>%2C<?=$offre['longitude']?>"></iframe>
+            <br/>
+            <small>
+                <a href="https://www.openstreetmap.org/?mlat=<?=$offre['latitude']?>&amp;mlon=<?=$offre['longitude']?>#map=12/<?=$offre['latitude']?>/<?=$offre['longitude']?>&amp;layers=N">Afficher une carte plus grande</a>
+            </small>
+            <?php
+            }
+            ?>
+        </div>
+    </div>
+
+    <div class='liste_boites'>
+        <?php
+        if($offre['libelle_metier']){
+        ?>
+        <div class='boite'>
+            <p class='titre_boite'>Information métier</p>
+            <p><?=$offre['libelle_metier']?></p>
+        </div>
+        <?php
+        }
+        if($offre['type_contrat']){
+        ?>
+        <div class='boite'>
+            <p class='titre_boite'>Contrat</p>
+            <p><?=$offre['type_contrat']?></p>
         </div>
         <?php
         }
         ?>
-        <div id='date_de_creation'>
-            <i class="fa-solid fa-calendar-days"></i>
-            <p class='date'>Offre créée le <?=date_i18n('l d F o, H:i:s', strtotime($offre['date_de_publication']))?></p>
-        </div>
-    </div>
-    <?php
-    if($offre['id_jobijoba']){
-    ?>
-        <a href='<?=$offre['lien_jj']?>'><button id='bouton_postuler'>Postuler</button></a>
-    <?php
-    }else{
-    ?>
-        <button id='bouton_postuler'>Postuler</button>
-    <?php
-    }
-    ?>
-</div>
-
-<div id='fiche_content'>
-    <p id='description'><span style='font-weight : bold'>Description</span><br><br><?=nl2br($offre['description'])?></p>
-    <div class='carte'>
         <?php
-        if($offre['latitude']){
+        if($offre['nom_entreprise'] || $offre['numero_entreprise'] || $offre['mail_entreprise']){
         ?>
-        <iframe frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="https://www.openstreetmap.org/export/embed.html?bbox=<?=($offre['longitude'] - 0.0360)?>%2C<?=($offre['latitude'] - 0.0133)?>%2C<?=($offre['longitude'] + 0.0360)?>%2C<?=($offre['latitude'] + 0.0133)?>&layer=mapnik&marker=<?=$offre['latitude']?>%2C<?=$offre['longitude']?>"></iframe>
-        <br/>
-        <small>
-            <a href="https://www.openstreetmap.org/?mlat=<?=$offre['latitude']?>&amp;mlon=<?=$offre['longitude']?>#map=12/<?=$offre['latitude']?>/<?=$offre['longitude']?>&amp;layers=N">Afficher une carte plus grande</a>
-        </small>
+
+        <div class='boite'>
+            <p class='titre_boite'>Entreprise</p>
+                
+                <?php
+                if($offre['nom_entreprise']){
+                ?>
+
+                <p><?=$offre['nom_entreprise']?></p>
+
+                <?php
+                }
+                if($offre['getMailEntreprise']){
+                ?>
+
+                <p><?=$offre['getMailEntreprise']?></p>
+
+                <?php
+                }
+                if($offre['numero_entreprise']){
+                ?>
+
+                <p><?=$offre['numero_entreprise']?></p>
+
+                <?php
+                }
+                ?>
+        </div>
+        
+        <?php
+        }
+        if($offre['salaire']){
+        ?>
+        
+        <div class='boite'>
+            <p class='titre_boite'>Salaire</p>
+            <p><?=$offre['salaire']?></p>
+        </div>
+
+        <?php
+        }
+
+        if($offre['secteur_activite'] ){
+        ?>
+        <div class='boite'>
+            <p class='titre_boite'>Secteur d'activité</p>
+            <p><?=$offre['secteur_activite']?></p>
+        </div>
         <?php
         }
         ?>
     </div>
+
 </div>
 
-<div class='liste_boites'>
-    <?php
-    if($offre['libelle_metier']){
-    ?>
-    <div class='boite'>
-        <p class='titre_boite'>Information métier</p>
-        <p><?=$offre['libelle_metier']?></p>
-    </div>
-    <?php
-    }
-    if($offre['type_contrat']){
-    ?>
-    <div class='boite'>
-        <p class='titre_boite'>Contrat</p>
-        <p><?=$offre['type_contrat']?></p>
-    </div>
-    <?php
-    }
-    ?>
-    <?php
-    if($offre['nom_entreprise'] || $offre['numero_entreprise'] || $offre['mail_entreprise']){
-    ?>
-
-    <div class='boite'>
-        <p class='titre_boite'>Entreprise</p>
-            
-            <?php
-            if($offre['nom_entreprise']){
-            ?>
-
-            <p><?=$offre['nom_entreprise']?></p>
-
-            <?php
-            }
-            if($offre['getMailEntreprise']){
-            ?>
-
-            <p><?=$offre['getMailEntreprise']?></p>
-
-            <?php
-            }
-            if($offre['numero_entreprise']){
-            ?>
-
-            <p><?=$offre['numero_entreprise']?></p>
-
-            <?php
-            }
-            ?>
-    </div>
-    
-    <?php
-    }
-    if($offre['salaire']){
-    ?>
-    
-    <div class='boite'>
-        <p class='titre_boite'>Salaire</p>
-        <p><?=$offre['salaire']?></p>
-    </div>
-
-    <?php
-    }
-
-    if($offre['secteur_activite'] ){
-    ?>
-    <div class='boite'>
-        <p class='titre_boite'>Secteur d'activité</p>
-        <p><?=$offre['secteur_activite']?></p>
-    </div>
-    <?php
-    }
-    ?>
-</div>
 <?php
     if(!$offre['id_jobijoba']){
 ?>
@@ -235,18 +270,22 @@ get_header();
             <input type='submit' value="Envoyer">
         </form>
     </div>
+    
     <?php
     }
-?>
+    ?>
 
-<?php
+    <?=do_shortcode('[elementor-template id="113838"]')?>
+
+    </main><!-- #main -->
+
+    <?php
 }else{
 ?>
     <p> Cette offre n'existe pas.</p>
 <?php
 }
 ?>
-            </main><!-- #main -->
 
             <section id='autre_offres'>
                 <p>Autres offres d’emploi à découvrir</p>

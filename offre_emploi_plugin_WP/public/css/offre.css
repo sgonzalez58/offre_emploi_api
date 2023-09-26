@@ -1,17 +1,53 @@
-h2{
-    margin-top: 0;
+#main{
+    display: flex;
+    flex-wrap: wrap;
+    margin: 20px;
+    font-family: 'Roboto', sans-serif;
+    gap: 30px;
 }
 
-#fiche_head{
+#main > *:last-child{
+    width: 35%;
+}
+
+#offre{
+    width: calc( 65% - 30px );
+}
+
+#fiche_offre{
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
     background-color: white;
     border : none;
-    box-shadow: 0 2px 3px 0 gray;
-    padding: 2rem;
-    width: 100%;
-    align-items: center;
+    padding: 40px;
     box-sizing: border-box;
+}
+
+#retour_offre_liste{
+    background-color: #D90012;
+    border-radius: 3px;
+    border: 1px solid #D90012;
+    padding: 3px 20px;
+    color: white;
+    display: inline-flex;
+    width: fit-content;
+    margin-bottom: 20px;
+    font-size: 1.2em;
+    font-weight: 700;
+    font-family: 'Montserrat', sans-serif;
+    align-items: center;
+    transition-property: color, background-color;
+    transition-duration: 400ms;
+}
+
+#retour_offre_liste > span{
+    margin-right: 3px;
+    font-size: 30px;
+}
+
+#retour_offre_liste:hover{
+    background-color: white;
+    color: #D90012;
 }
 
 #informations_principales{
@@ -20,14 +56,23 @@ h2{
 }
 
 #intitule{
-    font-weight: bold;
-    font-size: 25px;
+    font-weight: 700;
+    font-size: 38px;
     margin-top: 0;
+    text-transform: none;
+    hyphens: auto;
+    word-break: break-word;
+}
+
+.info_secondaire{
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 40px;
 }
 
 #adresse, #ville, #date_de_creation{
-    display: flex;
-    margin-bottom: 0.7rem;
+    display: inline-flex;
 }
 
 #adresse p, #ville p, #date_de_creation p{
@@ -38,40 +83,32 @@ h2{
 
 #adresse i, #ville i, #date_de_creation i{
     margin-right: 0.5rem;
-    color: red;
-    width: 2rem;
+    color: #D90012;
     display: flex;
     justify-content: center;
 }
 
 #bouton_postuler{
     font-size: 13px;
-    border-radius: 5px;
+    border-radius: 0;
     padding: 0.7rem 3rem;
-    margin: 0 1rem;
     letter-spacing: 1px;
     font-weight: bold;
-}
-
-#fiche_content{
-    display: flex;
-    width: 100%;
-    margin: 1rem 0;
+    background-color: #D90012;
 }
 
 #description{
-    padding: 2rem;
-    width: 50%;
-    box-sizing: border-box;
-    font-size: 15px;
+    font-weight : bold;
+    font-size:20px;
+    margin-bottom: 12px;
+    margin-top: 40px;
 }
 
 .carte{
-    width: 50%;
     border: 4px solid white;
-    max-height: 400px;
+    height: 300px;
     box-sizing: border-box;
-    margin-bottom: 3rem;
+    margin-top: 35px;
 }
 
 .carte > iframe{
@@ -81,19 +118,19 @@ h2{
 
 .liste_boites{
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    grid-gap: 1rem;
-    margin-top: 1rem;
+    grid-template-columns: repeat(2, 1fr);
+    grid-gap: 30px;
+    margin-top: 35px;
 }
 
 .boite{
     border: none;
-    box-shadow: 0 0 2px 0 gray;
+    box-shadow: 0px 1px 3px rgba(128, 128, 128, 0.5);
     padding: 1rem;
     background-color: white;
     box-sizing: border-box;
     color: gray;
-    font-size: 13px;
+    font-size: 16px;
 }
 
 .boite > *{
@@ -103,7 +140,7 @@ h2{
 .titre_boite{
     font-weight: bold;
     color: black;
-    font-size: 15px;
+    font-size: 20px;
 }
 
 #modal{
@@ -281,7 +318,7 @@ h2{
     display: flex;
     margin-right: 1rem;
     align-items: center;
-    color: red;
+    color: #D90012;
   }
   
   .contrat{
@@ -327,11 +364,13 @@ h2{
   }
 
   #autre_offres{
+    margin: 20px;
     margin-top: 40px;
   }
 
   #autre_offres > p{
-    font-weight: 500;
+    font-family: 'Roboto', sans-serif;
+    font-weight: 700;
     font-size: 32px;
   }
 
@@ -341,47 +380,32 @@ h2{
         grid-template-columns: repeat(2, 1fr);
         width: 100%;
     }
-    #fiche_content{
-        flex-direction: column-reverse;
-    }
-    #description{
-        width: 100%;
-        margin-top: 2rem;
-    }
-    .carte{
-        width: 70%;
-        height: calc(100vw / 100 * 30);
-        margin: auto;
-    }
     .liste_boites{
-        grid-template-columns: repeat(3, 1fr);
-    }
-    .postuler_copie{
-        display: flex;
-        justify-content: center;
+        grid-template-columns: repeat(1, 1fr);
     }
 }
 
-@media screen and (max-width:768px){
+@media screen and (max-width:767px){
+    #main > *{
+        width: 100%!important;
+        gap: 0;
+    }
+
+    #offre{
+        padding: 20px 20px 0 30px;
+    }
 
     .liste_boites{
         grid-template-columns: repeat(2,1fr);
     }
 
-    #fiche_head{
-        flex-direction: column-reverse;
-    }
-
-    #informations_principales{
-        margin-top: 2rem;
-    }
     #liste_offres{
         grid-template-columns: repeat(1, 1fr);
         width: 100%;
     }
 }
 
-@media screen and (max-width:520px){
+@media screen and (max-width:580px){
     .liste_boites{
         grid-template-columns: repeat(1,1fr);
     }

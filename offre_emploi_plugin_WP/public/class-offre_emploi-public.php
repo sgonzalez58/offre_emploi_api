@@ -721,6 +721,7 @@ class Offre_emploi_Public {
 				return plugin_dir_path( __FILE__ ) .'partials/fiche_offre.php';
 			}
 		}
+
 		//formulaire de création d'une offre
 		if(array_key_exists('nouvelleOffre',$wp_query->query_vars)){
 			if(file_exists(plugin_dir_path( __FILE__ ) .'partials/nouvelle_offre.php')) {

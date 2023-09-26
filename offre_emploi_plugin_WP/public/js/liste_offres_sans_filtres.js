@@ -156,6 +156,7 @@ async function modifier_liens(){
             }
         }
     }
+    document.getElementById('recherche').click();
 }
 
 Array.from(document.getElementsByClassName('pagination_nb_offre_select')).forEach(select => {

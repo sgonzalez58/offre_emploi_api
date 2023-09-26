@@ -157,6 +157,7 @@ async function modifier_liens(){
             }
         }
     }
+    document.getElementById('recherche').click();
 }
 
 
