@@ -175,64 +175,120 @@ class Offre_emploi_Public {
 
 	public function getMetier() {
 		
-		return $metier = $this->model->getMetier();	
+		$metier = wp_cache_get('offre_emploi_metier', 'offre_emploi');
+		if ( false === $metier ){
+			$metier = $this->model->getMetier();
+			wp_cache_set('offre_emploi_metier', $metier, 'offre_emploi');
+		}
+		return $metier;
 	}	
 
 	public function getAllCommunes() {
-		
-		return $villes = $this->model->findAllCommunes();	
+
+		$villes = wp_cache_get('offre_emploi_all_communes', 'offre_emploi');
+		if ( false === $villes ){
+			$villes = $this->model->findAllCommunes();
+			wp_cache_set( 'offre_emploi_all_communes', $villes, 'offre_emploi' );
+		}
+		return $villes;
 	}	
 
 	public function getAllTypeContrat() {
 		
-		return $categories = $this->model->getAllTypeContrat();	
+		$categories = wp_cache_get('offre_emploi_all_contrat', 'offre_emploi');
+		if ( false === $categories ){
+			$categories = $this->model->getAllTypeContrat();
+			wp_cache_set( 'offre_emploi_all_contrat', $categories, 'offre_emploi' );
+		}
+		return $categories;
 	}	
 
 	public function get_commune_by_slug($slug) {
 		
-		return $commune = $this->model->findOneCommuneBySlug($slug);
+		$commune = wp_cache_get('offre_emploi_commune_'.$slug, 'offre_emploi');
+		if ( false === $commune ){
+			$commune = $this->model->findOneCommuneBySlug($slug);
+			wp_cache_set( 'offre_emploi_commune_'.$slug, $commune, 'offre_emploi' );
+		}
+		return $commune;
 		
 	}
 
 	public function get_commune_by_id($id) {
 		
-		return $commune = $this->model->findOneCommune($id);
+		$commune = wp_cache_get('offre_emploi_commune_'.$id, 'offre_emploi');
+		if ( false === $commune ){
+			$commune = $this->model->findOneCommune($id);
+			wp_cache_set( 'offre_emploi_commune_'.$id, $commune, 'offre_emploi');
+		}
+		return $commune;
 		
 	}
 
 	public function get_nb_communes($recherche_input = '') {
 		
-		return $nb_communes = $this->model->getNbCommunes($recherche_input);
+		$nb_communes = wp_cache_get('offre_emploi_nb_communes_'.$recherche_input, 'offre_emploi');
+		if ( false === $nb_communes ){
+			$nb_communes = $this->model->getNbCommunes($recherche_input);
+			wp_cache_set( 'offre_emploi_nb_communes_'.$recherche_input, $nb_communes, 'offre_emploi');
+		}
+		return $nb_communes;
 		
 	}
 
 	public function get_nb_types_contrat($recherche_input = '') {
 		
-		return $nb_types_contrat = $this->model->getNbTypesContrat($recherche_input);
+		$nb_types_contrat = wp_cache_get('offre_emploi_nb_types_contrat_'.$recherche_input, 'offre_emploi');
+		if ( false === $nb_types_contrat ){
+			$nb_types_contrat = $this->model->getNbTypesContrat($recherche_input);
+			wp_cache_set( 'offre_emploi_nb_types_contrat_'.$recherche_input, $nb_types_contrat, 'offre_emploi' );
+		}
+		return $nb_types_contrat;
 		
 	}
 
 	public function get_nb_communes_1($them, $recherche_input = '') {
 		
-		return $nb_communes1 = $this->model->getNbCommunes1($them, $recherche_input);
+		$nb_communes1 = wp_cache_get('offre_emploi_nb_communes_'.$recherche_input.'_'.$them, 'offre_emploi');
+		if ( false === $nb_communes1 ){
+			$nb_communes1 = $this->model->getNbCommunes1($them, $recherche_input);
+			wp_cache_set( 'offre_emploi_nb_communes_'.$recherche_input.'_'.$them, $nb_communes1, 'offre_emploi' );
+		}
+		return $nb_communes1;
 		
 	}
 
 	public function get_nb_types_contrat_1($comm, $recherche_input = '') {
-		
-		return $nb_types_contrat1 = $this->model->getNbTypesContrat1($comm, $recherche_input);
+
+		$nb_types_contrat1 = wp_cache_get( 'offre_emploi_nb_types_contrat_'.$recherche_input.'_'.$comm, 'offre_emploi');
+		if ( false === $nb_types_contrat1 ){
+			$nb_types_contrat1 = $this->model->getNbTypesContrat1($comm, $recherche_input);
+			wp_cache_set( 'offre_emploi_nb_types_contrat_'.$recherche_input.'_'.$comm, $nb_types_contrat1, 'offre_emploi' );
+		}
+		return $nb_types_contrat1;
 		
 	}
 
 	public function findOneOffre($id) {
-		
-		return $nb_types_contrat1 = $this->model->findOneOffre($id);
+
+		$offre = wp_cache_get('offre_emploi_offre_'.$id, 'offre_emploi');
+		if ( false === $offre ){
+			$offre = $this->model->findOneOffre($id);
+			wp_cache_set( 'offre_emploi_offre_'.$id, $offre, 'offre_emploi' );
+		}
+		return $offre;
 		
 	}
 
 	public function getMoreOffre($secteur_activite = '', $id = '') {
+
+		$other_offres = wp_cache_get('offre_emploi_more_offres_'.$secteur_activite.'_'.$id, 'offre_emploi');
+		if ( false === $other_offres ){
+			$other_offres = $this->model->getMoreOffre($secteur_activite, $id);
+			wp_cache_set( 'offre_emploi_more_offres_'.$secteur_activite.'_'.$id, $other_offres, 'offre_emploi' );
+		}
 		
-		return $other_offres = $this->model->getMoreOffre($secteur_activite, $id);
+		return $other_offres;
 		
 	}
 
@@ -252,9 +308,9 @@ class Offre_emploi_Public {
 			'mots_clef' => $_GET['mots_clef'],
 		);
 
-		$array_nb_communes = $this->model->getNbCommunes($args['mots_clef']);
+		$array_nb_communes = $this->get_nb_communes($args['mots_clef']);
 
-		$array_nb_types_contrat = $this->model->getNbTypesContrat($args['mots_clef']);
+		$array_nb_types_contrat = $this->get_nb_types_contrat($args['mots_clef']);
 
 		wp_send_json_success(json_encode(['com' => $array_nb_communes, 'cont' => $array_nb_types_contrat]));
 	}
@@ -269,22 +325,22 @@ class Offre_emploi_Public {
 		);
 
 		if(!$args['idCommune']){
-			$array_nb_communes = $this->model->getNbCommunes1($args['type_de_contrat'], $args['mots_clef']);
-			$array_nb_types_contrat = $this->model->getNbTypesContrat($args['mots_clef']);
+			$array_nb_communes = $this->get_nb_communes_1($args['type_de_contrat'], $args['mots_clef']);
+			$array_nb_types_contrat = $this->get_nb_types_contrat($args['mots_clef']);
 		}else{
 			if($args['type_de_contrat']){
-				$array_nb_communes = $this->model->getNbCommunes1($args['type_de_contrat'], $args['mots_clef']);
+				$array_nb_communes = $this->get_nb_communes_1($args['type_de_contrat'], $args['mots_clef']);
 			}
 			else{
-				$array_nb_communes = $this->model->getNbCommunes($args['mots_clef']);
+				$array_nb_communes = $this->get_nb_communes($args['mots_clef']);
 			}
 			$ville_cible = [];
 			array_push($ville_cible, $args['idCommune']);
 				
-			$ville_a_trier = $this->model->findAllCommunes();
+			$ville_a_trier = $this->getAllCommunes();
 
 			foreach($ville_a_trier as $commune){
-				$villeFrom = $this->model->findOneCommune($args['idCommune']);
+				$villeFrom = $this->get_commune_by_id($args['idCommune']);
 				$villeTo = $commune;
 				$latFrom = deg2rad($villeFrom['latitude']);
 				$lonFrom = deg2rad($villeFrom['longitude']);
@@ -300,7 +356,7 @@ class Offre_emploi_Public {
 					array_push($ville_cible, $commune['id']);
 				}
 			}
-			$array_nb_types_contrat = $this->model->getNbTypesContrat1($ville_cible, $args['mots_clef']);
+			$array_nb_types_contrat = $this->get_nb_types_contrat_1($ville_cible, $args['mots_clef']);
 		}
 		wp_send_json_success(json_encode(['com' => $array_nb_communes, 'cont' => $array_nb_types_contrat]));
 	}
@@ -327,7 +383,7 @@ class Offre_emploi_Public {
 		$description = $this->secureInput($_POST['description']);
 		if($_POST['commune'] != ''){
 			$commune_id = $_POST['commune'];
-			$commune = $this->model->findOneCommune($commune_id);
+			$commune = $this->get_commune_by_id($commune_id);
 			$latitude = $commune['latitude'];
 			$longitude = $commune['longitude'];
 			$ville_libelle = ucwords($commune['slug']);
@@ -356,7 +412,7 @@ class Offre_emploi_Public {
 		$description = $this->secureInput($_POST['description']);
 		if($_POST['commune'] != ''){
 			$commune_id = $_POST['commune'];
-			$commune = $this->model->findOneCommune($commune_id);
+			$commune = $this->get_commune_by_id($commune_id);
 			$latitude = $commune['latitude'];
 			$longitude = $commune['longitude'];
 			$ville_libelle = ucwords($commune['slug']);
@@ -385,7 +441,7 @@ class Offre_emploi_Public {
 			wp_send_json_error("L'id de l'offre n'a pas été envoyé. Erreure lors de la demande ajax.");
 		}
 
-		$response = $this->model->findOneOffre($args['id_offre']);
+		$response = $this->findOneOffre($args['id_offre']);
 
 		if(!$response){
             wp_send_json_error("L'offre n'existe pas.");
@@ -441,7 +497,7 @@ class Offre_emploi_Public {
 			wp_send_json_error("L'id de l'offre n'a pas été envoyé. Erreure lors de la demande ajax.");
 		}
 
-		if(!$this->model->findOneOffre($args['id_offre'])){
+		if(!$this->findOneOffre($args['id_offre'])){
             wp_send_json_error("L'offre n'existe pas.");
         }
 
@@ -471,7 +527,7 @@ class Offre_emploi_Public {
 			wp_send_json_error("La visibilité souhaitée n'a pas été envoyée. Erreure lors de la demande ajax.");
 		}
 
-		if(!$this->model->findOneOffre($args['id_offre'])){
+		if(!$this->findOneOffre($args['id_offre'])){
             wp_send_json_error("L'offre n'existe pas.");
         }
 
@@ -519,7 +575,7 @@ class Offre_emploi_Public {
 				}else{
 					$this->model->createCandidature($id_offre_emploi, $args['mail']);
 				}
-				$offre = $this->model->findOneOffre($id_offre_emploi);
+				$offre = $this->findOneOffre($id_offre_emploi);
 				$mail_offre = wp_get_current_user()->user_email;
 
 				$this->envoi_email_utilisateur($mail_offre, $offre['intitule'].' - '.$args['prenom'].' '.$args['nom'].' - '.$args['mail'].' - '.$args['message'] , 'candidature');
@@ -835,7 +891,7 @@ class Offre_emploi_Public {
 				wp_enqueue_script( $this->plugin_name.'.pagination', plugin_dir_url( __FILE__ ) . 'js/pagination.js', array( 'jquery' ), $this->version, false );
 				wp_enqueue_script( $this->plugin_name.'.liste_offres_valides_js', plugin_dir_url( __FILE__ ) . 'js/liste_offres_valides.js', array( 'jquery' ), $this->version, true );
 				$liste_offres = wp_create_nonce( 'liste_offres' );
-				$commune = $this->model->findOneCommuneBySlug($wp_query->query_vars['ville']);
+				$commune = $this->get_commune_by_slug($wp_query->query_vars['ville']);
 				wp_localize_script(
 					$this->plugin_name.'.liste_offres_valides_js',
 					'my_ajax_obj',

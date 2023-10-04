@@ -113,13 +113,16 @@ class Offre_Emploi_Model {
 	 * Récupère jusqu'à 12 offres, nouvelles ou d'un secteur d'activité spécifique
 	 */
 	public function getMoreOffre($secteur_activite, $id){
-		if($secteur_activite == ''){
-			$sql = $this->offreEmploiDB->prepare('SELECT * FROM '.$this->TableOffreEmploi.' A WHERE id <> '.$id.'
-				ORDER BY A.id DESC LIMIT 12');
-		}else{
-			$sql = $this->offreEmploiDB->prepare('SELECT * FROM '.$this->TableOffreEmploi.' A WHERE A.secteur_activite = "'.$secteur_activite.'" AND id <> '.$id.'
-				ORDER BY A.id DESC LIMIT 12');
+		$sql = $this->offreEmploiDB->prepare('SELECT * FROM '.$this->TableOffreEmploi.' A');
+		$complement_sql = '';
+		if($id != ''){
+			$complement_sql = ' WHERE id <> '.$id;
 		}
+		if($secteur_activite != ''){
+			$complement_sql .= $complement_sql == '' ? ' WHERE A.secteur_activite = "'.$secteur_activite.'"' : ' AND A.secteur_activite = "'.$secteur_activite.'"';
+		}
+
+		$sql .= $complement_sql . ' ORDER BY A.id DESC LIMIT 12';
 
 		$this->offreEmploiDB->query( $sql );
 

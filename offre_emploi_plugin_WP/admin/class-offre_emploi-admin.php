@@ -45,6 +45,10 @@ class Offre_emploi_Admin {
 	 */
 	private $version;
 
+	private $model;
+
+	private $import;
+
 	/**
 	 * Initialize the class and set its properties.
 	 *
@@ -60,6 +64,8 @@ class Offre_emploi_Admin {
 		require_once plugin_dir_path( __FILE__ ) . '../model/model-offre_emploi.php';
 		$this->model = new Offre_Emploi_Model();
 		
+		$this->import = new Offre_emploi_Import( $plugin_name, $version );
+
 		add_action('admin_menu', array($this, 'gestion_offre_emploi'));
 
 		add_action('wp_ajax_get_nouvelles_offres', array($this,'get_nouvelles_offres'));
@@ -235,6 +241,7 @@ class Offre_emploi_Admin {
 			add_menu_page('Offre Emploi', 'Offre Emploi', 'edit_posts', 'gestion_offre_emploi', array($this, 'gestion_offre'));
 		}
 		add_submenu_page('gestion_offre_emploi', 'Import offres', 'Import', 'edit_posts', 'import_offres_emploi', array($this, 'import_offres_emploi'));
+		add_submenu_page('gestion_offre_emploi', 'Vider le cache offres emploi', 'Vider le cache', 'edit_posts', 'vider_cache_offres_emploi', array($this, 'vider_cache_offres_emploi'));
 	}
 
 	/**
@@ -302,13 +309,7 @@ class Offre_emploi_Admin {
 	}
 
 	function import_offres_emploi(){
-		wp_enqueue_style( $this->plugin_name.'datatable', 'https://cdn.datatables.net/v/bs5/dt-1.12.1/date-1.1.2/r-2.3.0/sb-1.3.4/sp-2.0.2/sl-1.4.0/datatables.min.css', array(), $this->version, 'all' );
-		wp_enqueue_style( $this->plugin_name.'gestion_offre', plugin_dir_url( __FILE__ ) . 'css/gestion_offre_emploi.css', array(), $this->version, 'all' );
 		wp_enqueue_style( $this->plugin_name.'admin_import_offre', plugin_dir_url( __FILE__ ) . 'css/offre_emploi-admin-import.css', array(), $this->version, 'all' );
-		wp_enqueue_script( $this->plugin_name.'bootstrap', 'https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js', array( 'jquery' ), $this->version, false );
-		wp_enqueue_script( $this->plugin_name.'luxon', 'https://cdn.jsdelivr.net/npm/luxon@3.0.4/build/global/luxon.min.js', array( 'jquery' ), $this->version, false );
-		wp_enqueue_script( $this->plugin_name.'datatable', 'https://cdn.datatables.net/v/bs5/dt-1.12.1/date-1.1.2/r-2.3.0/sb-1.3.4/sp-2.0.2/sl-1.4.0/datatables.min.js', array( 'jquery' ), $this->version, false );
-		wp_enqueue_script( $this->plugin_name.'datatable_luxon', 'https://cdn.datatables.net/plug-ins/1.10.24/sorting/datetime-luxon.js', array( 'jquery' ), $this->version, false );
 		wp_enqueue_script( $this->plugin_name.'admin_import_offre', plugin_dir_url( __FILE__ ) . 'js/offre_emploi-admin-import.js', array( 'jquery' ), $this->version, true );
 		$import = wp_create_nonce( 'import');
 		wp_localize_script(
@@ -323,17 +324,36 @@ class Offre_emploi_Admin {
 		return;
 	}
 
+	function vider_cache_offres_emploi(){
+		if( wp_cache_supports( 'flush_group' )){
+			wp_cache_flush_group( 'offre_emploi' );
+			echo 'Le cache des offres d\'emploi a bien été vidé.';
+		}else{
+			wp_cache_flush();
+			echo 'Le cache du site a été vidé.';
+		}
+		return;
+	}
+
 	function importer_offres(){
 		check_ajax_referer('import');
-		require_once plugin_dir_path( __FILE__ ) . '../library/recuperation_offre.php';
-		$retour = getAnnonce();
+		$retour = $this->import->getAnnonce();
+		if( wp_cache_supports( 'flush_group' )){
+			wp_cache_flush_group( 'offre_emploi' );
+		}else{
+			wp_cache_flush();
+		}
 		wp_send_json_success($retour);
 		return;
 	}
 
 	function importer_offres_cron(){
-		require_once plugin_dir_path( __FILE__ ) . '../library/recuperation_offre.php';
-		getAnnonce();
+		$this->import->getAnnonce();
+		if( wp_cache_supports( 'flush_group' )){
+			wp_cache_flush_group( 'offre_emploi' );
+		}else{
+			wp_cache_flush();
+		}
 		return;
 	}
 

@@ -409,7 +409,31 @@ get_header();
 
 						<div id='liste_offres'>
                             <?php
+
+                            $compteur_offre = 0;
+
                             foreach($offres_valides as $offre){
+
+                                if ($page && $compteur_offre % 2 == 1) {
+                                    echo '<div class="listeEmploi banniere_unique_mobile">';
+                                    echo do_shortcode('[bannieres_unique resolution="mobile"]');
+                                    echo '</div>';
+                                }
+                        
+                                if ($page && $compteur_offre % 4 == 2) {
+                                    echo '<div class="listeEmploi banniere_unique_tablette">';
+                                    echo do_shortcode('[bannieres_unique resolution="tablette"]');
+                                    echo '</div>';
+                                }
+                        
+                                if ($page && $compteur_offre % 6 == 3) {
+                                    echo '<div class="listeEmploi banniere_unique">';
+                                    echo do_shortcode('[bannieres_unique resolution="desktop"]');
+                                    echo '</div>';
+                                }
+                                
+                                $compteur_offre++;                        
+
                                 if($offre['ville_libelle'] && $offre['ville_libelle'] != 'Non renseigné' && $offre['id_pole_emploi']){
                                     $nomVille = explode('- ', $offre['ville_libelle'])[1];
                                 }else{

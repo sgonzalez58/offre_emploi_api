@@ -122,6 +122,11 @@ class Offre_emploi {
 		 */
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/class-offre_emploi-public.php';
 
+		/**
+		 * La classe qui permet de faire l'import des offres.
+		 */
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/import-offre.php';
+
 		$this->loader = new Offre_emploi_Loader();
 
 	}
