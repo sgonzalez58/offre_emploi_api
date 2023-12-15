@@ -23,12 +23,13 @@ $pageActuelle = $_GET['page'];
 if(!$pageActuelle){
     $pageActuelle = 1;
 }
+$retour_emploi_filtre = '?page='.$pageActuelle;
 
 $recherche_input = $_GET['motClef'];
 if(!$recherche_input){
     $recherche_input = '';
 }else{
-    $retour_emploi_filtre = '?motClef='.$recherche_input;
+    $retour_emploi_filtre = $retour_emploi_filtre == '' ? '?motClef='.$recherche_input : $retour_emploi_filtre . '&motClef='.$recherche_input;
 }
 
 $distance_max = $_GET['distance'];
@@ -432,8 +433,8 @@ get_header();
                                     echo '</div>';
                                 }
                                 
-                                $compteur_offre++;                        
-
+                                $compteur_offre++;
+                                
                                 if($offre['ville_libelle'] && $offre['ville_libelle'] != 'Non renseigné' && $offre['id_pole_emploi']){
                                     $nomVille = explode('- ', $offre['ville_libelle'])[1];
                                 }else{
@@ -444,10 +445,18 @@ get_header();
                                         $nomVille = 'Non renseigné';
                                     }
                                 }
-                                if(strlen($offre['description']) > 150){
-                                    $description = substr($offre['description'], 0, 149) . '...';
+                                if($offre['user_id']){
+                                    if(strlen($offre['description']) > 100){
+                                        $description = substr($offre['description'], 0, 99) . '...';
+                                    }else{
+                                        $description = $offre['description'];
+                                    }
                                 }else{
-                                    $description = $offre['description'];
+                                    if(strlen($offre['description']) > 150){
+                                        $description = substr($offre['description'], 0, 149) . '...';
+                                    }else{
+                                        $description = $offre['description'];
+                                    }
                                 }
                                 if($offre['nom_entreprise']){
                                     if(strlen($offre['nom_entreprise']) > 23){
@@ -460,27 +469,51 @@ get_header();
                                 }
                                 ?>
 
-                            <div class='offre'>
+                            <div class='offre<?= $offre['user_id'] ? ' offre_interne\' data_id=\''.$offre['id'].'\'' : '' ?>'>
                                 <div class='corps_offre'>
-                                    <h2><?=$offre['intitule']?></h2>
+                                    <?php 
+                                        if($offre['user_id']){
+                                            echo '<div class="gauche_offre_interne">
+                                                    <img src="'.str_replace('/home/www/www.koikispass.com/http', '', plugin_dir_path( __FILE__ ) . '../img/local.png').'" class="vignette_offre_interne">
+                                                    <div class="conteneur_image_offre_interne">
+                                                        <img src="'.$offre['image'].'" class="image_offre_interne skip-lazy"/>
+                                                    </div>
+                                                    <a class="lien_offre_interne" href="/offres-emploi/'.$offre['id']."/".$retour_emploi_filtre.'">
+                                                        <button class="bouton_lien_offre_interne">Voir l\'offre</button>
+                                                    </a>';
+                                            echo '</div>
+                                                  <div class="droite_offre_interne">
+                                                    <image src="'.$offre['logo'].'" class="logo_offre_interne">';
+                                        }
+                                    ?>
+                                    <h2><?= strlen($offre['intitule']) > 35 ? substr($offre['intitule'], 0, 34) . '...' : $offre['intitule']?></h2>
+                                    <?php if(!$offre['user_id']){?>
                                     <div class='details'>
+                                    <?php }else{ ?>
+                                    <div class='detail_offre_interne'>
+                                    <?php } ?>
                                         <div class='ville'>
                                             <i class='fa-solid fa-location-pin'></i>
                                             <h3><?=$nomVille?></h3>
                                         </div>
+                                        <?php if($offre['type_contrat']){ ?>
                                         <div class='contrat'>
                                             <i class='fa-solid fa-tag'></i>
                                             <h3><?=$offre['type_contrat']?></h3>
                                         </div>
+                                        <?php } ?>
                                     </div>
                                     <?php if($nomEntreprise != 'Aucun'){ ?>
                                     <h3 class='nom_entreprise'>Entreprise : <?=$nomEntreprise?></h3>
                                     <?php } ?>
-                                    <p class='description'><?=$description?></p>
+                                    <p class='description'><?= $description ?></p>
+                                    <?php if(!$offre['user_id']){?>
+                                    <a class='lien_fiche' href='/offres-emploi/<?=$offre['id']?>/<?=$retour_emploi_filtre?>'>
+                                        <button class='bouton_lien_fiche'>Voir l'offre</button>
+                                    </a>
+                                    <?php } ?>
                                 </div>
-                                <a class='lien_fiche' href='/offres-emploi/<?=$offre['id']?>/<?=$retour_emploi_filtre?>'>
-                                    <button class='bouton_lien_fiche'>Voir l'offre</button>
-                                </a>
+                                <?php if($offre['user_id']) { echo '</div>';}?>
                                 <a class='lien_fiche_big' href='/offres-emploi/<?=$offre['id']?>/<?=$retour_emploi_filtre?>'></a>
                             </div>
 

@@ -77,6 +77,7 @@ class Offre_emploi {
 		$this->load_dependencies();
 		$this->set_locale();
 		$this->define_admin_hooks();
+		$this->define_automation_hooks();
 		$this->define_public_hooks();
 
 	}
@@ -120,7 +121,13 @@ class Offre_emploi {
 		 * The class responsible for defining all actions that occur in the public-facing
 		 * side of the site.
 		 */
-		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/class-offre_emploi-public.php';
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/class-offre_emploi-public.php';		
+		
+		/**
+		 * The class responsible for defining all actions that are automated
+		 * side of the site.
+		 */
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'automation/class-offre_emploi-automation.php';
 
 		/**
 		 * La classe qui permet de faire l'import des offres.
@@ -178,6 +185,22 @@ class Offre_emploi {
 
 		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_styles' );
 		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_scripts' );
+
+	}
+	
+	/**
+	 * Register all of the hooks related to the public-facing functionality
+	 * of the plugin.
+	 *
+	 * @since    1.0.0
+	 * @access   private
+	 */
+	private function define_automation_hooks() {
+
+		$plugin_automation = new Offre_emploi_Automation( $this->get_plugin_name(), $this->get_version() );
+
+		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_automation, 'enqueue_styles' );
+		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_automation, 'enqueue_scripts' );
 
 	}
 

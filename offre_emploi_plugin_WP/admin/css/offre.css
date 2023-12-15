@@ -111,12 +111,32 @@ h2{
     justify-content: space-around;
 }
 
-.valider{
-    background-color: lightgreen;
+.modifier{
+    background-color: lightblue;
     padding: 10px 10px 7px;
     border-radius: 10px;
     cursor: pointer;
     transition-duration: 0.3s;
+    transition-property: transform;
+    text-decoration: none;
+    color: black;
+    border: 2px solid black;
+}
+
+.modifier:hover{
+    transform: scale(1.2);
+}
+
+.valider{
+    background-color: lightgreen;   
+    padding: 10px 10px 7px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition-duration: 0.3s;
+    transition-property: transform;
+    text-decoration: none;
+    color: black;
+    border: 2px solid black;
 }
 
 .valider:hover{
@@ -125,11 +145,14 @@ h2{
 
 .refuser{
     background-color: red;
-    color: white;
     padding: 10px 10px 7px;
     border-radius: 10px;
     cursor: pointer;
     transition-duration: 0.3s;
+    transition-property: transform;
+    text-decoration: none;
+    color: white;
+    border: 2px solid black;
 }
 
 .refuser:hover{

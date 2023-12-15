@@ -192,3 +192,21 @@ Array.from(document.getElementsByClassName('pagination_nb_offre_select')).forEac
         }
     })
 })
+
+function sendEmploiViewEvent(currentItem){
+    let id = currentItem.getAttribute('data_id');
+    _paq.push(['trachEvent', 'Emploi', 'AffichageListe', id]);
+}
+
+let offres_interne = document.getElementsByClassName('offre_interne');
+let observerEmploi = Array();
+Array.from(offres_interne).forEach((offre, index) => {
+    observerEmploi[index] = new IntersectionObserver(function(entries){
+        if (entries[0].isIntersecting){
+            sendEmploiViewEvent(offre);
+            observerEmploi[index].unobserve(offre);
+        }
+    }, { threshold: 0.8 });
+
+    observerEmploi[index].observe(offre);
+})

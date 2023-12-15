@@ -68,11 +68,14 @@ class Offre_emploi_Admin {
 
 		add_action('admin_menu', array($this, 'gestion_offre_emploi'));
 
+		add_action('wp_ajax_get_one_offre_admin', array($this,'get_one_offre'));
+		add_action('wp_ajax_nopriv_get_one_offre_admin', array($this,'get_one_offre'));
+
 		add_action('wp_ajax_get_nouvelles_offres', array($this,'get_nouvelles_offres'));
 		add_action('wp_ajax_nopriv_get_nouvelles_offres', array($this,'get_nouvelles_offres'));
 
-		add_action('wp_ajax_get_reponse_positive_offre', array($this,'get_reponse_positive_offre'));
-		add_action('wp_ajax_nopriv_get_reponse_positive_offre', array($this,'get_reponse_positive_offre'));
+		add_action('wp_ajax_toggle_visibilite_offre_admin', array($this,'toggle_visibilite_offre'));
+		add_action('wp_ajax_nopriv_toggle_visibilite_offre_admin', array($this,'toggle_visibilite_offre'));
 
 		add_action('wp_ajax_get_reponse_negative_offre', array($this,'get_reponse_negative_offre'));
 		add_action('wp_ajax_nopriv_get_reponse_negative_offre', array($this,'get_reponse_negative_offre'));
@@ -82,6 +85,8 @@ class Offre_emploi_Admin {
 
 		add_action('wp_ajax_importer_offres', array($this,'importer_offres'));
 		add_action('wp_ajax_nopriv_importer_offres', array($this,'importer_offres'));
+		
+		add_action('admin_init', array($this,'offre_emploi_ajout_validation'));
 
 		add_action('init', array($this,'offre_emploi_rewrite_rules'));
 		add_filter('query_vars', array($this,'offre_emploi_register_query_var' ));
@@ -106,7 +111,7 @@ class Offre_emploi_Admin {
 		 * between the defined hooks and the functions defined in this
 		 * class.
 		 */
-
+		wp_enqueue_style( $this->plugin_name.'.select2', 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css', array(), $this->version, 'all' );
 	}
 
 	/**
@@ -127,7 +132,7 @@ class Offre_emploi_Admin {
 		 * between the defined hooks and the functions defined in this
 		 * class.
 		 */
-
+		wp_enqueue_script( $this->plugin_name.'.select2', 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js', array( 'jquery' ), $this->version, false );
 	}
 
 	/**
@@ -141,37 +146,107 @@ class Offre_emploi_Admin {
 		$jsonData = [];
 		$idx = 0;
 		foreach($offres as $offre){
-			$jsonData[$idx++] = ['intitule' => $offre['intitule'], 'nomVille' => $offre['ville_libelle'], 'nomEntreprise' => $offre['nom_entreprise'], 'dateDemande' => $offre['date_de_publication'], 'etat' => $offre['validation'], 'id' => $offre['id']];
+			$historiques = $this->model->getHistoriques($offre['id']);
+			$vues = 0;
+			$vues_liste = 0;
+			$clics = 0;
+			$demandes = 0;
+			foreach($historiques as $historique){
+				$vues += $historique['vues'];
+				$vues_liste += $historique['vues_liste'];
+				$clics += $historique['clics'];
+				$demandes += $historique['postuler'];
+			}
+			$jsonData[$idx++] = ['intitule' => $offre['intitule'], 'nomVille' => $offre['ville_libelle'], 'nomEntreprise' => $offre['nom_entreprise'], 'dateDemande' => $offre['date_de_publication'], 'etat' => $offre['validation'], 'id' => $offre['id'], 'visibilite' => $offre['visibilite'], 'mail' => $offre['email_notification'], 'vue' => ['vues' => $vues, 'vues_liste' => $vues_liste], 'action' => ['clics' => $clics, 'demandes' => $demandes]];
 		}
 
         wp_send_json_success($jsonData);
 	}
 
+	public function findOneOffre($id) {
+
+		$offre = wp_cache_get('offre_emploi_offre_'.$id, 'offre_emploi');
+		if ( false === $offre ){
+			$offre = $this->model->findOneOffre($id);
+			wp_cache_set( 'offre_emploi_offre_'.$id, $offre, 'offre_emploi' );
+		}
+		return $offre;
+		
+	}
+	
+
 	/**
-	 * Valide une demande d'offre d'emploi et envoie un mail au demandeur
+	 * Récupère une offre d'emploi
 	 */
-	function get_reponse_positive_offre(){
-		check_ajax_referer('reponse_offre');
+	function get_one_offre(){
+		check_ajax_referer('modification_admin');
+
+		$args = array(
+			'id_offre' => $_POST['id_offre']
+		);
+		
+		if(!$args['id_offre']){
+			wp_send_json_error("L'id de l'offre n'a pas été envoyé. Erreure lors de la demande ajax.");
+		}
+
+		$response = $this->findOneOffre($args['id_offre']);
+
+		if(!$response){
+            wp_send_json_error("L'offre n'existe pas.");
+        }
+
+		$jsonData = [
+			'id' => $response['id'], 
+			'intitule' => $response['intitule'], 
+			'metier' => $response['libelle_metier'], 
+			'secteur_activite' => $response['secteur_activite'],
+			'nomEntreprise' => $response['nom_entreprise'],
+			'type_contrat' => $response['type_contrat'], 
+			'salaire' => $response['salaire'], 
+			'description' => $response['description'], 
+			'commune_id' => $response['commune_id'], 
+			'ville' => $response['ville_libelle'], 
+			'latitude' => $response['latitude'], 
+			'longitude' => $response['longitude'],
+			'email_notification' => $response['email_notification'],
+			'date_debut' => $response['date_debut'],
+			'date_fin' => $response['date_fin'],
+			'image' => $response['image'],
+			'logo' => $response['logo']
+		];
+
+		wp_send_json_success($jsonData);
+
+	}
+
+	/**
+	 * Modifie la visibilité d'une offre d'emploi
+	 */
+	function toggle_visibilite_offre(){
+		check_ajax_referer('liste_nouvelles_offres');
 
 		$args = array(
 			'id_offre' => $_POST['id_offre'],
-			'commentaire' => $_POST['commentaire']
+			'visibilite' => $_POST['visibilite']
 		);
-
+		
 		if(!$args['id_offre']){
-			wp_send_json_error("L'id de l'offre n'a pas été envoyé.");
-		}
-		if(!$this->model->findOneOffre($args['id_offre'])){
-			wp_send_json_error("L'offre n'existe pas.");
+			wp_send_json_error("L'id de l'offre n'a pas été envoyé. Erreure lors de la demande ajax.");
 		}
 
-		$response = $this->model->accepterOffre($args['id_offre']);
-		if( $response != 'Sql succès'){
-			wp_send_json_error($response);
+		if(!$args['visibilite']){
+			wp_send_json_error("La visibilité souhaitée n'a pas été envoyée. Erreure lors de la demande ajax.");
 		}
 
-		$this->envoi_email_utilisateur(get_userdata($this->model->findOneOffre($args['id_offre'])['user_id'])->user_email, $args['commentaire'], 'valide');
-		wp_send_json_success('mail envoyé');
+		if(!$this->findOneOffre($args['id_offre'])){
+            wp_send_json_error("L'offre n'existe pas.");
+        }
+
+		$reponse = $this->model->toggleVisibiliteOffre($args['id_offre'], $args['visibilite']);
+
+		if($reponse != 'Suppression réussie'){
+			wp_send_json_error('Erreure lors de la supression : ' . $reponse);
+		}
 	}
 
 	/**
@@ -199,8 +274,8 @@ class Offre_emploi_Admin {
 		if( $response != 'Sql succès'){
 			wp_send_json_error($response);
 		}
-		$this->envoi_email_utilisateur(get_userdata($this->model->findOneOffre($args['id_offre'])['user_id'])->user_email, $args['raison'], 'refus');
-		wp_send_json_success('mail envoyé');
+		// $this->envoi_email_utilisateur(get_userdata($this->model->findOneOffre($args['id_offre'])['user_id'])->user_email, $args['raison'], 'refus');
+		wp_send_json_success('Offre non mis en ligne');
 	}
 
 	/**
@@ -240,6 +315,7 @@ class Offre_emploi_Admin {
 		}else{
 			add_menu_page('Offre Emploi', 'Offre Emploi', 'edit_posts', 'gestion_offre_emploi', array($this, 'gestion_offre'));
 		}
+		add_submenu_page('gestion_offre_emploi', 'Ajouter une Offre', 'Ajouter', 'edit_posts', 'ajouter_offres_emploi', array($this, 'ajouter_offres_emploi'));
 		add_submenu_page('gestion_offre_emploi', 'Import offres', 'Import', 'edit_posts', 'import_offres_emploi', array($this, 'import_offres_emploi'));
 		add_submenu_page('gestion_offre_emploi', 'Vider le cache offres emploi', 'Vider le cache', 'edit_posts', 'vider_cache_offres_emploi', array($this, 'vider_cache_offres_emploi'));
 	}
@@ -251,6 +327,56 @@ class Offre_emploi_Admin {
 	function gestion_offre(){
 		//Affiche ici la fiche d'offre d'emploi
 		if(isset($_GET['id_offre'])){
+			if(isset($_GET['edit'])){
+				if(isset($_GET['validation'])){
+					$this->modification_offre($_GET['id_offre']);
+					wp_redirect("^/wp-admin/admin.php?page=gestion_offre_emploi&id_offre=".$_GET['id_offre']);
+					exit;
+					return;
+				}
+				wp_enqueue_style( $this->plugin_name.'.formulaire_offre_emploi_css', plugin_dir_url( __FILE__ ) . 'css/formulaire_offre_emploi.css', array(), $this->version, 'all' );
+				wp_enqueue_style( $this->plugin_name.'bootstrap', 'https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css', array(), $this->version, 'all' );
+				//wp_enqueue_style( $this->plugin_name.'.leaflet', 'https://unpkg.com/leaflet@1.9.2/dist/leaflet.css', array(), $this->version, 'all' );
+				wp_enqueue_script( $this->plugin_name.'.bootstrap', 'https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js', array( 'jquery' ), $this->version, false);
+				//wp_enqueue_script( $this->plugin_name.'.leaflet', 'https://unpkg.com/leaflet@1.9.2/dist/leaflet.js', array( 'jquery' ), $this->version, false);
+				wp_enqueue_script( $this->plugin_name.'.formulaire_offre_emploi_js', plugin_dir_url( __FILE__ ) . 'js/formulaire_offre_emploi.js', array( 'jquery' ), $this->version, true);
+
+				wp_enqueue_script($this->plugin_name.'.jquery-ui-datepicker-js', 'https://code.jquery.com/ui/1.12.1/jquery-ui.js', array( 'jquery' ), $this->version, false);
+				wp_enqueue_style($this->plugin_name.'.jquery-ui-style', 'https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css');
+
+				wp_enqueue_script( $this->plugin_name.'.preremplissage_formulaire_admin', plugin_dir_url( __FILE__ ) . 'js/preremplissage_formulaire.js', array( 'jquery' ), $this->version, true);
+
+				$modifier_offre = wp_create_nonce( 'modification_admin');
+				wp_localize_script(
+					$this->plugin_name.'.preremplissage_formulaire_admin',
+					'my_ajax_obj',
+					array(
+						'ajax_url' => admin_url( 'admin-ajax.php' ),
+						'nonce'    => $modifier_offre,
+						'id_offre' => $_GET['id_offre']
+					)
+				);
+				include(plugin_dir_path( __FILE__ ) .'partials/offre_emploi-admin-ajouter.php');
+				return;
+			}
+			if(isset($_GET['valider'])){
+				$this->model->accepterOffre($_GET['id_offre']);
+				wp_redirect("^/wp-admin/admin.php?page=gestion_offre_emploi");
+				exit;
+				return;
+			}
+			if(isset($_GET['refuser'])){
+				$this->model->refuserOffre($_GET['id_offre']);
+				wp_redirect("^/wp-admin/admin.php?page=gestion_offre_emploi");
+				exit;
+				return;
+			}
+			if(isset($_GET['archiver'])){
+				$this->model->archiverMonOffre($_GET['id_offre']);
+				wp_redirect("^/wp-admin/admin.php?page=gestion_offre_emploi");
+				exit;
+				return;
+			}
 			if(file_exists(plugin_dir_path( __FILE__ ) .'partials/offre_emploi_admin_display.php')) {
 				wp_enqueue_style( $this->plugin_name.'.font-awesome', plugin_dir_url( __FILE__ ) . 'css/all.css', array(), $this->version, 'all' );
 				wp_enqueue_style( $this->plugin_name.'datatable', 'https://cdn.datatables.net/v/bs5/dt-1.12.1/date-1.1.2/r-2.3.0/sb-1.3.4/sp-2.0.2/sl-1.4.0/datatables.min.css', array(), $this->version, 'all' );
@@ -355,6 +481,102 @@ class Offre_emploi_Admin {
 			wp_cache_flush();
 		}
 		return;
+	}
+
+	function ajouter_offres_emploi(){
+		wp_enqueue_style( $this->plugin_name.'.formulaire_offre_emploi_css', plugin_dir_url( __FILE__ ) . 'css/formulaire_offre_emploi.css', array(), $this->version, 'all' );
+		wp_enqueue_style( $this->plugin_name.'bootstrap', 'https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css', array(), $this->version, 'all' );
+		//wp_enqueue_style( $this->plugin_name.'.leaflet', 'https://unpkg.com/leaflet@1.9.2/dist/leaflet.css', array(), $this->version, 'all' );
+		wp_enqueue_script( $this->plugin_name.'.bootstrap', 'https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js', array( 'jquery' ), $this->version, false);
+		//wp_enqueue_script( $this->plugin_name.'.leaflet', 'https://unpkg.com/leaflet@1.9.2/dist/leaflet.js', array( 'jquery' ), $this->version, false);
+		wp_enqueue_script( $this->plugin_name.'.formulaire_offre_emploi_js', plugin_dir_url( __FILE__ ) . 'js/formulaire_offre_emploi.js', array( 'jquery' ), $this->version, true);
+
+		wp_enqueue_script($this->plugin_name.'.jquery-ui-datepicker-js', 'https://code.jquery.com/ui/1.12.1/jquery-ui.js', array( 'jquery' ), $this->version, false);
+    	wp_enqueue_style($this->plugin_name.'.jquery-ui-style', 'https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css');
+
+		$ajouter_offre = wp_create_nonce( 'ajouter_offre');
+		wp_localize_script(
+			$this->plugin_name.'admin_ajouter_offre',
+			'my_ajax_obj',
+			array(
+				'ajax_url' => admin_url( 'admin-ajax.php' ),
+				'nonce'    => $ajouter_offre,
+			)
+		);
+		include(plugin_dir_path( __FILE__ ) .'partials/offre_emploi-admin-ajouter.php');
+		return;
+	}
+
+	function offre_emploi_ajout_validation(){
+		if (isset($_POST['formEmploiBackend'])) {
+/* 			var_dump($_POST);
+			return; */
+			$intitule = sanitize_text_field($_POST['intitule']);
+			$libelle_metier = sanitize_text_field($_POST['libelle_metier']);
+			$nom_entreprise = sanitize_text_field($_POST['nom_entreprise']);
+			$secteur_activite = sanitize_text_field($_POST['secteur_activite']);
+			$type_contrat = sanitize_text_field($_POST['type_contrat']);
+			if(!empty($_POST['montant_salaire'])){
+				$salaire = $_POST['montant_salaire'].'€ par '.$_POST['periode_salaire'];
+			}
+			$description = sanitize_textarea_field($_POST['description']);
+			if($_POST['commune'] != ''){
+				$commune_id = $_POST['commune'];
+				$commune = $this->get_commune_by_id($commune_id);
+				$latitude = $commune['latitude'];
+				$longitude = $commune['longitude'];
+				$ville_libelle = ucwords($commune['slug']);
+			}
+
+			$email_notification = sanitize_text_field($_POST['email']);
+			$date_debut = $_POST['date_debut'];
+			$date_fin = $_POST['date_fin'];
+			$image = $_POST['image'];
+			$logo = $_POST['logo'];
+			$this->model->createOneOffreInterne($intitule, $libelle_metier, $secteur_activite, $nom_entreprise, $type_contrat, $latitude, $longitude, $salaire, $commune_id, get_current_user_id(), $description, $ville_libelle, $email_notification, $date_debut, $date_fin, $image, $logo);
+		}
+	}
+
+	/**
+	 * Modifie une offre d'emploi
+	 */
+	function modification_offre(){
+		$intitule = sanitize_text_field($_POST['intitule']);
+		$libelle_metier = sanitize_text_field($_POST['libelle_metier']);
+		$secteur_activite = sanitize_text_field($_POST['secteur_activite']);
+		$nom_entreprise = sanitize_text_field($_POST['nom_entreprise']);
+		$type_contrat = sanitize_text_field($_POST['type_contrat']);
+		if(!empty($_POST['montant_salaire'])){
+			$salaire = $_POST['montant_salaire'].'€ par '.$_POST['periode_salaire'];
+		}
+		$description = sanitize_textarea_field($_POST['description']);
+		if($_POST['commune'] != ''){
+			$commune_id = $_POST['commune'];
+			$commune = $this->get_commune_by_id($commune_id);
+			$latitude = $commune['latitude'];
+			$longitude = $commune['longitude'];
+			$ville_libelle = ucwords($commune['slug']);
+		}
+
+		$email_notification = sanitize_text_field($_POST['email']);
+		$date_debut = $_POST['date_debut'];
+		$date_fin = $_POST['date_fin'];
+		$image = $_POST['image'];
+		$logo = $_POST['logo'];
+
+		$this->model->modifierOffreInterne($_POST['id_offre'], $intitule, $libelle_metier, $secteur_activite, $nom_entreprise, $type_contrat, $latitude, $longitude, $salaire, $commune_id, $description, $ville_libelle, $email_notification, $date_debut, $date_fin, $image, $logo);
+		
+	}
+
+	public function get_commune_by_id($id) {
+		
+		$commune = wp_cache_get('offre_emploi_commune_'.$id, 'offre_emploi');
+		if ( false === $commune ){
+			$commune = $this->model->findOneCommune($id);
+			wp_cache_set( 'offre_emploi_commune_'.$id, $commune, 'offre_emploi');
+		}
+		return $commune;
+		
 	}
 
 	/**

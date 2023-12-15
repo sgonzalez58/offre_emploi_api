@@ -40,9 +40,19 @@ if($_GET['distance']){
     if($_GET['motClef']){
         $lien_retour .= '&motClef='.$_GET['motClef'];
     }
+    if($_GET['page']){
+        $lien_retour .= '&page='.$_GET['page'];
+    }
 }else{
     if($_GET['motClef']){
         $lien_retour .= '?motClef='.$_GET['motClef'];
+        if($_GET['page']){
+            $lien_retour .= '&page='.$_GET['page'];
+        }
+    }else{
+        if($_GET['page']){
+            $lien_retour .= '?page='.$_GET['page'];
+        }
     }
 }
 
@@ -110,6 +120,11 @@ get_header();
     <div id='fiche_offre'>
         <a id='retour_offre_liste' href='<?=$lien_retour?>'><span class="material-symbols-outlined">turn_left</span>Offres d'emploi</a>
         <div id='informations_principales'>
+            <?php 
+                if($offre['image']!=''){
+                    echo '<img src="'.$offre['image'].'"/>';
+                }
+            ?>
             <h1 id='intitule'><?=$offre['intitule']?></h1>
             <div class='info_secondaire'>
                 <?php
@@ -145,7 +160,17 @@ get_header();
         <?php
         }else{
         ?>
-            <button id='bouton_postuler'>Postuler</button>
+            <div class="elementor-element elementor-element-1281c89 elementor-align-justify elementor-widget elementor-widget-button" data-id="1281c89" data-element_type="widget" data-widget_type="button.default">
+				<div class="elementor-widget-container">
+					<div class="elementor-button-wrapper">
+                        <a id='ouverture_formulaire_postuler' class="elementor-button elementor-button-link elementor-size-sm lien_postuler" href="#elementor-action%3Aaction%3Dpopup%3Aopen%26settings%3DeyJpZCI6IjExNDU3NiIsInRvZ2dsZSI6ZmFsc2V9">
+                            <span class="elementor-button-content-wrapper">
+                                <span class="elementor-button-text">Postuler</span>
+                            </span>
+                        </a>
+		            </div>
+				</div>
+            </div>
         <?php
         }
         ?>
@@ -157,7 +182,7 @@ get_header();
             <?php
             if($offre['latitude']){
             ?>
-            <iframe frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="https://www.openstreetmap.org/export/embed.html?bbox=<?=($offre['longitude'] - 0.0360)?>%2C<?=($offre['latitude'] - 0.0133)?>%2C<?=($offre['longitude'] + 0.0360)?>%2C<?=($offre['latitude'] + 0.0133)?>&layer=mapnik&marker=<?=$offre['latitude']?>%2C<?=$offre['longitude']?>"></iframe>
+            <iframe frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="https://www.openstreetmap.org/export/embed.html?bbox=<?=($offre['longitude'] - 0.073)?>%2C<?=($offre['latitude'] - 0.025)?>%2C<?=($offre['longitude'] + 0.073)?>%2C<?=($offre['latitude'] + 0.025)?>&layer=mapnik&marker=<?=$offre['latitude']?>%2C<?=$offre['longitude']?>"></iframe>
             <br/>
             <small>
                 <a href="https://www.openstreetmap.org/?mlat=<?=$offre['latitude']?>&amp;mlon=<?=$offre['longitude']?>#map=12/<?=$offre['latitude']?>/<?=$offre['longitude']?>&amp;layers=N">Afficher une carte plus grande</a>
@@ -247,31 +272,9 @@ get_header();
 
 <?php
     if(!$offre['id_jobijoba']){
-?>
-    <div id='modal'>
-        <div id='overlay'></div>
-        <p style='color:white; z-index:11'>Formulaire de candidature</p>
-        <form id="envoie_candidature" method='post' action="candidature" class="centre">
-            <button id='fermer_formulaire'>X</button>
-            <input type='text' name='prenom' required minlength="3" maxlength="25" placeholder="Prénom">
-            <input type='text' name='nom' required minlength="3" maxlength="25" placeholder="Nom">
-            <?php
-                if(is_user_logged_in()){
-            ?>
-            <input type="mail" name='mail' id='mail_form' required value="<?=wp_get_current_user()->user_email?>" placeholder="adresse mail">
-            <?php
-                }else{  
-            ?>
-            <input type="mail" name='mail' id='mail_form' required placeholder="adresse mail">
-            <?php
-                }
-            ?>
-            <textarea name='message' required placeholder="Votre demande"></textarea>
-            <input type='submit' value="Envoyer">
-        </form>
-    </div>
-    
-    <?php
+
+        echo do_shortcode('[elementor-template id="114576"]');
+
     }
     ?>
 

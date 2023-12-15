@@ -190,3 +190,44 @@ Array.from(document.getElementsByClassName('pagination_nb_offre_select')).forEac
         }
     })
 })
+
+function sendEmploiViewEvent(currentItem){
+    let id = currentItem.getAttribute('data_id');
+    _paq.push(['trachEvent', 'Emploi', 'AffichageListe', id]);
+}
+
+let offres_interne = document.getElementsByClassName('offre_interne');
+let observerEmploi = Array();
+Array.from(offres_interne).forEach((offre, index) => {
+    observerEmploi[index] = new IntersectionObserver(function(entries){
+        if (entries[0].isIntersecting){
+            sendEmploiViewEvent(offre);
+            observerEmploi[index].unobserve(offre);
+        }
+    }, { threshold: 0.8 });
+
+    observerEmploi[index].observe(offre);
+})
+
+
+// Array.from(document.getElementsByClassName('conteneur_image_offre_interne')).forEach((conteneur, index) => {
+//     let image = new Image();
+//     image.src = conteneur.firstElementChild.getAttribute('src');
+//     if(image.complete){
+//         let vibrant = new Vibrant(image);
+//         let swatches = vibrant.swatches();
+
+//         let backgroundColor = swatches.Vibrant.getHex();
+
+//         conteneur.style.backgroundColor = backgroundColor;
+//     }else{
+//         image.addEventListener('load', ()=>{
+//             let vibrant = new Vibrant(image);
+//             let swatches = vibrant.swatches();
+    
+//             let backgroundColor = swatches.Vibrant.getHex();
+    
+//             conteneur.style.backgroundColor = backgroundColor;
+//         })
+//     }
+// })

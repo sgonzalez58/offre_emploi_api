@@ -82,18 +82,15 @@ class Offre_emploi_Public {
 		add_action('wp_ajax_toggle_visibilite_offre', array($this,'toggle_visibilite_offre'));
 		add_action('wp_ajax_nopriv_toggle_visibilite_offre', array($this,'toggle_visibilite_offre'));
 
-		add_action('wp_ajax_get_candidatures', array($this,'get_candidatures'));
-		add_action('wp_ajax_nopriv_get_candidatures', array($this,'get_candidatures'));
-
-		add_action('wp_ajax_get_mes_candidatures', array($this,'get_mes_candidatures'));
-		add_action('wp_ajax_nopriv_get_mes_candidatures', array($this,'get_mes_candidatures'));
-
 		add_action('init', array($this,'offre_emploi_rewrite_rules'));
 		add_action('init', array($this,'monprefixe_session_start'), 1);
 		add_filter('query_vars', array($this,'offre_emploi_register_query_var' ));
 		add_filter('template_include', array($this,'offre_emploi_front_end'));
 
 		add_shortcode('offre_emploi', array($this, 'liste_villes_offre'));
+
+		add_shortcode('offre_emploi_mail_contact', array($this, 'sc_offre_emploi_mail_contact'));
+
 	}
 
 	/**
@@ -158,6 +155,33 @@ class Offre_emploi_Public {
 		return $retour;
 	}
 
+	/**
+	 * Shortcode récupération du mail de contact d'une offre d'emploi
+	 */
+	public function sc_offre_emploi_mail_contact($atts) {
+
+		global $wp_query; //Load $wp_query object
+		
+		ob_start();
+
+			extract( shortcode_atts(array(
+						'id' => $wp_query->query_vars['idOffreEmploi'],
+				), $atts) );
+
+ 			// print_r($atts);			
+			if( $id ){
+				$offre = $this->findOneOffre($id);
+
+				if(file_exists(plugin_dir_path( __FILE__ ) .'partials/mail_contact.php')) {
+					include(plugin_dir_path( __FILE__ ) .'partials/mail_contact.php');
+				}
+				
+			}
+
+		return ob_get_clean();
+		
+	}
+
 	function monprefixe_session_start() {
 
 		if ( ! session_id() ) {
@@ -171,7 +195,7 @@ class Offre_emploi_Public {
 	public function getOffresValides($mots_clef = '', $type_de_contrat = null, array $communes = [], $page = 1, $limit = '') {
 		
 		return $offres = $this->model->findByMotsClef($mots_clef, $type_de_contrat, $communes, $page, $limit);	
-	}	
+	}
 
 	public function getMetier() {
 		
@@ -501,7 +525,7 @@ class Offre_emploi_Public {
             wp_send_json_error("L'offre n'existe pas.");
         }
 
-		$reponse = $this->model->supprimerMonOffre($args['id_offre']);
+		$reponse = $this->model->archiverMonOffre($args['id_offre']);
 
 		if($reponse != 'Suppression réussie'){
 			wp_send_json_error('Erreure lors de la supression.');
@@ -539,96 +563,13 @@ class Offre_emploi_Public {
 	}
 
 	/**
-	 * Envoie un mail au propriétaire de l'offre d'emploi et ajoute une candidature dans la table correspondante
-	 */
-	function envoie_candidature($id_offre_emploi){
-		if(!$id_offre_emploi){
-			echo('Erreur à l\'envoie de la candidature. L\'id de l\'offre n\'a pas été précisé. A voir avec l\'administrateur.');
-		}else{
-			$args = array(
-				'id_user' => get_current_user_id(),
-				'prenom' => $_POST['prenom'],
-				'nom' => $_POST['nom'],
-				'mail' => $_POST['mail'],
-				'message' => $_POST['message']
-			);
-			$form_complet = true;
-			if(!$args['prenom']){
-				echo('Le prénom n\'a pas été fourni');
-				$form_complet = false;
-			}
-			if(!$args['nom']){
-				echo('Le nom n\'a pas été fourni');
-				$form_complet = false;
-			}
-			if(!$args['mail']){
-				echo('Le mail n\'a pas été fourni');
-				$form_complet = false;
-			}
-			if(!$args['message']){
-				echo('Le message n\'a pas été fourni');
-				$form_complet = false;
-			}
-			if($form_complet){
-				if($args['id_user']){
-					$this->model->createCandidature($id_offre_emploi, $args['mail'], $args['id_user']);
-				}else{
-					$this->model->createCandidature($id_offre_emploi, $args['mail']);
-				}
-				$offre = $this->findOneOffre($id_offre_emploi);
-				$mail_offre = wp_get_current_user()->user_email;
-
-				$this->envoi_email_utilisateur($mail_offre, $offre['intitule'].' - '.$args['prenom'].' '.$args['nom'].' - '.$args['mail'].' - '.$args['message'] , 'candidature');
-			}
-		}
-	}
-
-	/**
-	 * Récupère le nombre de candidature d'un mail sur une offre
-	 */
-	function get_candidatures(){
-		check_ajax_referer('mes_candidatures');
-
-		$args=[
-			'id_offre' => $_POST['id_offre'],
-			'mail' => $_POST['mail']
-		];
-
-		if(!$args['id_offre']){
-			wp_send_json_error('Erreur à la demande. L\'id de l\'offre n\'a pas été précisé. A voir avec l\administrateur.');
-		}
-		if(!$args['mail']){
-			wp_send_json_error('Le mail n\'a pas été fourni');
-		}
-		
-		$candidatures = $this->model->findCandidatures($args['id_offre'], $args['mail']);
-		
-		wp_send_json_success(['nombre_de_demande' => count($candidatures)]);
-	}
-
-	/**
-	 * Récupère les candidatures d'un utilisateur
-	 */
-	function get_mes_candidatures(){
-		check_ajax_referer('mes_offres');
-        
-        $offres = $this->model->findMesCandidatures(get_current_user_id());
-
-		$jsonData = [];
-		$idx = 0;
-		foreach($offres as $offre){
-			$jsonData[$idx++] = ['intitule' => $offre['intitule'], 'nomVille' => $offre['ville_libelle'], 'nomEntreprise' => $offre['nom_entreprise'], 'dateCreation' => $offre['date_envoi'], 'mail' => $offre['mail'] , 'etat' => $offre['validation'], 'id' => $offre['id']];
-		}
-
-        wp_send_json_success($jsonData);
-	}
-
-	/**
 	 * Ré-écritude des routes
 	 */
 	function offre_emploi_rewrite_rules() {	
 
-		add_rewrite_rule('^offres-emploi/([0-9]+)/candidature/?', 'index.php?idOffreEmploi=$matches[1]&candidature=1', 'top');
+		add_rewrite_rule('^offres-emploi/([0-9]+)/pourvu/?', 'index.php?idOffreEmploi=$matches[1]&pourvu=1', 'top');
+
+		add_rewrite_rule('^offres-emploi/([0-9]+)/nonPourvu/?', 'index.php?idOffreEmploi=$matches[1]&pourvu=0', 'top');
 
 		add_rewrite_rule('^offres-emploi/([0-9]+)/?', 'index.php?idOffreEmploi=$matches[1]', 'top');
 
@@ -658,6 +599,7 @@ class Offre_emploi_Public {
 		
 		$vars[] = 'offreEmploi';
 		$vars[] = 'idOffreEmploi';
+		$vars[] = 'pourvu';
 		$vars[] = 'commune';
 		$vars[] = 'thematique';
 		$vars[] = 'nouvelleOffre';
@@ -665,7 +607,6 @@ class Offre_emploi_Public {
 		$vars[] = 'idMonOffreEmploi';
 		$vars[] = 'modifier';
 		$vars[] = 'verificationNouvelleOffre';
-		$vars[] = 'candidature';
 		$vars[] = 'ville';
 
 		return $vars;
@@ -755,29 +696,88 @@ class Offre_emploi_Public {
 
 		//affichage de la fiche d'une offre
 		if(array_key_exists('idOffreEmploi',$wp_query->query_vars)){	
-			if(array_key_exists('candidature', $wp_query->query_vars)){
-				$this->envoie_candidature($wp_query->query_vars['idOffreEmploi']);
-				wp_redirect("^/offres-emploi/".$wp_query->query_vars['idOffreEmploi']."?postule=1");
-				exit;
-				return;
-			}
-			if(file_exists(plugin_dir_path( __FILE__ ) .'partials/fiche_offre.php')) {
-				wp_enqueue_style( $this->plugin_name.'offre', plugin_dir_url( __FILE__ ) . 'css/offre.css', array(), $this->version, 'all' );
-				wp_enqueue_script( $this->plugin_name.'fiche_offre', plugin_dir_url( __FILE__ ) . 'js/fiche_offre.js', array( 'jquery'), $this->version, true);
-				$mesCandidatures = wp_create_nonce( 'mes_candidatures' );
-				wp_localize_script(
-					$this->plugin_name.'fiche_offre',
-					'mes_candidature_ajax',
-					array(
-						'ajax_url' => admin_url( 'admin-ajax.php' ),
-						'nonce'    => $mesCandidatures,
-						'id_offre_emploi' => $wp_query->query_vars['idOffreEmploi']
-					)
-				);
-				return plugin_dir_path( __FILE__ ) .'partials/fiche_offre.php';
-			}
-		}
 
+			if(array_key_exists('pourvu', $wp_query->query_vars)){
+
+				$clef = $_GET['key'];
+
+				if(!$clef){
+
+					if(file_exists(plugin_dir_path( __FILE__ ) .'partials/lien_non_disponible.php')) {
+						return plugin_dir_path( __FILE__ ) .'partials/lien_non_disponible.php';
+					}
+
+				}
+
+				$result = $this->model->verifierClefOffre($wp_query->query_vars['idOffreEmploi'], $clef);
+
+				if(!$result){
+
+					if(file_exists(plugin_dir_path( __FILE__ ) .'partials/lien_non_disponible.php')) {
+						return plugin_dir_path( __FILE__ ) .'partials/lien_non_disponible.php';
+					}else{
+						wp_redirect('https://koikispass.com');
+						exit;
+					}
+				}
+
+				if($wp_query->query_vars['pourvu'] == 1){
+
+					$result = $this->model->archiverMonOffre($wp_query->query_vars['idOffreEmploi']);
+
+					if($result == 'error'){
+
+						if(file_exists(plugin_dir_path( __FILE__ ) .'partials/erreur.php')) {
+							return plugin_dir_path( __FILE__ ) .'partials/erreur.php';
+						}else{
+							wp_redirect('https://koikispass.com');
+							exit;
+						}
+					}
+
+					if(file_exists(plugin_dir_path( __FILE__ ) .'partials/confirmer_archive.php')) {
+						return plugin_dir_path( __FILE__ ) .'partials/confirmer_archive.php';
+					}
+
+				}elseif($wp_query->query_vars['pourvu'] == 0){
+
+					$offre = $this->model->findOneOffre($wp_query->query_vars['idOffreEmploi']);
+
+					if(Datetime::createFromFormat('Y-m-d', $offre['date_fin']['date']) < new \Datetime('+15 days')){
+						$result = $this->model->rafraichirOffre2($wp_query->query_vars['idOffreEmploi']);
+					}else{
+						$result = $this->model->rafraichirOffre($wp_query->query_vars['idOffreEmploi']);
+					}
+
+					if($result == 'error'){
+
+						if(file_exists(plugin_dir_path( __FILE__ ) .'partials/erreur.php')) {
+							return plugin_dir_path( __FILE__ ) .'partials/erreur.php';
+						}else{
+							wp_redirect('https://koikispass.com');
+							exit;
+						}
+						
+					}
+
+					if(file_exists(plugin_dir_path( __FILE__ ) .'partials/confirmer_mise_a_jour.php')) {
+						return plugin_dir_path( __FILE__ ) .'partials/confirmer_mise_a_jour.php';
+					}
+					wp_redirect('https://koikispass.com');
+					exit;
+				}
+			}
+
+			if(file_exists(plugin_dir_path( __FILE__ ) .'partials/fiche_offre.php')) {
+
+				wp_enqueue_style( $this->plugin_name.'offre', plugin_dir_url( __FILE__ ) . 'css/offre.css', array(), $this->version, 'all' );
+				wp_enqueue_script( $this->plugin_name.'.offre', plugin_dir_url( __FILE__ ) . 'js/offre.js', array( 'jquery' ), $this->version, true);
+
+				return plugin_dir_path( __FILE__ ) .'partials/fiche_offre.php';
+
+			}
+
+		}
 		//formulaire de création d'une offre
 		if(array_key_exists('nouvelleOffre',$wp_query->query_vars)){
 			if(file_exists(plugin_dir_path( __FILE__ ) .'partials/nouvelle_offre.php')) {
@@ -791,7 +791,7 @@ class Offre_emploi_Public {
 					include(plugin_dir_path( __FILE__ ) .'partials/nouvelle_offre.php');
 					return;
 				}else{
-					echo 'Vous devez être connecté(e) pour ajouter une nouvelle offre.';
+					return plugin_dir_path( __FILE__ ) .'partials/page_connexion.php';
 				}
 			}
 		}
@@ -803,7 +803,7 @@ class Offre_emploi_Public {
 				wp_redirect("^/offres-emploi/mesOffres?creation=1");
 				exit;
 			}else{
-				echo 'Vous devez être connecté(e) pour ajouter une nouvelle offre.';
+				return plugin_dir_path( __FILE__ ) .'partials/page_connexion.php';
 			}
 		}
 		//affichage des offres d'un utilisateur connecté
@@ -840,7 +840,7 @@ class Offre_emploi_Public {
 					echo 'Une erreur s\'est produite.';
 				}
 			}else{
-				echo 'Vous devez être connecté(e) pour consulter vos offres.';
+				return plugin_dir_path( __FILE__ ) .'partials/page_connexion.php';
 			}
 		}
 		//formulaire de modification d'une offre d'un utilisateur connecté
@@ -867,7 +867,7 @@ class Offre_emploi_Public {
 					include(plugin_dir_path( __FILE__ ) .'partials/nouvelle_offre.php');
 					return;
 				}else{
-					echo 'Vous devez être connecté(e) pour modifier une offre.';
+					return plugin_dir_path( __FILE__ ) .'partials/page_connexion.php';
 				}
 			}
 		}
@@ -880,7 +880,7 @@ class Offre_emploi_Public {
 				exit;
 				return;
 			}else{
-				echo 'Vous devez être connecté(e) pour modifier une offre.';
+				return plugin_dir_path( __FILE__ ) .'partials/page_connexion.php';
 			}
 		}
 		//liste offres par ville
@@ -956,33 +956,6 @@ class Offre_emploi_Public {
 						</tr>
 						
 					</table>";	
-			}elseif('candidature'){
-				$demande = explode(' - ', $content);
-				$intitule_offre = $demande[0];
-				$prenom_nom_user = $demande[1];
-				$mail_user = $demande[2];
-				$demande = $demande[3];
-
-				$mail->Subject = utf8_decode("Candidature pour votre offre '".$intitule_offre."' - ".$prenom_nom_user);
-				$message = "<table cellpadding=0 cellspacing=0>
-								<tr>
-									<td width='11px'></td>
-										<td width='10px'>&nbsp;</td>
-										<td width='729px'>
-
-										<p>Bonjour,</p>
-
-										<p>".$prenom_nom_user." a candidaté(e) pour votre offre '".$intitule_offre."' :
-										<br>'".nl2br($demande)."'</p>
-
-										<p>Vous pouvez le contacter sur le mail <a href='mailto:".$mail_user."?subject=RE:Candidature [".$intitule_offre."]'>".$mail_user."</a></p>
-										<p><br>Cordialement.</p>
-									
-										</td>
-										<td width='10px'>&nbsp;</td>
-									<td width='11px'></td>
-								</tr>
-							</table>";	
 			}else{
 				$mail->Subject = utf8_decode("Refus de votre demande d'offre d'emploi");
 				$message = "<table cellpadding=0 cellspacing=0>

@@ -17,7 +17,11 @@ let tableOffres = jQuery('#liste_offre_en_attente').DataTable({
         {data:'nomEntreprise'},
         {data:'dateDemande'},
         {data:'etat'},
-        {data:'id'}
+        {data:'vue'},
+        {data:'action'},
+        {data:'id'},
+        {data:'visibilite', visible:false},
+        {data:'mail', visible:false}
     ],
     searchPanes: {
         viewTotal: true
@@ -26,18 +30,37 @@ let tableOffres = jQuery('#liste_offre_en_attente').DataTable({
         {targets: [1,2,4], searchPanes:{
             show:true
         }},
-        {targets: 5, render:function (data, type, row){                    //création des boutons de lien vers la fiche, refus de l'offre et archivage de l'offre pour chaque ligne
+        {targets: 7, render:function (data, type, row){                   //création des boutons de lien vers la fiche, refus de l'offre et archivage de l'offre pour chaque ligne
+            let bouton_visible = '';
+            if(row['visibilite'] == 'visible')
+                bouton_visible = `<div data-toggle='tooltip' data-placement='bottom' title='visible' class='btn bulle transparent rounded mx-2' onclick="toggleVisibilite('`+ data +`', 'non visible', '`+row['etat']+`')"><i class='fa-solid fa-eye'></i></div>`;
+            else
+                bouton_visible = `<div data-toggle='tooltip' data-placement='bottom' title='invisible' class='btn bulle transparent rounded mx-2' onclick="toggleVisibilite('`+ data +`', 'visible', '`+row['etat']+`')"><i class='fa-solid fa-eye-slash'></i></i></div>`;
+        
             if(row['etat'] == 'refus'){
                 second_bouton = `</button><button type='button' data-toggle='tooltip' data-placement='bottom' title="archiver l'offre" class='btn bulle btn-secondary rounded me-2' onclick="archiver('`+data+`', '`+row['etat']+`')"><i class="fa-solid fa-box-archive"></i></button>`;
             }else{
                 second_bouton = `<button type='button' data-toggle='tooltip' data-placement='bottom' title="refuser l'offre" class='btn bulle btn-danger rounded me-2' data-bs-toggle='modal' data-bs-target='#modalMail' data-bs-offre='`+ data +`'><i class='fa-solid fa-xmark'></i>`
             }
-            return "<a href='/wp-admin/admin.php?page=gestion_offre_emploi&id_offre="+ data +`' data-toggle='tooltip' data-placement='bottom' title="voir la fiche d'offre" class='btn bulle btn-success rounded me-2'><i class='fa-regular fa-file-lines'></i></a>`+second_bouton; 
+
+            if(row['etat'] == 'valide'){
+                bouton_envoi = "<a type='button' class='btn btn-primary rounded' href='mailto:"+row['mail']+"?subject=Votre%20lien%20vers%20votre%20offre%20d%27emploi&body=www.koikispass.com%2Foffres-emploi%2F" + data +"'><i class='fa-regular fa-envelope'></i></a>";
+            }else{
+                bouton_envoi = ''
+            }
+
+            return bouton_envoi + bouton_visible +"<a href='/wp-admin/admin.php?page=gestion_offre_emploi&id_offre="+ data +`' data-toggle='tooltip' data-placement='bottom' title="voir la fiche d'offre" class='btn bulle btn-success rounded me-2'><i class='fa-regular fa-file-lines'></i></a>`+second_bouton; 
         }},
         {targets: [3], render:function (data, type){                    //mise en page de la colonne date d'actualisation
             return type === 'display' ?
                 DateTime.fromISO(new Date(data).toISOString()).setLocale('fr').toFormat('dd MMMM y') :
                 DateTime.fromISO(new Date(data).toISOString()).toFormat('dd MMMM y')
+        }},
+        {targets: [5], render:function (data){
+            return "<p>"+data['vues']+' / '+data['vues_liste']+"</p>";
+        }},
+        {targets: [6], render:function (data, type){
+            return "<p>"+data['clics']+' / '+data['demandes']+"</p>";
         }},
         {targets: [0,5], responsivePriority : 1}
     ],
@@ -126,5 +149,27 @@ function archiver(id_offre, etat){
                 console.log(data.responseText);
             }
         })
+    }
+}
+//demande au serveur de modifier la visibilité d'une offre valide
+function toggleVisibilite(offre_id, visibilite, etat){
+    if(etat == 'valide'){
+        jQuery.ajax({
+            type:'POST',
+            url:my_ajax_obj.ajax_url,
+            data:{_ajax_nonce:my_ajax_obj.nonce, action:'toggle_visibilite_offre_admin', id_offre: offre_id, visibilite:visibilite},
+            success:function(){
+                tableOffres.ajax.reload(function(){
+                    jQuery(function () {
+                        jQuery('.bulle').tooltip()
+                    })
+                });
+            },
+            error:function(data){
+                console.log(data.responseText);
+            }
+        })
+    }else{
+        alert("Vous ne pouvez pas rendre visible une annonce qui n'a pas été validée par un administrateur.")
     }
 }

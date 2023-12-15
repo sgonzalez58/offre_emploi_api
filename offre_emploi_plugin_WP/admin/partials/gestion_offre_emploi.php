@@ -57,6 +57,8 @@
                 <th>Entreprise</th>
                 <th>Date</th>
                 <th>Etat</th>
+                <th>Fiche / Liste</th>
+                <th>Clics / Postuler</th>
                 <th></th>
             </tr>
         </thead>

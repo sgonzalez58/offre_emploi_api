@@ -88,13 +88,11 @@
     justify-content: center;
 }
 
-#bouton_postuler{
+.lien_postuler{
     font-size: 13px;
-    border-radius: 0;
-    padding: 0.7rem 3rem;
+    border-radius: 3px!important;
     letter-spacing: 1px;
-    font-weight: bold;
-    background-color: #D90012;
+    box-sizing: border-box;
 }
 
 #description{

@@ -1,15 +1,3 @@
 body{
     margin:0;
 }
-
-#offres_creees_input, #candidatures_input, #offres_creees, #candidatures{
-    display: none;
-}
-
-#offres_creees_input:checked ~ #offres_creees{
-    display: block;
-}
-
-#candidatures_input:checked ~ #candidatures{
-    display: block;
-}

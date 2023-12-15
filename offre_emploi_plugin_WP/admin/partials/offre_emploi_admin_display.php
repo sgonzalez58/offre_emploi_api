@@ -141,53 +141,21 @@ setlocale (LC_TIME, 'fr_FR');
     ?>
 </div>
 <div class='choix'>
-    <button class='valider' data-bs-target='#modalOffre' data-bs-toggle='modal' data-bs-decision='valider'>Valider</button>
+
+    <a class='modifier' href='/wp-admin/admin.php?page=gestion_offre_emploi&id_offre=<?=$offre['id']?>&edit=1'>Modifier</a>
+
+    <a class='valider' href='/wp-admin/admin.php?page=gestion_offre_emploi&id_offre=<?=$offre['id']?>&valider=1'>Valider</a>
 <?php
     if($offre['validation'] != 'refus'){
 ?>
-    <button class='refuser' data-bs-target='#modalOffre' data-bs-toggle='modal' data-bs-decision='refuser'>Refuser</button>
+    <a class='refuser' href='/wp-admin/admin.php?page=gestion_offre_emploi&id_offre=<?=$offre['id']?>&refuser=1'>Refuser</a>
 <?php
     }else{
 ?>
-    <button class='archiver' data-bs-target='#modalOffre' data-bs-toggle='modal' data-bs-decision='archiver' id='bouton_archiver'>Archiver</button>
+    <a class='archiver' href='/wp-admin/admin.php?page=gestion_offre_emploi&id_offre=<?=$offre['id']?>&archiver=1'>Archiver</a>
 <?php
     }
 ?>
-</div>
-<div class="modal fade" id="modalOffre" tabindex="-1" aria-labelledby="modalOffreLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalOffreLabel"></h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <label for='localisation'>
-                    <p>
-                        <input type='checkbox' id='localisation' name='localisation'>
-                        La localisation et le nom de la commune ne sont pas renseignés.
-                    </p>
-                </label>
-                <label for='entreprise'>
-                    <p>
-                        <input type='checkbox' id='entreprise' name='entreprise'>
-                        Le nom de l'entreprise n'est pas renseigné.
-                    </p>
-                </label>
-                <br>
-                <div class='d-flex align-items-start justify-content-stretch'>
-                    <label for='raison_personnalisee'>
-                        <p>Autres:</p>
-                    </label>
-                    <textarea id='raison_personnalisee' class='form-control ms-1' name='raison_personnalisee'></textarea>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button id='closeModal' type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                <button id='bouton_confirmation' form='formulaire' type="button" class="btn btn-primary">Confirmer</button>
-            </div>
-        </div>
-    </div>
 </div>
 <?php
     }else{
